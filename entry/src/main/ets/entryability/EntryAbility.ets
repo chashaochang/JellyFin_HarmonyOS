@@ -24,6 +24,16 @@ export default class EntryAbility extends UIAbility {
       }
       hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
     });
+    windowStage.getMainWindow().then((window)=>{
+      window.setWindowBackgroundColor('#101010')
+      window.setWindowSystemBarProperties({
+        statusBarColor:'#101010',
+        navigationBarColor:'#101010',
+        navigationBarContentColor:'#101010',
+        isStatusBarLightIcon:true
+      })
+    })
+
     const context = getContext(this) as common.UIAbilityContext;
     DebugDB.initialize(context); // 在浏览器中访问 http://XXX.XXX.XXX.XXX:8080/index.html (详细地址请在 Log 中查看)
   }

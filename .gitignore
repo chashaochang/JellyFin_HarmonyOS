@@ -11,3 +11,4 @@
 **/.test
 /.appanalyzer
 **/**lock.json5
+**/BuildProfile.ets

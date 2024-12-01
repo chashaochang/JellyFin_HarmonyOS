@@ -1,4 +1,5 @@
 import { ConnectScreen } from '../features/ConnectScreen'
+import { WebViewScreen } from '../features/WebViewScreen'
 import { MainViewModel, ServerState } from './MainViewModel'
 
 @Entry
@@ -9,7 +10,9 @@ struct Index {
   @Provide showExternalConnectionError: boolean = false
 
   aboutToAppear(): void {
-    this.viewModel.refreshServer()
+    setTimeout(()=>{
+      this.viewModel.refreshServer()
+    },200)
   }
 
   build() {
@@ -18,7 +21,9 @@ struct Index {
       if (this.viewModel.serverState === ServerState.Unset) {
         ConnectScreen()
       } else {
-        Text('666')
+        WebViewScreen({
+          hostname:this.viewModel.serverState.server?.hostname
+        })
       }
     }.width('100%').height('100%')
 
