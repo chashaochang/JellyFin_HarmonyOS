@@ -1,6 +1,7 @@
-import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, common, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { DebugDB } from '@hadss/debug-db';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -23,6 +24,8 @@ export default class EntryAbility extends UIAbility {
       }
       hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
     });
+    const context = getContext(this) as common.UIAbilityContext;
+    DebugDB.initialize(context); // 在浏览器中访问 http://XXX.XXX.XXX.XXX:8080/index.html (详细地址请在 Log 中查看)
   }
 
   onWindowStageDestroy(): void {

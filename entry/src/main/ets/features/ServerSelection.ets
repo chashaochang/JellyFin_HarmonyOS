@@ -1,22 +1,173 @@
 import { ApiClientController } from "../data/ApiClientController"
+import { CheckUrlState } from "../ui/state/CheckUrlState"
+import { ServerSelectionMode } from "../ui/state/ServerSelectionMode"
+import { inputMethod } from "@kit.IMEKit"
+import connectionHelper from "../setup/ConnectionHelper"
+import { KeyCode } from "@kit.InputKit"
+import Theme from "../ui/Theme"
+import { JSON } from "@kit.ArkTS"
 
 @Component
-export struct ServerSelection{
-  private apiClientController:ApiClientController = new ApiClientController()
-
-  onConnected:(hostname:string)=>void = ()=>{}
-
-  @State hostname:string = ''
+export struct ServerSelection {
+  private apiClientController: ApiClientController = new ApiClientController()
+  onConnected: (hostname: string) => void = () => {
+  }
+  @State hostname: string = ''
+  @State serverSelectionMode: ServerSelectionMode = ServerSelectionMode.ADDRESS
+  @Consume showExternalConnectionError: boolean
+  @State checkUrlState: CheckUrlState = CheckUrlState.Unchecked
 
   async aboutToAppear(): Promise<void> {
     let server = await this.apiClientController.loadSavedServer()
-    if(server){
+    if (server) {
       this.hostname = server.hostname
     }
   }
+
+  async onSubmit() {
+    this.showExternalConnectionError = false
+    this.checkUrlState = CheckUrlState.Pending
+    let state = await connectionHelper.checkServerUrl(this.hostname)
+    this.checkUrlState = state
+    if (state === CheckUrlState.Success) {
+      this.onConnected(state.address!)
+    }
+  }
+
   build() {
-    Column(){
-      Text('连接到服务器').padding({bottom:8}).fontSize(24).fontColor(Color.White)
+    Column() {
+      Text('连接到服务器').padding({ bottom: 8 }).fontSize(24).fontColor(Color.White)
+      if (this.serverSelectionMode === ServerSelectionMode.ADDRESS) {
+        AddressSelection({
+          text: this.hostname,
+          errorText: this.showExternalConnectionError ? '无法建立连接。 请检查主机名和你的网络连接。' :
+            (this.checkUrlState === CheckUrlState.Error ? this.checkUrlState.message : undefined),
+          loading: this.checkUrlState === CheckUrlState.Pending,
+          onTextChange: (value: string) => {
+            this.showExternalConnectionError = false
+            this.checkUrlState = CheckUrlState.Unchecked
+            this.hostname = value
+          },
+          onDiscoveryClick: () => {
+            this.showExternalConnectionError = false
+            inputMethod.getController().hideTextInput()
+            this.serverSelectionMode = ServerSelectionMode.AUTO_DISCOVERY
+          },
+          onSubmit: () => {
+            this.onSubmit()
+          }
+        })
+      } else {
+        //ServerDiscoveryList()
+      }
     }.alignItems(HorizontalAlign.Start).width('100%')
+  }
+}
+
+@Component
+struct AddressSelection {
+  @Prop text: string
+  @Prop errorText: string
+  @Prop loading: boolean
+  onTextChange: (x: string) => void = () => {
+  }
+  onDiscoveryClick: () => void = () => {
+  }
+  onSubmit: () => void = () => {
+  }
+
+  build() {
+    Column() {
+      ServerUrlField({
+        text: this.text,
+        onTextChanged: this.onTextChange,
+        onSubmit: this.onSubmit
+      })
+      AnimatedErrorText({
+        errorText: this.errorText
+      })
+      if (!this.loading) {
+        Blank().height(12)
+        StyledTextButton({
+          text: '连接',
+          enable: this.text.length > 0,
+          onclick: this.onSubmit,
+        })
+        StyledTextButton({
+          text: '选择服务器',
+          onclick: this.onDiscoveryClick
+        })
+      } else {
+
+      }
+    }
+  }
+}
+
+@Component
+struct ServerUrlField {
+  @Prop text: string
+  onTextChanged: (val: string) => void = () => {
+  }
+  onSubmit: () => void = () => {
+  }
+
+  build() {
+    TextInput({
+      text: this.text,
+      placeholder: '主机',
+    })
+      .onChange((v) => {
+        this.onTextChanged(v)
+      })
+      .width('100%')
+      .padding({ bottom: 8 })
+      .onKeyEvent((event) => {
+        if (event.keyCode === KeyCode.KEYCODE_ENTER) {
+          this.onSubmit()
+        }
+      })
+      .type(InputType.URL)
+      .onSubmit(() => {
+        this.onSubmit()
+      })
+      .maxLines(1)
+      .borderWidth(1)
+      .borderColor(Color.Gray)
+      .borderRadius(4)
+      .height(50)
+      .placeholderColor(Color.Gray)
+      .fontColor(Color.White)
+  }
+}
+
+@Component
+struct AnimatedErrorText {
+  @Prop errorText: string
+
+  build() {
+    Text(this.errorText).width('100%').padding({ top: 4 }).fontColor(Theme.colors.error)
+  }
+}
+
+@Component
+struct StyledTextButton {
+  @Prop text: string
+  @Prop enable: boolean
+  onclick: () => void = () => {
+  }
+
+  build() {
+    Button(this.text, { type: ButtonType.Normal, stateEffect: true })
+      .borderRadius(8)
+      .backgroundColor(0x317aff)
+      .width('100%')
+      .onClick(() => {
+        this.onclick()
+      })
+      .enabled(this.enable)
+      .padding({ top: 4, bottom: 4 })
+      .margin({ top: 16 })
+
   }
 }

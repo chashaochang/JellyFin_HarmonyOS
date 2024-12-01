@@ -92,6 +92,6 @@ export class AppPreference {
   }
 
   setCurrentServerId(id:number){
-
+    this.setValue<number>(Constants.PREF_SERVER_ID,id)
   }
 }

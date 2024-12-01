@@ -1,5 +1,5 @@
 import { ApiClientController } from '../data/ApiClientController'
-import { ServerEntity } from '../data/ServerEntity'
+import ServerEntity from '../data/ServerEntity'
 
 @Observed
 export class MainViewModel {
@@ -10,15 +10,15 @@ export class MainViewModel {
   constructor() {
     this.serverState = ServerState.Unset
     this.apiClientController = new ApiClientController()
-    this.refreshServer()
   }
 
   async refreshServer() {
     let serverEntity = await this.apiClientController.loadSavedServer()
-    this.serverState = serverEntity ? ServerState.Available : ServerState.Unset
     if (serverEntity) {
-      this.serverState.server = serverEntity!
+      ServerState.Available = new ServerState()
+      ServerState.Available.server = serverEntity!
     }
+    this.serverState = serverEntity ? ServerState.Available : ServerState.Unset
   }
 
   switchServer(hostname: string) {
@@ -27,6 +27,7 @@ export class MainViewModel {
   }
 }
 
+@Observed
 export class ServerState {
   server?: ServerEntity
   static Pending: ServerState

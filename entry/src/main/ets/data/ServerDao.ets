@@ -1,7 +1,7 @@
 import Rdb from "./Rdb";
 import { RdbConstants } from "./RdbConstants";
 import { relationalStore } from "@kit.ArkData";
-import { ServerEntity } from "./ServerEntity";
+import ServerEntity  from "./ServerEntity";
 
 export class ServerDao {
   private serverTable = new Rdb(
@@ -80,6 +80,6 @@ export class ServerDao {
   }
 
   insert(hostname:string){
-    this.serverTable.insertDataSync(new ServerEntity(hostname).asBucket())
+    this.serverTable.insertDataSync(new ServerEntity(hostname).toValuesBucket())
   }
 }
