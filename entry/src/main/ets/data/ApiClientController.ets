@@ -1,7 +1,7 @@
 import { ApiClient } from "../network/ApiClient";
 import { AppPreference } from "./AppPreference";
 import { ServerDao } from "./ServerDao";
-import { ServerEntity } from "./ServerEntity";
+import ServerEntity from "./ServerEntity";
 
 export class ApiClientController {
   appPreference: AppPreference

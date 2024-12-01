@@ -6,7 +6,6 @@ import { ServerSelection } from "./ServerSelection"
 export struct ConnectScreen{
 
   @Consume viewModel:MainViewModel
-  @Consume showExternalConnectionError:boolean
 
   build() {
     Column(){

@@ -8,6 +8,10 @@ struct Index {
   @Provide viewModel: MainViewModel = new MainViewModel()
   @Provide showExternalConnectionError: boolean = false
 
+  aboutToAppear(): void {
+    this.viewModel.refreshServer()
+  }
+
   build() {
     // Navigation(this.pathStack){
     Stack() {

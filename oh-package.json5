@@ -2,7 +2,10 @@
   "modelVersion": "5.0.1",
   "description": "Please describe the basic information.",
   "dependencies": {
-    "@pura/harmony-utils": "^1.2.4"
+    "@pura/harmony-utils": "^1.2.4",
+    "@ohos/axios": "^2.2.4",
+    "@ohos/node-polyfill": "^1.0.0",
+    "@hadss/debug-db": "^1.0.0-rc.4"
   },
   "devDependencies": {
     "@ohos/hypium": "1.0.19",
