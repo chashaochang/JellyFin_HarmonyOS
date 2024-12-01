@@ -24,6 +24,7 @@ export default class EntryAbility extends UIAbility {
       }
       hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
     });
+
     windowStage.getMainWindow().then((window)=>{
       window.setWindowBackgroundColor('#101010')
       window.setWindowSystemBarProperties({
@@ -32,6 +33,8 @@ export default class EntryAbility extends UIAbility {
         navigationBarContentColor:'#101010',
         isStatusBarLightIcon:true
       })
+      // 保存 UIContext， 在后续的同层渲染绘制中会用到。
+      AppStorage.setOrCreate<UIContext>("UIContext", window.getUIContext());
     })
 
     const context = getContext(this) as common.UIAbilityContext;

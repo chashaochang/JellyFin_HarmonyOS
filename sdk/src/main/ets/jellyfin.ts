@@ -3,6 +3,8 @@ import { Api } from "./api";
 import { DiscoveryService } from "./discovery/discovery-service";
 import { ClientInfo } from "./models/client-info";
 import { DeviceInfo } from "./models/device-info";
+import { deviceInfo } from '@kit.BasicServicesKit';
+import { bundleManager } from "@kit.AbilityKit";
 
 /** Parameters to create a Jellyfin SDK instance. */
 export interface JellyfinParameters {
@@ -11,8 +13,8 @@ export interface JellyfinParameters {
 }
 /** Class representing the Jellyfin SDK. */
 export class Jellyfin {
-  clientInfo;
-  deviceInfo;
+  clientInfo: ClientInfo;
+  deviceInfo:DeviceInfo;
   discovery:DiscoveryService;
 
   constructor(parameters: JellyfinParameters) {
@@ -36,12 +38,12 @@ export class Jellyfin {
 // Create a new instance of the SDK
 const jellyfin = new Jellyfin({
   clientInfo: {
-    name: 'JellyFin_Harmonyos',
-    version: '1.0.0'
+    name: 'JellyFin_HarmonyOS',
+    version: bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_DEFAULT).versionName
   },
   deviceInfo: {
-    name: 'Device Name',
-    id: 'unique-device-id'
+    name: deviceInfo.marketName,
+    id: deviceInfo.ODID
   }
 });
 

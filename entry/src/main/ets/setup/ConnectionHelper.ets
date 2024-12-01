@@ -3,7 +3,6 @@ import { DiscoveryService } from "sdk/src/main/ets/discovery/discovery-service"
 import { RecommendedServerInfoScore } from "sdk/src/main/ets/models/recommended-server-info"
 import { CheckUrlState } from "../ui/state/CheckUrlState"
 
-
 class ConnectionHelper {
   async checkServerUrl(enteredUrl: string): Promise<CheckUrlState> {
     let candidates = jellyfin.discovery.getAddressCandidates(enteredUrl)
