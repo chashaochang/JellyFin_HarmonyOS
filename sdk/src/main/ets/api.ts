@@ -24,6 +24,7 @@ export class Api {
 	deviceInfo;
 	accessToken;
 	axiosInstance;
+	userId: string;
 
 	constructor(
 		basePath: string,

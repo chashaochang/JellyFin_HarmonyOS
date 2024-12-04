@@ -2,11 +2,14 @@ import { AbilityConstant, common, ConfigurationConstant, UIAbility, Want } from 
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { DebugDB } from '@hadss/debug-db';
+import { webview } from '@kit.ArkWeb';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
+    //预初始化
+    webview.WebviewController.initializeWebEngine()
   }
 
   onDestroy(): void {

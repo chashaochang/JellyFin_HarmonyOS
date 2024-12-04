@@ -1,17 +1,28 @@
+import { ObjectUtil } from "@pura/harmony-utils";
+import jellyfin from "sdk/src/main/ets/jellyfin";
 import { ApiClient } from "../network/ApiClient";
 import { AppPreference } from "./AppPreference";
 import { ServerDao } from "./ServerDao";
 import ServerEntity from "./ServerEntity";
+import { UserDao } from "./UserDao";
 
 export class ApiClientController {
+
   appPreference: AppPreference
   serverDao: ServerDao
-  apiClient: ApiClient
+  userDao: UserDao
+  baseDeviceInfo = jellyfin.deviceInfo
 
   constructor() {
     this.appPreference = AppPreference.getInstance()
     this.serverDao = new ServerDao()
-    this.apiClient = new ApiClient()
+    this.userDao = new UserDao()
+  }
+
+  async setupUser(serverId: number, userId: string, accessToken: string) {
+    //let id = await this.userDao.upsert(serverId,userId,accessToken)
+    //await this.appPreference.setCurrentUserId(id)
+    this.configureApiClientUser(userId, accessToken)
   }
 
   setupServer(hostname: string) {
@@ -21,7 +32,7 @@ export class ApiClientController {
     } else {
       this.appPreference.setCurrentServerId(server.id)
     }
-    this.apiClient.baseUrl = hostname
+    ApiClient.init(hostname)
   }
 
   async loadSavedServer(): Promise<ServerEntity | null> {
@@ -35,6 +46,17 @@ export class ApiClientController {
   }
 
   configureApiClientServer(server: ServerEntity | null) {
-    this.apiClient.baseUrl = server?.hostname
+    if(server){
+      ApiClient.init(server?.hostname)
+    }
+  }
+
+  configureApiClientUser(userId: string, accessToken: string) {
+    ApiClient.Instance().userId = userId
+    ApiClient.Instance().accessToken = accessToken
+    // Append user id to device id to ensure uniqueness across sessions
+    let info = ObjectUtil.deepCopy(this.baseDeviceInfo)
+    info.id = this.baseDeviceInfo.id + userId
+    ApiClient.Instance().deviceInfo = info
   }
 }
