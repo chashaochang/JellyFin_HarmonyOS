@@ -88,7 +88,9 @@ function setFlattenedQueryParams(urlSearchParams: url.URLParams, parameter: any,
     if (parameter == null) return;
     if (typeof parameter === "object") {
         if (Array.isArray(parameter)) {
-            (parameter as any[]).forEach(item => setFlattenedQueryParams(urlSearchParams, item, key));
+            (parameter as any[]).forEach(
+              item => setFlattenedQueryParams(urlSearchParams, item, key)
+            );
         } 
         else {
             Object.keys(parameter).forEach(currentKey => 
@@ -101,6 +103,8 @@ function setFlattenedQueryParams(urlSearchParams: url.URLParams, parameter: any,
             urlSearchParams.append(key, parameter);
         } 
         else {
+            //处理报错
+            parameter = parameter + ''
             urlSearchParams.set(key, parameter);
         }
     }

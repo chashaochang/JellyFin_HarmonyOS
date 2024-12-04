@@ -94,4 +94,16 @@ export class AppPreference {
   setCurrentServerId(id:number){
     this.setValue<number>(Constants.PREF_SERVER_ID,id)
   }
+
+  async getCurrentUserId(): Promise<number | null> {
+    let id = await this.getValue<number>(Constants.PREF_USER_ID)
+    if (id && id >= 0) {
+      return id
+    }
+    return null
+  }
+
+  async setCurrentUserId(id:number){
+    await this.setValue<number>(Constants.PREF_USER_ID,id)
+  }
 }
