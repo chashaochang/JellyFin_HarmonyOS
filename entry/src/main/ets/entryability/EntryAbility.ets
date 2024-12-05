@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { DebugDB } from '@hadss/debug-db';
 import { webview } from '@kit.ArkWeb';
+import { HMRouterMgr } from '@hadss/hmrouter';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -10,6 +11,9 @@ export default class EntryAbility extends UIAbility {
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
     //预初始化
     webview.WebviewController.initializeWebEngine()
+    HMRouterMgr.init({
+      context: this.context
+    })
   }
 
   onDestroy(): void {

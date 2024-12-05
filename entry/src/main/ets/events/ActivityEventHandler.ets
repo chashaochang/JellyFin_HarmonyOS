@@ -1,3 +1,4 @@
+import { HMRouterMgr } from "@hadss/hmrouter";
 import { common } from "@kit.AbilityKit";
 import { PlayOptions } from "../player/interaction/PlayOptions";
 import { ActivityEvent } from "./ActivityEvent";
@@ -9,9 +10,9 @@ export class ActivityEventHandler {
     this.eventHub = eventHub
   }
 
-  subscribe(pathStack: NavPathStack) {
+  subscribe() {
     this.eventHub.on(ActivityEvent.LaunchNativePlayer, (options: PlayOptions) => {
-      pathStack.pushPathByName('PlayerView', options)
+      HMRouterMgr.push({ pageUrl: '/Player', param: options })
     })
   }
 

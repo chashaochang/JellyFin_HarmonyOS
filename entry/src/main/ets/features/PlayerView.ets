@@ -1,13 +1,19 @@
+import { HMRouter, HMRouterMgr } from "@hadss/hmrouter"
 import { GlobalContext, PlayerType, StandardGSYVideoPlayer } from "@ohos/gsyvideoplayer"
 import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../player/interaction/PlayOptions"
 import { PlayerException } from "../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
 
+@HMRouter({
+  pageUrl: '/Player',
+  interceptors:['jumpInfoInterceptor'],
+  lifecycle: 'pageLifecycle',
+  animator: 'pageAnimator' })
 @Component
-struct PlayerView{
+export struct PlayerView {
 
-  @Prop options:PlayOptions
+  @State options:PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
 
   @State viewModel:PlayerViewModel = new PlayerViewModel()
   @StorageProp('url') url:string=''
@@ -31,21 +37,23 @@ struct PlayerView{
   }
   private controller:VideoController=new VideoController()
   build() {
-    NavDestination(){
       Column(){
-        Video({
-          src: this.url,
-          // previewUri: this.previewUris,
-          controller: this.controller,
-        }).autoPlay(true).layoutWeight(1)
-      }
-    }.hideTitleBar(false)
-  }
-}
+        Stack(){
+          Video({
+            src: this.url,
+            // previewUri: this.previewUris,
+            controller: this.controller,
+          }).autoPlay(true)
+            .width('100%')
+            .height('100%')
+          Button(){
+            Image($r('app.media.ic_back')).width(36).height(36)
+          }.width(48).height(48).margin(12).backgroundColor(Color.Transparent)
+          .onClick(()=>{
+            HMRouterMgr.pop()
+          })
+        }.alignContent(Alignment.TopStart)
 
-@Builder
-export function PlayerViewViewBuilder(_name:string,options:PlayOptions){
-  PlayerView({
-    options:options
-  })
+      }
+  }
 }

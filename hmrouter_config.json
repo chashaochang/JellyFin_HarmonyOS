@@ -1,0 +1,4 @@
+{
+  "scanDir": ["src/main/ets/features","src/main/ets/router/interceptors"],
+  "saveGeneratedFile": false
+}
