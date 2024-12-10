@@ -54,6 +54,10 @@
     {
       "name": "sdk",
       "srcPath": "./sdk",
+    },
+    {
+      "name": "library",
+      "srcPath": "./library",
     }
   ]
 }

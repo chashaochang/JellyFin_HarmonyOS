@@ -6,7 +6,8 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "sdk": 'file:../sdk'
+    "sdk": 'file:../sdk',
+    "@ohos/gsyvideoplayer": "file:../library"
   }
 }
 
