@@ -5,6 +5,8 @@ import { common } from '@kit.AbilityKit';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
 import { AttributeUpdater } from '@kit.ArkUI';
 import { HMDefaultGlobalAnimator, HMNavigation } from '@hadss/hmrouter';
+import { GlobalContext } from '@ohos/gsyvideoplayer/src/main/ets/components/mainpage/GlobalContext';
+import { BaseVideoPlayer } from '@ohos/gsyvideoplayer/Index';
 
 @Entry
 @Component
@@ -27,6 +29,7 @@ struct Index {
   aboutToDisappear(): void {
     this.activityEventHandler.unsubscribe()
   }
+
 
 
   build() {

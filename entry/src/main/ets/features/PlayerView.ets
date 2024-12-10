@@ -1,26 +1,44 @@
-import { HMRouter, HMRouterMgr } from "@hadss/hmrouter"
-import { GlobalContext, PlayerType, StandardGSYVideoPlayer } from "@ohos/gsyvideoplayer"
-import { ToastUtil } from "@pura/harmony-utils"
+import { HMLifecycle, HMLifecycleContext, HMRouter, HMRouterMgr, IHMLifecycle } from "@hadss/hmrouter"
+import { GlobalContext, ToastUtil } from "@pura/harmony-utils"
+import AvPlayManager from "../player/AvPlayManager"
 import { PlayOptions } from "../player/interaction/PlayOptions"
 import { PlayerException } from "../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
+import { media } from "@kit.MediaKit"
+import { BaseVideoPlayer, StandardGSYVideoModel, StandardGSYVideoPlayer } from "@ohos/gsyvideoplayer/Index"
 
 @HMRouter({
   pageUrl: '/Player',
-  interceptors:['jumpInfoInterceptor'],
-  lifecycle: 'pageLifecycle',
-  animator: 'pageAnimator' })
+  interceptors: ['jumpInfoInterceptor'],
+  lifecycle: 'playerPageLifecycle',
+  animator: 'pageAnimator'
+})
 @Component
 export struct PlayerView {
+  @State options: PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
+  backClickListener: () => void = () => {
+    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    if (player) {
+      player.stop();
+    }
+    HMRouterMgr.pop()
+  }
+  @State videoModel: StandardGSYVideoModel | null = null
+  @State viewModel: PlayerViewModel = new PlayerViewModel()
+  @StorageProp('url') @Watch('onUrl') url: string = ''
 
-  @State options:PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
-
-  @State viewModel:PlayerViewModel = new PlayerViewModel()
-  @StorageProp('url') url:string=''
+  onUrl() {
+    console.log('PlayNetWithCacheDemo', this.url)
+    this.videoModel = new StandardGSYVideoModel();
+    this.videoModel.setUrl(this.url, true);
+    this.videoModel.setTitle('');
+    this.videoModel.setBackClickListener(this.backClickListener);
+    // this.videoModel.setFullClickListener(this.fullClickListener);
+    this.videoModel.setCoverImage($r('app.media.app_icon'));
+  }
 
   aboutToAppear(): void {
-    GlobalContext.getContext().setObject("playType", PlayerType.IJK_PLAYER);
-    switch (this.viewModel.queueManager.initializePlaybackQueue(this.options)){
+    switch (this.viewModel.queueManager.initializePlaybackQueue(this.options)) {
       case PlayerException.InvalidPlayOptions:
         ToastUtil.showToast('无法解析播放信息')
         break
@@ -35,25 +53,48 @@ export struct PlayerView {
     }
 
   }
-  private controller:VideoController=new VideoController()
-  build() {
-      Column(){
-        Stack(){
-          Video({
-            src: this.url,
-            // previewUri: this.previewUris,
-            controller: this.controller,
-          }).autoPlay(true)
-            .width('100%')
-            .height('100%')
-          Button(){
-            Image($r('app.media.ic_back')).width(36).height(36)
-          }.width(48).height(48).margin(12).backgroundColor(Color.Transparent)
-          .onClick(()=>{
-            HMRouterMgr.pop()
-          })
-        }.alignContent(Alignment.TopStart)
 
+  aboutToDisappear(): void {
+    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    if (player) {
+      player.stop();
+      player.release()
+    }
+  }
+
+  build() {
+    Column() {
+      if (this.videoModel) {
+        StandardGSYVideoPlayer({
+          videoModel: this.videoModel
+        }).height('100%')
       }
+    }.width('100%')
+    .height('100%')
+  }
+}
+
+@HMLifecycle({ lifecycleName: 'playerPageLifecycle' })
+export class PlayerPageLifecycle implements IHMLifecycle {
+  onPageShow() {
+    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    if (player) {
+      player.resumePlay();
+    }
+  }
+
+  onPageHide() {
+    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    if (player) {
+      player.pause();
+    }
+  }
+
+  onShown(ctx: HMLifecycleContext): void {
+
+  }
+
+  onHidden(ctx: HMLifecycleContext): void {
+
   }
 }
