@@ -34,8 +34,13 @@ export struct WebViewScreen {
         .cacheMode(CacheMode.Default)
         .javaScriptAccess(true)
         .onControllerAttached(() => {
-          this.controller.registerJavaScriptProxy(new NativeInterface(), 'NativeInterface', ['getDeviceInformation'])
-          this.controller.registerJavaScriptProxy(new NativePlayer(), 'NativePlayer', ['isEnabled', 'loadPlayer'])
+          this.controller.registerJavaScriptProxy(new NativeInterface(), 'NativeInterface',
+            ['getDeviceInformation', 'enableFullscreen', 'disableFullscreen', 'openUrl', 'updateMediaSession',
+              'hideMediaSession', 'updateVolumeLevel', 'downloadFiles', 'openClientSettings', 'openServerSelection',
+              'exitApp'])
+          this.controller.registerJavaScriptProxy(new NativePlayer(), 'NativePlayer',
+            ['isEnabled', 'loadPlayer', 'pausePlayer', 'resumePlayer', 'stopPlayer', 'destroyPlayer', 'seek', 'seekMs',
+              'setVolume'])
           this.controller.registerJavaScriptProxy(new ExternalPlayer(), 'ExternalPlayer', ['isEnabled'])
         })
         .onInterceptRequest((event) => {
@@ -103,7 +108,7 @@ export struct WebViewScreen {
                 if (credentials) {
                   let server = credentials.Servers[0]
                   this.apiClientController.setupUser(this.server.id, server.UserId, server.AccessToken)
-                  AppStorage.setOrCreate('userId',server.UserId)
+                  AppStorage.setOrCreate('userId', server.UserId)
                 }
               })
               .catch(() => {
