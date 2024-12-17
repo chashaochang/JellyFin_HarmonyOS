@@ -1,10 +1,9 @@
-import { HMLifecycle, HMLifecycleContext, HMRouter, HMRouterMgr, IHMLifecycle } from "@hadss/hmrouter"
+import { HMRouter, HMRouterMgr } from "@hadss/hmrouter"
+import { BaseVideoPlayer, StandardGSYVideoModel, StandardGSYVideoPlayer } from "@ohos/gsyvideoplayer"
 import { GlobalContext, ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
-import { BaseVideoPlayer, StandardGSYVideoModel, StandardGSYVideoPlayer } from "@ohos/gsyvideoplayer/Index"
-import { JumpInfoInterceptor } from '../../router/interceptors/JumpInfoInterceptor'
 
 @HMRouter({
   pageUrl: '/Player',
