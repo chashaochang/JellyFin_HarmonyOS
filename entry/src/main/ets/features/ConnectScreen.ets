@@ -1,11 +1,11 @@
-import { MainViewModel } from "../pages/MainViewModel"
+import mainViewModel, { MainViewModel } from "../pages/MainViewModel"
 import Theme from "../ui/Theme"
 import { ServerSelection } from "./ServerSelection"
 
-@Component
+@ComponentV2
 export struct ConnectScreen{
 
-  @Consume viewModel:MainViewModel
+  @Local viewModel:MainViewModel = mainViewModel
 
   build() {
     Column(){
@@ -19,7 +19,7 @@ export struct ConnectScreen{
   }
 }
 
-@Component
+@ComponentV2
 struct LogoHeader{
   build() {
     Row(){

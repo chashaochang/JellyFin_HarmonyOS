@@ -10,7 +10,7 @@ import { ApiClientController } from "../data/ApiClientController";
 
 @ComponentV2
 export struct WebViewScreen {
-  @Param @Require server: ServerEntity
+  @Local server: ServerEntity = AppStorage.get<ServerEntity>('server') ?? new ServerEntity()
   controller: webview.WebviewController = new webview.WebviewController();
   responseWeb: WebResourceResponse = new WebResourceResponse();
   apiClientController: ApiClientController = new ApiClientController()
@@ -26,6 +26,7 @@ export struct WebViewScreen {
         controller: this.controller,
         src: this.server.hostname
       })
+        //.backgroundColor($r('app.color.start_window_background'))
         .darkMode(WebDarkMode.Auto)
         .domStorageAccess(true)
         .zoomAccess(true)
@@ -68,11 +69,6 @@ export struct WebViewScreen {
             })
             this.responseWeb.setResponseIsReady(false);
             return this.responseWeb
-            // let decoder = util.TextDecoder.create('utf-8');
-            // let str = decoder.decodeToString(new Uint8Array(buffer));
-            // this.controller.runJavaScript(str)
-            // console.log('注入native/injectionScript.js');
-            // return
           }
           if (path.includes('/native/')) {
             const promise: Promise<String> = new Promise((resolve: Function, reject: Function) => {
@@ -93,13 +89,6 @@ export struct WebViewScreen {
             })
             this.responseWeb.setResponseIsReady(false);
             return this.responseWeb
-            // console.log('注入js');
-            // let buffer = getContext().resourceManager.getRawFileContentSync(`native/${getLastPathSegment(path)}`)
-            // let decoder = util.TextDecoder.create('utf-8');
-            // let str = decoder.decodeToString(new Uint8Array(buffer));
-            // this.controller.runJavaScript(str)
-            // console.log(`注入native/${getLastPathSegment(path)}`);
-            // return
           }
           if (path.toLowerCase().endsWith(Constants.SESSION_CAPABILITIES_PATH)) {
             this.controller.runJavaScript("JSON.parse(window.localStorage.getItem('jellyfin_credentials'))")

@@ -102,6 +102,7 @@ export abstract class BaseVideoPlayer implements IVideoPlayer {
       this.videoUrl = await server.getProxyUrl(this.videoUrl);
     }
     LogUtils.getInstance().LOGI('setUp2: ' + this.videoUrl + '--------' + this.cacheWithPlay);
+    this.play()
   }
 
   pause(): void {
@@ -162,7 +163,7 @@ export abstract class BaseVideoPlayer implements IVideoPlayer {
         format: 'image/jpeg',
         quality: 10
       }
-      imagePackerApi.packing(pixmap, packOptions).then((res) => {
+      imagePackerApi.packToData(pixmap, packOptions).then((res) => {
         const imageFd = fs.openSync(fileSavePath, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE);
         fs.writeSync(imageFd.fd, res);
         fs.closeSync(imageFd);

@@ -1,4 +1,4 @@
-import { PlayerViewModel } from "../../features/PlayerViewModel";
+import { PlayerViewModel } from "../../features/player/PlayerViewModel";
 import { PlayOptions } from "../interaction/PlayOptions";
 import { PlayerException } from "../PlayerException";
 import { MediaSourceResolver } from "../source/MediaSourceResolver";

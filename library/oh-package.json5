@@ -15,9 +15,9 @@
   "type": "module",
   "version": "1.0.1",
   "dependencies": {
-    "@ohos/mp4parser": "^2.0.3-rc.0",
-    "@ohos/ijkplayer": "^2.0.4",
-    "@ohos/video-cache": "^1.0.1-rc.2"
+    "@ohos/mp4parser": "^2.0.5-rc.1",
+    "@ohos/ijkplayer": "^2.0.6-rc.2",
+    "@ohos/video-cache": "^1.0.3-rc.0"
   },
   "tags": [
     "Media"

@@ -1,12 +1,13 @@
 import { getVideosApi, PlaybackInfoResponse } from "sdk";
-import { ApiClient } from "../network/ApiClient";
-import { QueueManager } from "../player/queue/QueueManager";
+import { ApiClient } from "../../network/ApiClient";
+import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
+import { PlayerViewUIState } from "./PlayerViewUIState";
 
-@Observed
 export class PlayerViewModel{
 
   queueManager:QueueManager = new QueueManager(this)
+  uiState:PlayerViewUIState = new PlayerViewUIState()
 
   load(itemId:string,res: PlaybackInfoResponse | null) {
     let sourceInfo = res?.MediaSources?.find(e=>e.Id === itemId)
@@ -18,10 +19,7 @@ export class PlayerViewModel{
         mediaSourceId:sourceInfo.Id,
         deviceId:ApiClient.Instance().deviceInfo,
       }).then((res:string)=>{
-
-        AppStorage.setOrCreate('url',res)
-
-
+        this.uiState.url = res
       }).catch((e:BusinessError)=>{
         console.log(JSON.stringify(e));
       })
