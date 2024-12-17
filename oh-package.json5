@@ -7,7 +7,6 @@
     "@ohos/node-polyfill": "^1.0.0",
     "@hadss/debug-db": "^1.0.0-rc.4",
     "@hadss/hmrouter": "^1.0.0-rc.10",
-    "@ohos/video-cache": "^1.0.2"
   },
   "devDependencies": {
     "@ohos/hypium": "1.0.19",

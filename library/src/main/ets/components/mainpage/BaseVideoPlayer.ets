@@ -102,7 +102,6 @@ export abstract class BaseVideoPlayer implements IVideoPlayer {
       this.videoUrl = await server.getProxyUrl(this.videoUrl);
     }
     LogUtils.getInstance().LOGI('setUp2: ' + this.videoUrl + '--------' + this.cacheWithPlay);
-    this.play()
   }
 
   pause(): void {

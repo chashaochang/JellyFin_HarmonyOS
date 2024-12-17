@@ -159,7 +159,6 @@ export class IjkPlayerControl extends BaseVideoPlayer {
       let mOnPreparedListener: OnPreparedListener = {
         onPrepared: () => {
           LogUtils.getInstance().LOGI("setOnPreparedListener--->go");
-          this.play()
         }
       }
       this.mIjkMediaPlayer.setOnPreparedListener(mOnPreparedListener);

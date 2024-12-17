@@ -108,6 +108,8 @@ export struct StandardGSYVideoPlayer {
     this.mIVideoPlayer = iVideoPlayer
     this.xComponentId = xid;
     this.mIVideoPlayer.setUp(this.videoModel.getUrl(), this.videoModel.getCacheWithPlay())
+    //自动播放
+    this.videoToPlay()
   }
 
   @Builder
@@ -436,9 +438,9 @@ export struct StandardGSYVideoPlayer {
             return;
           }
 
-          // if (!this.showPlay) {
-          this.timeCountdown();
-          // }
+          if (!this.showPlay) {
+            this.timeCountdown();
+          }
           if (event && event.fingerList && event.fingerList[0]) {
             LogUtils.getInstance().LOGI('TapGesture event.onActionStart start x: ' + event.fingerList[0].localX +
               " ---event.onActionStart start y: " + event.fingerList[0].localY);
@@ -858,32 +860,24 @@ export struct StandardGSYVideoPlayer {
   }
 
   private timeCountdown() {
-    if (this.showPause) {
-      clearTimeout(uiTime);
-      this.showBottomUi = false;
-      this.showPlay = false
-      this.showPause = false;
-      this.fullShowLock = false;
-    } else {
-      clearTimeout(uiTime);
-      this.showPause = true;
-      this.showBottomUi = true;
-      if (this.mDirection == 1 && this.screenIsFull) {
-        this.fullShowLock = true;
-        this.fullShowTop = true;
-      }
-      this.sec = 3;
-      uiTime = setInterval(() => {
-        if (this.sec <= 0) {
-          clearTimeout(uiTime);
-          this.showBottomUi = false;
-          this.showPause = false;
-          this.fullShowLock = false;
-        } else {
-          this.sec--;
-        }
-      }, 1000)
+    clearTimeout(uiTime);
+    this.showPause = true;
+    this.showBottomUi = true;
+    if (this.mDirection == 1 && this.screenIsFull) {
+      this.fullShowLock = true;
+      this.fullShowTop = true;
     }
+    this.sec = 3;
+    uiTime = setInterval(() => {
+      if (this.sec <= 0) {
+        clearTimeout(uiTime);
+        this.showBottomUi = false;
+        this.showPause = false;
+        this.fullShowLock = false;
+      } else {
+        this.sec--;
+      }
+    }, 1000)
   }
 
   private timeLockCountdown() {
