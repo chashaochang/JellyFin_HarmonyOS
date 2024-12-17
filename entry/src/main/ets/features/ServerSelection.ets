@@ -5,17 +5,15 @@ import { inputMethod } from "@kit.IMEKit"
 import connectionHelper from "../setup/ConnectionHelper"
 import { KeyCode } from "@kit.InputKit"
 import Theme from "../ui/Theme"
-import { JSON } from "@kit.ArkTS"
 
-@Component
+@ComponentV2
 export struct ServerSelection {
   private apiClientController: ApiClientController = new ApiClientController()
-  onConnected: (hostname: string) => void = () => {
-  }
-  @State hostname: string = ''
-  @State serverSelectionMode: ServerSelectionMode = ServerSelectionMode.ADDRESS
-  @Consume showExternalConnectionError: boolean
-  @State checkUrlState: CheckUrlState = CheckUrlState.Unchecked
+  @Param @Once onConnected: (hostname: string) => void = () => {}
+  @Local hostname: string = ''
+  @Local serverSelectionMode: ServerSelectionMode = ServerSelectionMode.ADDRESS
+  @Consumer() showExternalConnectionError: boolean = false
+  @Local checkUrlState: CheckUrlState = CheckUrlState.Unchecked
 
   async aboutToAppear(): Promise<void> {
     let server = await this.apiClientController.loadSavedServer()

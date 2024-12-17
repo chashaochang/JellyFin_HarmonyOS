@@ -1,36 +1,30 @@
 import { ConnectScreen } from '../features/ConnectScreen'
 import { WebViewScreen } from '../features/WebViewScreen'
-import { MainViewModel, ServerState } from './MainViewModel'
+import mainViewModel, { MainViewModel, ServerState } from './MainViewModel'
 import { common } from '@kit.AbilityKit';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
 import { AttributeUpdater } from '@kit.ArkUI';
 import { HMDefaultGlobalAnimator, HMNavigation } from '@hadss/hmrouter';
-import { GlobalContext } from '@ohos/gsyvideoplayer/src/main/ets/components/mainpage/GlobalContext';
-import { BaseVideoPlayer } from '@ohos/gsyvideoplayer/Index';
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
 
   private eventHub: common.EventHub = (getContext() as common.UIAbilityContext).eventHub;
   private activityEventHandler: ActivityEventHandler = new ActivityEventHandler(this.eventHub)
-  @Provide viewModel: MainViewModel = new MainViewModel()
-  @Provide showExternalConnectionError: boolean = false
+  @Local viewModel: MainViewModel = mainViewModel
+  @Provider() showExternalConnectionError: boolean = false
 
   modifier: NavModifier = new NavModifier();
 
   aboutToAppear(): void {
-    setTimeout(() => {
-      this.viewModel.refreshServer()
-    }, 200)
+    this.viewModel.refreshServer()
     this.activityEventHandler.subscribe()
   }
 
   aboutToDisappear(): void {
     this.activityEventHandler.unsubscribe()
   }
-
-
 
   build() {
     // @Entry中需要再套一层容器组件,Column或者Stack
@@ -47,9 +41,7 @@ struct Index {
           if (this.viewModel.serverState === ServerState.Unset) {
             ConnectScreen()
           } else {
-            WebViewScreen({
-              server: this.viewModel.serverState.server
-            })
+            WebViewScreen()
           }
         }.width('100%').height('100%')
       }

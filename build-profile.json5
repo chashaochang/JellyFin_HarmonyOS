@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/mac/.ohos/config/default_Jellyfin_ohaAnRDJi_u1EFHVb1UDj0HQQZAdQjWsEUwzS-bs6Ts=.cer",
-          "storePassword": "0000001B3DCF7E519D128F2CD8F9BDD5BA3D081D868BB251A712AB7D73EC05B20E40CF7D96C14720E7CB76",
+          "certpath": "C:\\Users\\Administrator\\.ohos\\config\\default_JellyFin_HarmonyOS_yVikNSqkysbnCuBKavs5CZUqPBm6IXCYoSFTLkquDyI=.cer",
+          "storePassword": "0000001BABFD68309C3D4A0940B0C7298BA94E17763FA558CB13EC5FB81DAC3553747B8CC2B3385E4933B5",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BD4B25DE8989258A8E306AA4C0DAD952E35C7A71E76C6D398934A47EAD7CD0C100451637D867B67",
-          "profile": "/Users/mac/.ohos/config/default_Jellyfin_ohaAnRDJi_u1EFHVb1UDj0HQQZAdQjWsEUwzS-bs6Ts=.p7b",
+          "keyPassword": "0000001B97E60BEAC6BA629F21970339F09CEF217DE3699DB7F952EC97A14CEFD8CED9B545E1B43DEE0452",
+          "profile": "C:\\Users\\Administrator\\.ohos\\config\\default_JellyFin_HarmonyOS_yVikNSqkysbnCuBKavs5CZUqPBm6IXCYoSFTLkquDyI=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/mac/.ohos/config/default_Jellyfin_ohaAnRDJi_u1EFHVb1UDj0HQQZAdQjWsEUwzS-bs6Ts=.p12"
+          "storeFile": "C:\\Users\\Administrator\\.ohos\\config\\default_JellyFin_HarmonyOS_yVikNSqkysbnCuBKavs5CZUqPBm6IXCYoSFTLkquDyI=.p12"
         }
       }
     ],

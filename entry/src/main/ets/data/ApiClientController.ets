@@ -25,7 +25,7 @@ export class ApiClientController {
     this.configureApiClientUser(userId, accessToken)
   }
 
-  setupServer(hostname: string) {
+  async setupServer(hostname: string) {
     let server = this.serverDao.getServerByHostname(hostname)
     if (!server) {
       this.serverDao.insert(hostname)
