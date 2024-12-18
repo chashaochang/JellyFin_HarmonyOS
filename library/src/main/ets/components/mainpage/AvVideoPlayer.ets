@@ -15,6 +15,7 @@
 import { LogUtils } from '../utils/LogUtils';
 import { IVideoPlayer } from './IVideoPlayer';
 import { AvPlayerControl } from './AvPlayerControl';
+import { GlobalContext } from './GlobalContext';
 
 @Component
 export struct AvVideoPlayer {
@@ -31,11 +32,12 @@ export struct AvVideoPlayer {
     Stack() {
       XComponent({
         id: this.xComponentId,
-        type: 'surface',
+        type: XComponentType.SURFACE,
         libraryname: '',
         controller: this.xComponentController
       })
         .onLoad(async (context: object) => {
+          GlobalContext.getContext().setObject('xComponentController',this.xComponentController)
           this.surfaceID = this.xComponentController.getXComponentSurfaceId();
           this.initDelayPlay(context);
         })
@@ -55,6 +57,7 @@ export struct AvVideoPlayer {
     this.mIVideoPlayer.setVideoId(this.videoId);
     this.mIVideoPlayer.setXComponentId(this.xComponentId);
     this.mIVideoPlayer.surfaceID = this.surfaceID;
+    this.mIVideoPlayer.xComponentController = this.xComponentController
     LogUtils.getInstance().LOGI('initDelayPlay create AvVideoPlayer surfaceID: ' + this.surfaceID);
     this.videoInit(this.mIVideoPlayer, this.xComponentId);
   }

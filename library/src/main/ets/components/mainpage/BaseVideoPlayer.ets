@@ -32,6 +32,7 @@ let screenshotTimer: number = 0;
 let gifTempPath: string = "";
 
 export abstract class BaseVideoPlayer implements IVideoPlayer {
+  xComponentController: XComponentController = new XComponentController()
   surfaceID: string = '';
   firstOrSeek: boolean = true;
   playStatus = PlayStatus.INIT;
@@ -68,6 +69,10 @@ export abstract class BaseVideoPlayer implements IVideoPlayer {
 
   setXComponentId(id: string): void {
     this.xComponentId = id;
+  }
+
+  setXComponentController(controller: XComponentController): void {
+    this.xComponentController = controller;
   }
 
   play(): void {
