@@ -22,6 +22,7 @@ export interface IVideoPlayer {
   context: object | undefined;
   firstOrSeek: boolean;
   xComponentId: string;
+  xComponentController:XComponentController;
   surfaceID: string;
 
   /**
@@ -72,6 +73,8 @@ export interface IVideoPlayer {
    * @param id
    */
   setXComponentId(id: string): void;
+
+  setXComponentController(controller: XComponentController): void;
 
   setOnPlayingListener(onPlayingListener: () => void): void;
 

@@ -15,12 +15,14 @@
 import { LogUtils } from '../utils/LogUtils';
 import { IVideoPlayer } from './IVideoPlayer';
 import { IjkPlayerControl } from './IjkPlayerControl';
+import { GlobalContext } from './GlobalContext';
 
 @Component
 export struct IjkVideoPlayer {
   mIVideoPlayer: IVideoPlayer | undefined = undefined;
   private videoId: string = 'videoId' + Math.random();
   private xComponentId = 'xid' + Math.random();
+  private xComponentController = new XComponentController();
   public videoInit: (mIVideoPlayer: IVideoPlayer, xid: string) => void = (mIVideoPlayer: IVideoPlayer, xid: string) => {
   }
   @Link isVisible : Visibility;
@@ -28,6 +30,7 @@ export struct IjkVideoPlayer {
     Stack() {
       XComponent({
         id: this.xComponentId,
+        controller:this.xComponentController,
         type: XComponentType.SURFACE,
         libraryname: 'ijkplayer_napi',
       })
@@ -50,6 +53,7 @@ export struct IjkVideoPlayer {
     this.mIVideoPlayer.setContext(context,this.xComponentId);
     this.mIVideoPlayer.setVideoId(this.videoId);
     this.mIVideoPlayer.setXComponentId(this.xComponentId);
+    this.mIVideoPlayer.setXComponentController(this.xComponentController)
     this.videoInit(this.mIVideoPlayer, this.xComponentId);
     LogUtils.getInstance().LOGI("initDelayPlay end");
   }

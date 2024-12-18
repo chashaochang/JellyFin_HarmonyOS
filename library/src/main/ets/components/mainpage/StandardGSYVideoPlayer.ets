@@ -103,6 +103,7 @@ export struct StandardGSYVideoPlayer {
   sec: number = 3;
   PROGRESS_MAX_VALUE: number = 100;
   public videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
+  onInit?:()=>void
   videoInit: (iVideoPlayer: IVideoPlayer, xid: string) => void = (iVideoPlayer: IVideoPlayer, xid: string) => {
     LogUtils.getInstance().LOGI('VideoInit')
     this.mIVideoPlayer = iVideoPlayer
@@ -110,6 +111,7 @@ export struct StandardGSYVideoPlayer {
     this.mIVideoPlayer.setUp(this.videoModel.getUrl(), this.videoModel.getCacheWithPlay())
     //自动播放
     this.videoToPlay()
+    this.onInit?.()
   }
 
   @Builder

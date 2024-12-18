@@ -5,16 +5,15 @@ import { common } from '@kit.AbilityKit';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
 import { AttributeUpdater } from '@kit.ArkUI';
 import { HMDefaultGlobalAnimator, HMNavigation } from '@hadss/hmrouter';
+import { Constants } from '../utils/Constants';
 
 @Entry
 @ComponentV2
 struct Index {
-
   private eventHub: common.EventHub = (getContext() as common.UIAbilityContext).eventHub;
   private activityEventHandler: ActivityEventHandler = new ActivityEventHandler(this.eventHub)
   @Local viewModel: MainViewModel = mainViewModel
   @Provider() showExternalConnectionError: boolean = false
-
   modifier: NavModifier = new NavModifier();
 
   aboutToAppear(): void {
@@ -28,10 +27,10 @@ struct Index {
 
   build() {
     // @Entry中需要再套一层容器组件,Column或者Stack
-    Column(){
+    Column() {
       // 使用HMNavigation容器
       HMNavigation({
-        navigationId: 'mainNavigation', options: {
+        navigationId: Constants.NAVIGATION_ID, options: {
           standardAnimator: HMDefaultGlobalAnimator.STANDARD_ANIMATOR,
           dialogAnimator: HMDefaultGlobalAnimator.DIALOG_ANIMATOR,
           modifier: this.modifier
@@ -50,6 +49,7 @@ struct Index {
     .width('100%')
   }
 }
+
 class NavModifier extends AttributeUpdater<NavigationAttribute> {
   initializeModifier(instance: NavigationAttribute): void {
     instance.mode(NavigationMode.Stack);
