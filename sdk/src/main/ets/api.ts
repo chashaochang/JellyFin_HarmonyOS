@@ -19,9 +19,10 @@ export const AUTHORIZATION_HEADER = 'Authorization';
 
 /** Class representing the Jellyfin API. */
 export class Api {
+
 	basePath;
 	clientInfo;
-	deviceInfo;
+	deviceInfo:DeviceInfo;
 	accessToken;
 	axiosInstance;
 	userId: string;
@@ -78,5 +79,9 @@ export class Api {
 
 	get authorizationHeader(): string {
 		return getAuthorizationHeader(this.clientInfo, this.deviceInfo, this.accessToken);
+	}
+
+	createUrl(pathTemplate: string) {
+		return this.basePath + pathTemplate
 	}
 }

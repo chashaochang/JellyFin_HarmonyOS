@@ -82,4 +82,20 @@ export class ServerDao {
   insert(hostname:string){
     this.serverTable.insertDataSync(new ServerEntity(hostname).toValuesBucket())
   }
+
+  getAllServers():ServerEntity[]{
+    let predicates: relationalStore.RdbPredicates =
+      new relationalStore.RdbPredicates(RdbConstants.TABLE_SERVER.tableName)
+    let resultSet = this.serverTable.queryDataSync(predicates)
+    let res:ServerEntity[] = []
+    if(resultSet){
+      while (resultSet.goToNextRow()) {
+        let item: ServerEntity = new ServerEntity(resultSet.getString(1))
+        item.id = resultSet.getLong(0)
+        item.lastUsedTimestamp = resultSet.getLong(2)
+        res.push(item)
+      }
+    }
+    return res
+  }
 }

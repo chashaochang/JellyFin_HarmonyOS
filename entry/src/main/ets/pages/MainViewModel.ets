@@ -8,6 +8,7 @@ export enum ServerState {
 
 @ObservedV2
 export class MainViewModel {
+
   apiClientController: ApiClientController
   @Trace serverState: ServerState = ServerState.Unset
 
@@ -26,6 +27,10 @@ export class MainViewModel {
   async switchServer(hostname: string) {
     await this.apiClientController.setupServer(hostname)
     await this.refreshServer()
+  }
+
+  resetServer() {
+    this.serverState = ServerState.Unset
   }
 }
 

@@ -45,6 +45,12 @@ export class ApiClientController {
     return server
   }
 
+  loadPreviouslyUsedServers():ServerEntity[] {
+    return this.serverDao.getAllServers().filter(async server=>{
+      server.id === await this.appPreference.getCurrentServerId()
+    })
+  }
+
   configureApiClientServer(server: ServerEntity | null) {
     if(server){
       ApiClient.init(server?.hostname)

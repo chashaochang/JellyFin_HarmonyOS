@@ -1,23 +1,25 @@
-import { ConnectScreen } from '../features/ConnectScreen'
-import { WebViewScreen } from '../features/WebViewScreen'
+import { ConnectScreen } from '../features/connect/ConnectScreen'
+import { WebViewScreen } from '../webapp/WebViewScreen'
 import mainViewModel, { MainViewModel, ServerState } from './MainViewModel'
 import { common } from '@kit.AbilityKit';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
 import { AttributeUpdater } from '@kit.ArkUI';
 import { HMDefaultGlobalAnimator, HMNavigation } from '@hadss/hmrouter';
 import { Constants } from '../utils/Constants';
+import { BackController } from '../webapp/BackController';
 
 @Entry
 @ComponentV2
 struct Index {
   private eventHub: common.EventHub = (getContext() as common.UIAbilityContext).eventHub;
-  private activityEventHandler: ActivityEventHandler = new ActivityEventHandler(this.eventHub)
-  @Local viewModel: MainViewModel = mainViewModel
+  @Provider() mainViewModel: MainViewModel = mainViewModel
+  @Provider() activityEventHandler: ActivityEventHandler = new ActivityEventHandler(this.eventHub,this.mainViewModel)
   @Provider() showExternalConnectionError: boolean = false
   modifier: NavModifier = new NavModifier();
+  backController?: BackController
 
   aboutToAppear(): void {
-    this.viewModel.refreshServer()
+    this.mainViewModel.refreshServer()
     this.activityEventHandler.subscribe()
   }
 
@@ -37,16 +39,25 @@ struct Index {
         }
       }) {
         Stack() {
-          if (this.viewModel.serverState === ServerState.Unset) {
+          if (this.mainViewModel.serverState === ServerState.Unset || this.showExternalConnectionError) {
             ConnectScreen()
           } else {
-            WebViewScreen()
+            WebViewScreen({
+              onBackController: (controller: BackController) => {
+                this.backController = controller
+              }
+            })
           }
         }.width('100%').height('100%')
       }
     }
     .height('100%')
     .width('100%')
+  }
+
+  onBackPress(): boolean | void {
+    console.log('Index', 'onBackPress');
+    return this.backController?.onBackPress()
   }
 }
 

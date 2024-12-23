@@ -1,29 +1,57 @@
-import { ApiClientController } from "../data/ApiClientController"
-import { CheckUrlState } from "../ui/state/CheckUrlState"
-import { ServerSelectionMode } from "../ui/state/ServerSelectionMode"
+import { ApiClientController } from "../../data/ApiClientController"
+import { CheckUrlState } from "../../ui/state/CheckUrlState"
+import { ServerSelectionMode } from "../../ui/state/ServerSelectionMode"
 import { inputMethod } from "@kit.IMEKit"
-import connectionHelper from "../setup/ConnectionHelper"
+import connectionHelper from "../../setup/ConnectionHelper"
 import { KeyCode } from "@kit.InputKit"
-import Theme from "../ui/Theme"
+import Theme from "../../ui/Theme"
+import { ServerSuggestion, Type } from "./ServerSuggestion"
+import { ComposeListItem } from "@ohos.arkui.advanced.ComposeListItem"
 
 @ComponentV2
 export struct ServerSelection {
   private apiClientController: ApiClientController = new ApiClientController()
-  @Param @Once onConnected: (hostname: string) => void = () => {}
+  @Param @Once onConnected: (hostname: string) => void = () => {
+  }
   @Local hostname: string = ''
   @Local serverSelectionMode: ServerSelectionMode = ServerSelectionMode.ADDRESS
   @Consumer() showExternalConnectionError: boolean = false
+  @Local externalError: boolean = this.showExternalConnectionError
   @Local checkUrlState: CheckUrlState = CheckUrlState.Unchecked
+  @Local serverSuggestions: ServerSuggestion[] = []
 
   async aboutToAppear(): Promise<void> {
     let server = await this.apiClientController.loadSavedServer()
     if (server) {
       this.hostname = server.hostname
     }
+    let previousServers = this.apiClientController.loadPreviouslyUsedServers()
+    // Suggest saved servers
+    this.serverSuggestions = previousServers.map(server => {
+      return {
+        type: Type.SAVED,
+        name: server.hostname,
+        address: server.hostname,
+        timestamp: server.lastUsedTimestamp
+      } as ServerSuggestion
+    })
+    // Prepend discovered servers to suggestions
+    let servers = await connectionHelper.discoverServers()
+    servers.forEach(serverInfo => {
+      this.serverSuggestions = [
+        {
+          type: Type.DISCOVERED,
+          name: serverInfo.Name ?? "",
+          address: serverInfo.Address ?? '',
+          timestamp: new Date().getTime()
+        },
+        ...this.serverSuggestions.filter(existing => existing.address !== serverInfo.Address)
+      ];
+    })
   }
 
   async onSubmit() {
-    this.showExternalConnectionError = false
+    this.externalError = false
     this.checkUrlState = CheckUrlState.Pending
     let state = await connectionHelper.checkServerUrl(this.hostname)
     this.checkUrlState = state
@@ -42,12 +70,12 @@ export struct ServerSelection {
             (this.checkUrlState === CheckUrlState.Error ? this.checkUrlState.message : undefined),
           loading: this.checkUrlState === CheckUrlState.Pending,
           onTextChange: (value: string) => {
-            this.showExternalConnectionError = false
+            this.externalError = false
             this.checkUrlState = CheckUrlState.Unchecked
             this.hostname = value
           },
           onDiscoveryClick: () => {
-            this.showExternalConnectionError = false
+            this.externalError = false
             inputMethod.getController().hideTextInput()
             this.serverSelectionMode = ServerSelectionMode.AUTO_DISCOVERY
           },
@@ -56,9 +84,19 @@ export struct ServerSelection {
           }
         })
       } else {
-        //ServerDiscoveryList()
+        ServerDiscoveryList({
+          serverSuggestions: this.serverSuggestions,
+          onGoBack: () => {
+            this.serverSelectionMode = ServerSelectionMode.ADDRESS
+          },
+          onSelectServer: (url: string) => {
+            this.hostname = url
+            this.serverSelectionMode = ServerSelectionMode.ADDRESS
+            this.onSubmit()
+          },
+        }).height('100%')
       }
-    }.alignItems(HorizontalAlign.Start).width('100%')
+    }.alignItems(HorizontalAlign.Start).width('100%').height('100%')
   }
 }
 
@@ -167,5 +205,64 @@ struct StyledTextButton {
       .padding({ top: 4, bottom: 4 })
       .margin({ top: 16 })
 
+  }
+}
+
+@ComponentV2
+struct ServerDiscoveryList {
+  @Param @Require serverSuggestions: ServerSuggestion[]
+  @Param @Require onGoBack: () => void
+  @Param @Require onSelectServer: (url: string) => void
+
+  build() {
+    Column() {
+      Row() {
+        Button() {
+          Image($r('app.media.ic_back'))
+        }.backgroundColor(Color.Transparent).onClick(() => {
+          this.onGoBack()
+        }).size({ width: 40, height: 40 })
+
+        Text('现有服务器').layoutWeight(1).padding(8).fontColor(Color.White)
+        LoadingProgress().margin({
+          left: 12, right: 12
+        }).width(24).height(24)
+      }
+
+      Blank().height(8)
+      Column() {
+        Repeat<ServerSuggestion>(this.serverSuggestions).each((obj: RepeatItem<ServerSuggestion>) => {
+          ServerDiscoveryItem({
+            serverSuggestion: obj.item,
+            onClickServer: () => {
+              this.onSelectServer(obj.item.address)
+            }
+          })
+        })
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .margin({ bottom: 16 })
+      .backgroundColor(Theme.colors.surface)
+      .borderRadius(4)
+    }.height('100%')
+  }
+}
+
+
+@ComponentV2
+struct ServerDiscoveryItem {
+  @Param @Require serverSuggestion: ServerSuggestion
+  @Param @Require onClickServer: () => void
+
+  build() {
+    ComposeListItem({
+      contentItem: {
+        primaryText: this.serverSuggestion.name,
+        secondaryText: this.serverSuggestion.address
+      }
+    }).onClick(() => {
+      this.onClickServer()
+    })
   }
 }

@@ -85,10 +85,10 @@ export class IjkPlayerControl extends BaseVideoPlayer {
     }
   }
 
-  setContext(context: object,id:string): void {
-    super.setContext(context,id);
+  setContext(context: object, id: string): void {
+    super.setContext(context, id);
     if (this.mIjkMediaPlayer) {
-      this.mIjkMediaPlayer.setContext(this.context,id);
+      this.mIjkMediaPlayer.setContext(this.context, id);
     }
   }
 
@@ -98,7 +98,7 @@ export class IjkPlayerControl extends BaseVideoPlayer {
 
       // 设置当前context，如果是放在list场景中，这个操作可以解决list错乱问题
       // 单例的ijk播放器，切换Context就可以锁定选择的Xcomponent
-      this.mIjkMediaPlayer.setContext(this.context,this.xComponentId);
+      this.mIjkMediaPlayer.setContext(this.context, this.xComponentId);
       this.mIjkMediaPlayer.reset();
       GlobalContext.getContext().setObject('xid', this.xComponentId);
       GlobalContext.getContext().setObject('currentPlayer', this);
@@ -135,6 +135,9 @@ export class IjkPlayerControl extends BaseVideoPlayer {
 
       // 无限制收流
       this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", "1");
+
+      //IjkPlayer默认是关闭字幕显示的使用以下代码配置可以显示视频字幕
+      this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "subtitle", "1")
 
       // 屏幕常亮
       this.mIjkMediaPlayer.setScreenOnWhilePlaying(true);
@@ -225,5 +228,9 @@ export class IjkPlayerControl extends BaseVideoPlayer {
       return this.mIjkMediaPlayer.getDuration();
     }
     return 0;
+  }
+
+  selectTrack(track: number): void {
+    this.mIjkMediaPlayer?.selectTrack(track+'')
   }
 }

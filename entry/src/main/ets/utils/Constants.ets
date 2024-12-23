@@ -1,4 +1,8 @@
 export class Constants{
+
+  // Webapp constants
+  static readonly INITIAL_CONNECTION_TIMEOUT = 10000 // 10 seconds
+
   // Preference keys
   static readonly PREF_SERVER_ID = "pref_server_id"
   static readonly PREF_USER_ID = "pref_user_id"
@@ -8,4 +12,8 @@ export class Constants{
   static readonly TICKS_PER_MILLISECOND = 10000
 
   static readonly NAVIGATION_ID = 'mainNavigation'
+
+  // Video player constants
+  static readonly LANGUAGE_UNDEFINED = "und"
+
 }

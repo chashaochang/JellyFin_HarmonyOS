@@ -4,11 +4,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+import { ServerDiscoveryInfo } from '../generated-client/models';
 import type { Jellyfin } from '../jellyfin';
 import type { RecommendedServerInfo } from '../models/recommended-server-info';
 
 import { RecommendedServerInfoScore } from '../models/recommended-server-info';
 import { getAddressCandidates } from '../utils/address-candidates';
+import { LocalServerDiscovery } from './local-server-discovery';
 
 import { RecommendedServerDiscovery } from './recommended-server-discovery';
 
@@ -16,10 +18,12 @@ import { RecommendedServerDiscovery } from './recommended-server-discovery';
 export class DiscoveryService {
 	private jellyfin;
 	private recommendedServerDiscovery:RecommendedServerDiscovery;
+	private localServerDiscovery:LocalServerDiscovery;
 
 	constructor(jellyfin: Jellyfin) {
 		this.jellyfin = jellyfin;
 		this.recommendedServerDiscovery = new RecommendedServerDiscovery(this.jellyfin);
+		this.localServerDiscovery = new LocalServerDiscovery();
 	}
 
 	/**
@@ -78,5 +82,10 @@ export class DiscoveryService {
 		minimumScore?: RecommendedServerInfoScore
 	): Promise<Array<RecommendedServerInfo>> {
 		return this.getRecommendedServers(this.getAddressCandidates(input), minimumScore);
+	}
+
+	async discoverLocalServers(timeout: number = LocalServerDiscovery.DISCOVERY_TIMEOUT,
+		maxServers: number = LocalServerDiscovery.DISCOVERY_MAX_SERVERS):Promise<ServerDiscoveryInfo[]>{
+		return this.localServerDiscovery.discover(timeout,maxServers)
 	}
 }

@@ -17,8 +17,7 @@ import { common } from "@kit.AbilityKit"
 @ComponentV2
 export struct PlayerView {
   options: PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
-  @Local viewModel: PlayerViewModel = new PlayerViewModel()
-
+  @Provider() viewModel: PlayerViewModel = new PlayerViewModel()
 
   async aboutToAppear(): Promise<void> {
     switch (this.viewModel.queueManager.initializePlaybackQueue(this.options)) {
@@ -37,6 +36,10 @@ export struct PlayerView {
   }
 
   aboutToDisappear(): void {
+    //后台播放音频
+    // if (!this.viewModel.notificationHelper.allowBackgroundAudio) {
+    //   this.viewModel.pause()
+    // }
     let context = getContext(this) as common.UIAbilityContext;
     context.eventHub.off('onForeground')
     context.eventHub.off('onBackground')
@@ -59,6 +62,7 @@ export struct PlayerView {
 struct CustomVideoPlayer {
   @Param @Require url: string
   @Local videoModel: StandardGSYVideoModel | null = null
+  @Consumer() viewModel:PlayerViewModel = new PlayerViewModel()
   pipController?: PiPWindow.PiPController;
   xComponentController?: XComponentController
   backClickListener: () => void = () => {
@@ -71,7 +75,7 @@ struct CustomVideoPlayer {
 
   aboutToAppear(): void {
     this.videoModel = new StandardGSYVideoModel();
-    this.videoModel.setUrl(this.url, true);
+    this.videoModel.setUrl(this.url, false);
     this.videoModel.setTitle('');
     this.videoModel.setBackClickListener(this.backClickListener);
     // this.videoModel.setFullClickListener(this.fullClickListener);
@@ -187,12 +191,12 @@ struct CustomVideoPlayer {
       StandardGSYVideoPlayer({
         videoModel: this.videoModel,
         onInit: async ()=>{
+          this.viewModel.setupPlayer()
           //开启自动画中画
           if (canIUse('SystemCapability.Window.SessionManager')) {
             if (!this.pipController) {
               await this.createPipController();
               this.pipController!.setAutoStartEnabled(true);
-              // this.pipController!.startPiP()
             }
           }
         }

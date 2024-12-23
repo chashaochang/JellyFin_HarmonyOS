@@ -7,6 +7,11 @@ import { ExternalPlayer } from "../bridge/ExternalPlayer";
 import { JSONUtil } from "@pura/harmony-utils";
 import ServerEntity from "../data/ServerEntity";
 import { ApiClientController } from "../data/ApiClientController";
+import { WebappEvents } from "./WebappEvents";
+import { BackController } from "./BackController";
+import { ActivityEventHandler } from "../events/ActivityEventHandler";
+import { common } from "@kit.AbilityKit";
+import mainViewModel, { MainViewModel } from "../pages/MainViewModel";
 
 @ComponentV2
 export struct WebViewScreen {
@@ -14,10 +19,42 @@ export struct WebViewScreen {
   controller: webview.WebviewController = new webview.WebviewController();
   responseWeb: WebResourceResponse = new WebResourceResponse();
   apiClientController: ApiClientController = new ApiClientController()
+  timeoutId = -1
+  connected = false
+  webappEvents: WebappEvents = new WebappEvents(getContext())
+  backController: BackController = new BackController()
+  @Param @Require onBackController: (controller: BackController) => void
+  @Consumer() showExternalConnectionError: boolean = false
+  @Consumer() mainViewModel: MainViewModel = mainViewModel
+  @Consumer() activityEventHandler: ActivityEventHandler =
+    new ActivityEventHandler((getContext() as common.UIAbilityContext).eventHub, this.mainViewModel)
 
   aboutToAppear(): void {
+    this.onBackController(this.backController)
+    this.backController.setOnBackPressListener(() => {
+      return this.connected && this.webappEvents.goBack()
+    })
+    getContext().eventHub.on('webappFunction', (action: string) => {
+      this.controller.loadUrl(`javascript:${action}`)
+    })
     // 配置Web开启调试模式
     webview.WebviewController.setWebDebuggingAccess(true);
+    this.timeoutId = setTimeout(() => {
+      this.handleError()
+    }, Constants.INITIAL_CONNECTION_TIMEOUT)
+  }
+
+  aboutToDisappear(): void {
+    getContext().eventHub.off('webappFunction')
+  }
+
+  handleError() {
+    this.connected = false
+    this.onSelectServer(true)
+  }
+
+  onSelectServer(error: boolean = false) {
+    this.showExternalConnectionError = error
   }
 
   build() {
@@ -26,7 +63,7 @@ export struct WebViewScreen {
         controller: this.controller,
         src: this.server.hostname
       })
-        //.backgroundColor($r('app.color.start_window_background'))
+        .backgroundColor($r('app.color.start_window_background'))
         .darkMode(WebDarkMode.Auto)
         .domStorageAccess(true)
         .zoomAccess(true)
@@ -35,7 +72,7 @@ export struct WebViewScreen {
         .cacheMode(CacheMode.Default)
         .javaScriptAccess(true)
         .onControllerAttached(() => {
-          this.controller.registerJavaScriptProxy(new NativeInterface(), 'NativeInterface',
+          this.controller.registerJavaScriptProxy(new NativeInterface(this.activityEventHandler), 'NativeInterface',
             ['getDeviceInformation', 'enableFullscreen', 'disableFullscreen', 'openUrl', 'updateMediaSession',
               'hideMediaSession', 'updateVolumeLevel', 'downloadFiles', 'openClientSettings', 'openServerSelection',
               'exitApp'])
@@ -52,6 +89,7 @@ export struct WebViewScreen {
           let path = event.request.getRequestUrl()
           if (path.match(Constants.MAIN_BUNDLE_PATH_REGEX) && !path?.includes('deferred')) {
             const promise: Promise<String> = new Promise((resolve: Function, reject: Function) => {
+              this.onConnectedToWebapp()
               let buffer = getContext().resourceManager.getRawFileContentSync('native/injectionScript.js')
               let decoder = util.TextDecoder.create('utf-8');
               let str = decoder.decodeToString(new Uint8Array(buffer));
@@ -107,7 +145,22 @@ export struct WebViewScreen {
           }
           return null
         })
+        .onErrorReceive(() => {
+          this.handleError()
+        })
+        .onHttpErrorReceive(() => {
+          this.handleError()
+        })
+        .onSslErrorEventReceive((event) => {
+          event.handler.handleCancel()
+          this.handleError()
+        })
     }.width('100%').height('100%')
+  }
+
+  onConnectedToWebapp() {
+    clearTimeout(this.timeoutId)
+    this.connected = true
   }
 }
 

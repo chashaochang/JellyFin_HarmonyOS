@@ -87,4 +87,6 @@ export interface IVideoPlayer {
   startGif(tmpPicPath?: string): void;
 
   stopGif(saveGifPath: string, gsyVideoGifSaveListener: GSYVideoGifSaveListener): void;
+
+  selectTrack(track: number):void;
 }

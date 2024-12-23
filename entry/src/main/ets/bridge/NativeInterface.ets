@@ -1,8 +1,15 @@
 import jellyfin from 'sdk'
 import { ActivityEvents } from '../events/ActivityEvent'
+import { ActivityEventHandler } from '../events/ActivityEventHandler';
 
 const TAG = 'NativeInterface'
 export class NativeInterface {
+
+  activityEventHandler:ActivityEventHandler
+
+  constructor(activityEventHandler:ActivityEventHandler) {
+    this.activityEventHandler = activityEventHandler
+  }
 
   getDeviceInformation(): string {
     console.log(TAG, 'getDeviceInformation');
@@ -18,19 +25,19 @@ export class NativeInterface {
 
   enableFullscreen(): boolean {
     console.log(TAG, 'enableFullscreen');
-    emitEvent(ActivityEvents.CHANGE_FULLSCREEN, true)
+    this.emitEvent(ActivityEvents.CHANGE_FULLSCREEN, true)
     return true
   }
 
   disableFullscreen(): boolean {
     console.log(TAG, 'disableFullscreen');
-    emitEvent(ActivityEvents.CHANGE_FULLSCREEN, false)
+    this.emitEvent(ActivityEvents.CHANGE_FULLSCREEN, false)
     return true
   }
 
   openUrl(uri: string): boolean {
     console.log(TAG, 'openUrl');
-    emitEvent(ActivityEvents.OPEN_URL, uri)
+    this.emitEvent(ActivityEvents.OPEN_URL, uri)
     return true
   }
 
@@ -55,20 +62,21 @@ export class NativeInterface {
 
   openClientSettings() {
     console.log(TAG, 'openClientSettings');
-    emitEvent(ActivityEvents.OPEN_SETTINGS)
+    this.emitEvent(ActivityEvents.OPEN_SETTINGS)
   }
 
   openServerSelection() {
     console.log(TAG, 'openServerSelection');
-    emitEvent(ActivityEvents.SELECT_SERVER)
+    this.emitEvent(ActivityEvents.SELECT_SERVER)
   }
 
   exitApp() {
     console.log(TAG, 'exitApp');
-    emitEvent(ActivityEvents.EXIT_APP)
+    this.emitEvent(ActivityEvents.EXIT_APP)
+  }
+
+  emitEvent(event: string, ...args: Object[]) {
+    this.activityEventHandler.eventHub.emit(event, ...args)
   }
 }
 
-function emitEvent(event: string, ...args: Object[]) {
-  getContext().eventHub.emit(event, ...args)
-}

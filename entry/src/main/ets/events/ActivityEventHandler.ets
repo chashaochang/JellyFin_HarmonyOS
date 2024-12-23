@@ -1,13 +1,16 @@
 import { HMRouterMgr } from "@hadss/hmrouter";
 import { common } from "@kit.AbilityKit";
+import { MainViewModel } from "../pages/MainViewModel";
 import { PlayOptions } from "../player/interaction/PlayOptions";
 import { ActivityEvents } from "./ActivityEvent";
 
 export class ActivityEventHandler {
   eventHub: common.EventHub
+  vm: MainViewModel
 
-  constructor(eventHub: common.EventHub) {
+  constructor(eventHub: common.EventHub, vm: MainViewModel) {
     this.eventHub = eventHub
+    this.vm = vm
   }
 
   subscribe() {
@@ -18,12 +21,15 @@ export class ActivityEventHandler {
     this.eventHub.on(ActivityEvents.OPEN_URL, (uri: string) => {
 
     });
-    this.eventHub.on(ActivityEvents.REQUEST_BLUETOOTH_PERMISSION,()=>{
+    this.eventHub.on(ActivityEvents.REQUEST_BLUETOOTH_PERMISSION, () => {
 
     });
-    this.eventHub.on(ActivityEvents.EXIT_APP,()=>{
+    this.eventHub.on(ActivityEvents.EXIT_APP, () => {
       getContext().getApplicationContext().killAllProcesses()
     });
+    this.eventHub.on(ActivityEvents.SELECT_SERVER, () => {
+      this.vm.resetServer()
+    })
     this.eventHub.on(ActivityEvents.LAUNCH_NATIVE_PLAYER, (options: PlayOptions) => {
       HMRouterMgr.push({ pageUrl: '/Player', param: options })
     })

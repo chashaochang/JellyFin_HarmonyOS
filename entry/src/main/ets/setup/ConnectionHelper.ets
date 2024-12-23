@@ -1,5 +1,6 @@
 import jellyfin, { PublicSystemInfo, RecommendedServerInfo } from "sdk"
 import { DiscoveryService } from "sdk/src/main/ets/discovery/discovery-service"
+import { ServerDiscoveryInfo } from "sdk/src/main/ets/generated-client/models"
 import { RecommendedServerInfoScore } from "sdk/src/main/ets/models/recommended-server-info"
 import { CheckUrlState } from "../ui/state/CheckUrlState"
 
@@ -57,6 +58,10 @@ class ConnectionHelper {
     let err = CheckUrlState.Error
     err.message = error??''
     return err
+  }
+
+  async discoverServers(): Promise<ServerDiscoveryInfo[]>{
+    return await jellyfin.discovery.discoverLocalServers()
   }
 }
 

@@ -161,4 +161,8 @@ export class AvPlayerControl extends BaseVideoPlayer {
       this.avPlayer.play();
     }
   }
+
+  selectTrack(track: number): void {
+    this.avPlayer?.selectTrack(track)
+  }
 }

@@ -7,7 +7,7 @@ import { HMRouterMgr } from '@hadss/hmrouter';
 import { GlobalContext as GsyGlobal, PlayerType } from '@ohos/gsyvideoplayer';
 
 export default class EntryAbility extends UIAbility {
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  onCreate(_want: Want, _launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
     //预初始化
@@ -15,7 +15,7 @@ export default class EntryAbility extends UIAbility {
     HMRouterMgr.init({
       context: this.context
     })
-    GsyGlobal.getContext().setObject('playType', PlayerType.IJK_PLAYER);
+    GsyGlobal.getContext().setObject('playType', PlayerType.SYSTEM_AVPLAYER);
   }
 
   onDestroy(): void {
@@ -34,16 +34,18 @@ export default class EntryAbility extends UIAbility {
       hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
     });
 
-    windowStage.getMainWindow().then((window)=>{
-      window.setWindowBackgroundColor('#101010')
-      window.setWindowSystemBarProperties({
-        statusBarColor:'#101010',
-        navigationBarColor:'#101010',
-        navigationBarContentColor:'#101010',
-        isStatusBarLightIcon:true
+    windowStage.getMainWindow().then((windowClass) => {
+      windowClass.setWindowBackgroundColor('#101010')
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#101010',
+        navigationBarColor: '#101010',
+        navigationBarContentColor: '#101010',
+        isStatusBarLightIcon: true
       })
       // 保存 UIContext， 在后续的同层渲染绘制中会用到。
-      AppStorage.setOrCreate<UIContext>("UIContext", window.getUIContext());
+      AppStorage.setOrCreate<UIContext>("UIContext", windowClass.getUIContext());
+      let avoidArea = windowClass.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR)
+      AppStorage.setOrCreate<number>('navBarHeight', px2vp(avoidArea.bottomRect.height))
     })
 
     const context = getContext(this) as common.UIAbilityContext;

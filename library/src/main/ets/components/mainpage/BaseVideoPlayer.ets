@@ -32,6 +32,7 @@ let screenshotTimer: number = 0;
 let gifTempPath: string = "";
 
 export abstract class BaseVideoPlayer implements IVideoPlayer {
+
   xComponentController: XComponentController = new XComponentController()
   surfaceID: string = '';
   firstOrSeek: boolean = true;
@@ -281,5 +282,9 @@ export abstract class BaseVideoPlayer implements IVideoPlayer {
       }
     }
     emitter.emit(this.videoInitEvent, eventData);
+  }
+
+  selectTrack(track: number): void {
+
   }
 }
