@@ -85,6 +85,8 @@ export struct StandardGSYVideoPlayer {
   @State mSeekCurrentTime: string = this.currentTime;
   // 当前进度
   @State mSeekTimePosition: number = 0;
+  // 视频画面比例
+  @State customAspectRatio:number = 16/9
   // 是否拖动进度条
   private isSeek: boolean = false;
   // 是否正在加载手势滑动禁止
@@ -404,9 +406,9 @@ export struct StandardGSYVideoPlayer {
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
       if (GlobalContext.getContext().getObject('playType') == PlayerType.SYSTEM_AVPLAYER) {
-        AvVideoPlayer({ videoInit: this.videoInit })
+        AvVideoPlayer({ videoInit: this.videoInit }).height('100%').aspectRatio(this.customAspectRatio)
       } else {
-        IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible })
+        IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible }).height('100%').aspectRatio(this.customAspectRatio)
       }
 
       if (this.videoModel.getCoverImage()) {
