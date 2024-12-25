@@ -35,34 +35,47 @@ export struct PlayerView {
     }
   }
 
-  aboutToDisappear(): void {
+  async aboutToDisappear(): Promise<void> {
     //后台播放音频
     // if (!this.viewModel.notificationHelper.allowBackgroundAudio) {
     //   this.viewModel.pause()
     // }
+    await this.viewModel.reportPlaybackStop()
     let context = getContext(this) as common.UIAbilityContext;
     context.eventHub.off('onForeground')
     context.eventHub.off('onBackground')
   }
 
   build() {
-    Column() {
+    Stack() {
       if (this.viewModel.uiState.url) {
         CustomVideoPlayer({
-          url: this.viewModel.uiState.url
+          url: this.viewModel.uiState.url,
+          title: this.viewModel.uiState.title,
         })
       }
+      Text(this.viewModel.uiState.subtitle)
+        .fontSize(16)
+        .fontColor(Color.White)
+        .width('100%')
+        .padding(20)
+        .textAlign(TextAlign.Center)
+        .textShadow({
+          radius:vp2px(2),
+        })
+        .hitTestBehavior(HitTestMode.None)
     }.width('100%')
     .height('100%')
+    .alignContent(Alignment.Bottom)
   }
-
 }
 
 @ComponentV2
 struct CustomVideoPlayer {
   @Param @Require url: string
+  @Param title: string = ''
   @Local videoModel: StandardGSYVideoModel | null = null
-  @Consumer() viewModel:PlayerViewModel = new PlayerViewModel()
+  @Consumer() viewModel: PlayerViewModel = new PlayerViewModel()
   pipController?: PiPWindow.PiPController;
   xComponentController?: XComponentController
   backClickListener: () => void = () => {
@@ -76,7 +89,7 @@ struct CustomVideoPlayer {
   aboutToAppear(): void {
     this.videoModel = new StandardGSYVideoModel();
     this.videoModel.setUrl(this.url, false);
-    this.videoModel.setTitle('');
+    this.videoModel.setTitle(this.title);
     this.videoModel.setBackClickListener(this.backClickListener);
     // this.videoModel.setFullClickListener(this.fullClickListener);
     this.videoModel.setCoverImage($r('app.media.app_icon'));
@@ -190,7 +203,7 @@ struct CustomVideoPlayer {
     if (this.videoModel) {
       StandardGSYVideoPlayer({
         videoModel: this.videoModel,
-        onInit: async ()=>{
+        onInit: async () => {
           this.viewModel.setupPlayer()
           //开启自动画中画
           if (canIUse('SystemCapability.Window.SessionManager')) {
@@ -199,9 +212,12 @@ struct CustomVideoPlayer {
               this.pipController!.setAutoStartEnabled(true);
             }
           }
+        },
+        onTimeUpdate: (pos) => {
+          this.viewModel.updateSubtitle(pos)
         }
-      }).height('100%')
+      }).width('100%')
+        .height('100%')
     }
   }
-
 }

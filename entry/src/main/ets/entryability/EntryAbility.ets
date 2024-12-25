@@ -15,7 +15,7 @@ export default class EntryAbility extends UIAbility {
     HMRouterMgr.init({
       context: this.context
     })
-    GsyGlobal.getContext().setObject('playType', PlayerType.SYSTEM_AVPLAYER);
+    GsyGlobal.getContext().setObject('playType', PlayerType.IJK_PLAYER);
   }
 
   onDestroy(): void {

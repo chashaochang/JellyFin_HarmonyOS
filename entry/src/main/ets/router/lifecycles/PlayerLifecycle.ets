@@ -30,4 +30,12 @@ export class PlayerLifecycle implements IHMLifecycle {
   onHidden(ctx: HMLifecycleContext): void {
 
   }
+
+  onDisAppear(ctx: HMLifecycleContext): void {
+    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    if (player) {
+      player.stop();
+      player.release();
+    }
+  }
 }

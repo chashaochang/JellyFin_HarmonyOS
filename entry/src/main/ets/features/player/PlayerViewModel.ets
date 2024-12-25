@@ -1,17 +1,29 @@
-import { getPlaystateApi, getVideosApi, PlaybackInfoResponse } from "sdk";
+import { getPlaystateApi, getSubtitleApi, getVideosApi, PlaybackInfoResponse } from "sdk";
 import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { PlayerViewUIState } from "./PlayerViewUIState";
-import { BaseVideoPlayer, GlobalContext, IjkVideoPlayer, PlayStatus } from "@ohos/gsyvideoplayer/Index";
+import {
+  AvPlayerControl,
+  BaseVideoPlayer,
+  GlobalContext,
+  IjkVideoPlayer,
+  PlayerType,
+  PlayStatus
+} from "@ohos/gsyvideoplayer/Index";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
 import { PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
 import { audio } from "@kit.AudioKit";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
+import { AxiosResponse } from "@ohos/axios";
+import { buffer } from "@kit.ArkTS";
+import { SubtitleManager } from "../../player/SubtitleManager";
 
 export class PlayerViewModel {
+
   queueManager: QueueManager = new QueueManager(this)
+  subtitleManager:SubtitleManager = new SubtitleManager()
 
   get mediaSourceOrNull(): JellyfinMediaSource | undefined {
     return this.queueManager.currentMediaSourceOrNull
@@ -28,6 +40,7 @@ export class PlayerViewModel {
     return this._player
   }
 
+  //相当于prepare
   setupPlayer() {
     this._player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer
     if (this.initSource) {
@@ -37,10 +50,6 @@ export class PlayerViewModel {
         this._player.seekTo(startTime)
       }
       this.reportPlaybackStart(this.initSource)
-      if (this.initSource.selectedSubtitleStream) {
-        this.trackSelectionHelper.selectSubtitleTrack(this.initSource.selectedSubtitleStream)
-        this._player.selectTrack(1)
-      }
     }
   }
 
@@ -51,18 +60,39 @@ export class PlayerViewModel {
       if (index === 0) {
         //设置播放器url,开始播放
         this.uiState.url = element
+        this.uiState.title = source.sourceInfo.Name ?? ''
       } else {
         console.log('外挂字幕:' + element);
       }
     }
+    let subtitleStream = source.selectedSubtitleStream
+    if (subtitleStream) {
+      getSubtitleApi(ApiClient.Instance()).getSubtitle({
+        routeItemId: source.itemId,
+        routeMediaSourceId: source.id,
+        routeIndex: source.selectedSubtitleStreamIndex,
+        routeFormat: subtitleStream.Codec
+      }).then((res: AxiosResponse<string, ArrayBuffer>) => {
+        let resText = buffer.from(res.data).toString()
+        console.log('subtitle', resText);
+        this.subtitleManager.parse(resText,subtitleStream?.Codec??'')
+      }).catch((e: BusinessError) => {
+        console.error(e.message)
+      })
+    }
   }
 
   stopTranscoding(mediaSource: JellyfinMediaSource) {
-
+    if (mediaSource.playMethod == PlayMethod.Transcode) {
+      // hlsSegmentApi.stopEncodingProcess(
+      //   deviceId = apiClient.deviceInfo.id,
+      //   playSessionId = mediaSource.playSessionId,
+      // )
+    }
   }
 
-  async reportPlaybackStart(mediaSource: JellyfinMediaSource) {
-    await getPlaystateApi(ApiClient.Instance()).reportPlaybackStart({
+  reportPlaybackStart(mediaSource: JellyfinMediaSource) {
+    getPlaystateApi(ApiClient.Instance()).reportPlaybackStart({
       playbackStartInfo: {
         ItemId: mediaSource.itemId,
         PlayMethod: mediaSource.playMethod,
@@ -77,5 +107,42 @@ export class PlayerViewModel {
         RepeatMode: RepeatMode.RepeatNone
       }
     })
+  }
+
+  async reportPlaybackStop() {
+    let mediaSource = this.mediaSourceOrNull
+    if (!mediaSource) {
+      return
+    }
+    let player = this.playerOrNull
+    if (!player) {
+      return
+    }
+    let hasFinished = player.playStatus == PlayStatus.DONE
+    let lastPositionTicks =
+      hasFinished ? mediaSource.runTimeTicks : player.getCurrentPosition() * Constants.TICKS_PER_MILLISECOND
+    let playStateApi = getPlaystateApi(ApiClient.Instance())
+    await playStateApi.reportPlaybackStopped({
+      playbackStopInfo: {
+        ItemId: mediaSource.itemId,
+        PositionTicks: lastPositionTicks,
+        PlaySessionId: mediaSource.playSessionId,
+        LiveStreamId: mediaSource.liveStreamId,
+        Failed: false
+      }
+    })
+    // Mark video as watched if playback finished
+    if (hasFinished) {
+      playStateApi.markPlayedItem({
+        itemId: mediaSource.itemId
+      })
+    }
+    // Stop active encoding if transcoding
+    this.stopTranscoding(mediaSource)
+  }
+
+  updateSubtitle(pos: number) {
+    this.uiState.subtitle = this.subtitleManager.getSubtitle(pos)
+    console.log('updateSubtitle',this.uiState.subtitle);
   }
 }

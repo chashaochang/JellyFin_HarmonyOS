@@ -4,7 +4,7 @@ import { PlayerException } from "../PlayerException";
 import { JellyfinMediaSource } from "../source/JellyfinMediaSource";
 import { MediaSourceResolver } from "../source/MediaSourceResolver";
 import { BusinessError } from "@kit.BasicServicesKit";
-import { getVideosApi, PlaybackInfoResponse } from "sdk";
+import { getVideosApi } from "sdk";
 import { MediaProtocol, MediaStream, PlayMethod } from "sdk/src/main/ets/generated-client/models";
 import { ApiClient } from "../../network/ApiClient";
 
@@ -96,7 +96,6 @@ export class QueueManager {
         } else {
           throw new Error(`Unsupported protocol ${sourceInfo.Protocol}`)
         }
-        break
       case PlayMethod.DirectStream:
         let container = sourceInfo.Container
         if (container) {
@@ -110,7 +109,6 @@ export class QueueManager {
         } else {
           throw new Error('Missing direct stream container')
         }
-        break
       case PlayMethod.Transcode:
         let transcodingPath = sourceInfo.TranscodingUrl
         if(transcodingPath){
@@ -124,9 +122,7 @@ export class QueueManager {
         }else{
           throw new Error('Missing transcode URL')
         }
-        break
     }
-    return ''
   }
 
   selectSubtitleStreamAndRestartPlayback(selectedMediaStream: MediaStream):boolean {

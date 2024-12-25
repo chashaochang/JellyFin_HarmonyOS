@@ -33,6 +33,7 @@ export class IjkPlayerControl extends BaseVideoPlayer {
   public constructor() {
     super();
     this.mIjkMediaPlayer = IjkMediaPlayer.getInstance();
+
   }
 
   isPlaying(): boolean {
@@ -137,7 +138,12 @@ export class IjkPlayerControl extends BaseVideoPlayer {
       this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", "1");
 
       //IjkPlayer默认是关闭字幕显示的使用以下代码配置可以显示视频字幕
-      this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "subtitle", "1")
+      // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "subtitle", "1")
+      // 开启h264与h265硬解码
+      // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-all-videos", "1");
+      // 开启h265硬解码
+      // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-hevc", "1");
+      //开硬解花屏
 
       // 屏幕常亮
       this.mIjkMediaPlayer.setScreenOnWhilePlaying(true);

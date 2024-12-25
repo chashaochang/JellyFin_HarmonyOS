@@ -256,12 +256,11 @@ struct ServerDiscoveryItem {
   @Param @Require onClickServer: () => void
 
   build() {
-    ComposeListItem({
-      contentItem: {
-        primaryText: this.serverSuggestion.name,
-        secondaryText: this.serverSuggestion.address
-      }
-    }).onClick(() => {
+    Column() {
+      Text(this.serverSuggestion.name).fontColor(Color.White).fontSize(18)
+      Text(this.serverSuggestion.address).fontColor(Color.Gray).fontSize(16)
+    }.width('100%')
+    .padding(10).alignItems(HorizontalAlign.Start).onClick(() => {
       this.onClickServer()
     })
   }

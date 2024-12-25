@@ -86,7 +86,7 @@ export struct StandardGSYVideoPlayer {
   // 当前进度
   @State mSeekTimePosition: number = 0;
   // 视频画面比例
-  @State customAspectRatio:number = 16/9
+  @State customAspectRatio: number = 16 / 9
   // 是否拖动进度条
   private isSeek: boolean = false;
   // 是否正在加载手势滑动禁止
@@ -105,7 +105,8 @@ export struct StandardGSYVideoPlayer {
   sec: number = 3;
   PROGRESS_MAX_VALUE: number = 100;
   public videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
-  onInit?:()=>void
+  onInit?: () => void
+  onTimeUpdate?: (position: number) => void
   videoInit: (iVideoPlayer: IVideoPlayer, xid: string) => void = (iVideoPlayer: IVideoPlayer, xid: string) => {
     LogUtils.getInstance().LOGI('VideoInit')
     this.mIVideoPlayer = iVideoPlayer
@@ -113,10 +114,10 @@ export struct StandardGSYVideoPlayer {
     this.mIVideoPlayer.setUp(this.videoModel.getUrl(), this.videoModel.getCacheWithPlay())
     this.onInit?.()
     //自动播放 avplayer不加延时播放不了
-    setTimeout(()=>{
+    setTimeout(() => {
       //自动播放
       this.videoToPlay()
-    },200)
+    }, 200)
   }
 
   @Builder
@@ -408,7 +409,9 @@ export struct StandardGSYVideoPlayer {
       if (GlobalContext.getContext().getObject('playType') == PlayerType.SYSTEM_AVPLAYER) {
         AvVideoPlayer({ videoInit: this.videoInit }).height('100%').aspectRatio(this.customAspectRatio)
       } else {
-        IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible }).height('100%').aspectRatio(this.customAspectRatio)
+        IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible })
+          .height('100%')
+          .aspectRatio(this.customAspectRatio)
       }
 
       if (this.videoModel.getCoverImage()) {
@@ -863,6 +866,7 @@ export struct StandardGSYVideoPlayer {
         position = duration;
       }
       this.currentTime = this.stringForTime(position);
+      this.onTimeUpdate?.(position)
     }
   }
 

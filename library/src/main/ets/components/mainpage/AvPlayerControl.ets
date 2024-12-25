@@ -31,6 +31,7 @@ export class AvPlayerControl extends BaseVideoPlayer {
     LogUtils.getInstance().LOGI('createAVPlayer');
     let avPlayer: media.AVPlayer = await media.createAVPlayer();
     this.avPlayer = avPlayer;
+    GlobalContext.getContext().setObject('currentPlayer', this);
     this.bindState();
   }
 
@@ -83,9 +84,23 @@ export class AvPlayerControl extends BaseVideoPlayer {
       }
     });
 
-    this.avPlayer.on(Events.ERROR, () => {
+    this.avPlayer.on(Events.ERROR, (err) => {
+      console.error(`Invoke avPlayer failed, code is ${err.code}, message is ${err.message}`);
       this.onInitStatus();
     })
+
+    // 注册字幕回调函数
+    this.avPlayer.on('subtitleUpdate', (info: media.SubtitleInfo) => {
+      if (info) {
+        let text = (!info.text) ? '' : info.text;
+        let startTime = (!info.startTime) ? 0 : info.startTime;
+        let duration = (!info.duration) ? 0 : info.duration;
+        console.info('subtitleUpdate info: text=' + text + ' startTime=' + startTime +' duration=' + duration);
+      } else {
+        console.info('subtitleUpdate info is null');
+      }
+    });
+
   }
 
   play() {
@@ -96,7 +111,6 @@ export class AvPlayerControl extends BaseVideoPlayer {
         this.firstPlay = false;
       }
       GlobalContext.getContext().setObject('xid', this.xComponentId);
-      GlobalContext.getContext().setObject('currentPlayer', this);
       LogUtils.getInstance().LOGI('avplayer play1: ' + this.surfaceID);
       if (this.avPlayer.state == AvPlayerStatus.STOPPED ||
           this.avPlayer.state == AvPlayerStatus.ERROR ||
@@ -164,5 +178,9 @@ export class AvPlayerControl extends BaseVideoPlayer {
 
   selectTrack(track: number): void {
     this.avPlayer?.selectTrack(track)
+  }
+
+  addSubtitle(url:string){
+    this.avPlayer?.addSubtitleFromUrl(url)
   }
 }

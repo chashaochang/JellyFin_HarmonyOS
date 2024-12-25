@@ -7,6 +7,7 @@ export class TrackSelectionHelper {
 
   constructor(viewModel: PlayerViewModel) {
     this.viewModel = viewModel
+
   }
 
   selectSubtitleTrack(mediaStream: MediaStream): boolean {

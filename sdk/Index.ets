@@ -15,3 +15,5 @@ export { getPlaystateApi } from './src/main/ets/utils/api/playstate-api'
 export { PlaybackInfoResponse } from './src/main/ets/generated-client/models/playback-info-response'
 
 export { getItemsApi } from './src/main/ets/utils/api/items-api'
+
+export { getSubtitleApi } from './src/main/ets/utils/api/subtitle-api'

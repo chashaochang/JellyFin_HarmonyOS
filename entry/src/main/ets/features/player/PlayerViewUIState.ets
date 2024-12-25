@@ -7,4 +7,6 @@
 export class PlayerViewUIState {
 
   @Trace url?:string
+  @Trace title?:string
+  @Trace subtitle?:string
 }
