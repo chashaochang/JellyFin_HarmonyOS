@@ -43,8 +43,3 @@ export enum PlayStatus {
   PAUSE,
   DONE
 }
-
-export enum PlayerType {
-  IJK_PLAYER,
-  SYSTEM_AVPLAYER
-}

@@ -7,7 +7,7 @@
   "license": "",
   "dependencies": {
     "sdk": 'file:../sdk',
-    "@ohos/gsyvideoplayer": "file:../library"
+    "videoplayer": "file:../library"
   }
 }
 

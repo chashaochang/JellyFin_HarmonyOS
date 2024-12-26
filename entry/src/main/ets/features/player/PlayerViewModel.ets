@@ -4,17 +4,11 @@ import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { PlayerViewUIState } from "./PlayerViewUIState";
 import {
-  AvPlayerControl,
-  BaseVideoPlayer,
-  GlobalContext,
-  IjkVideoPlayer,
-  PlayerType,
-  PlayStatus
-} from "@ohos/gsyvideoplayer/Index";
+  GlobalContext, IjkPlayerControl, PlayStatus
+} from "videoplayer/Index";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
 import { PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
-import { audio } from "@kit.AudioKit";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
 import { AxiosResponse } from "@ohos/axios";
 import { buffer } from "@kit.ArkTS";
@@ -31,18 +25,18 @@ export class PlayerViewModel {
 
   uiState: PlayerViewUIState = new PlayerViewUIState()
   trackSelectionHelper: TrackSelectionHelper = new TrackSelectionHelper(this)
-  _player?: BaseVideoPlayer
+  _player?: IjkPlayerControl
   initialTracksSelected: boolean = false
   //由于这个player要设置完url才能得到,暂时保存初始化信息
   initSource?: JellyfinMediaSource
 
-  get playerOrNull(): BaseVideoPlayer | undefined | null {
+  get playerOrNull(): IjkPlayerControl | undefined | null {
     return this._player
   }
 
   //相当于prepare
   setupPlayer() {
-    this._player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer
+    this._player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl
     if (this.initSource) {
       this.initialTracksSelected = false
       let startTime = this.initSource.startTimeMs
@@ -51,6 +45,7 @@ export class PlayerViewModel {
       }
       this.reportPlaybackStart(this.initSource)
     }
+
   }
 
   load(source: JellyfinMediaSource, url: string[], playWhenReady: boolean) {

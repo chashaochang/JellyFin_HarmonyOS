@@ -1,19 +1,9 @@
 {
   "types": "",
-  "keywords": [
-    "gsyvideoplayer",
-    "openHarmony",
-    "ijkplayer Avplayer"
-  ],
-  "author": "ohos_tpc",
-  "ohos": {
-    "org": "opensource"
-  },
-  "description": "gsyvideoplayer是一款ohos视频播放器三方库。",
+  "description": "",
   "main": "Index.ets",
-  "repository": "https://gitee.com/openharmony-tpc/openharmony_tpc_samples/tree/master/GSYVideoPlayer",
   "type": "module",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "dependencies": {
     "@ohos/mp4parser": "^2.0.5-rc.1",
     "@ohos/ijkplayer": "^2.0.6-rc.2",
@@ -23,5 +13,5 @@
     "Media"
   ],
   "license": "Apache-2.0",
-  "name": "@ohos/gsyvideoplayer"
+  "name": "videoplayer"
 }

@@ -4,7 +4,6 @@ import { window } from '@kit.ArkUI';
 import { DebugDB } from '@hadss/debug-db';
 import { webview } from '@kit.ArkWeb';
 import { HMRouterMgr } from '@hadss/hmrouter';
-import { GlobalContext as GsyGlobal, PlayerType } from '@ohos/gsyvideoplayer';
 
 export default class EntryAbility extends UIAbility {
   onCreate(_want: Want, _launchParam: AbilityConstant.LaunchParam): void {
@@ -15,7 +14,6 @@ export default class EntryAbility extends UIAbility {
     HMRouterMgr.init({
       context: this.context
     })
-    GsyGlobal.getContext().setObject('playType', PlayerType.IJK_PLAYER);
   }
 
   onDestroy(): void {

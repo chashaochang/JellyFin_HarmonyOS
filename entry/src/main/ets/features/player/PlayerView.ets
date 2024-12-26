@@ -1,5 +1,7 @@
 import { HMRouter, HMRouterMgr } from "@hadss/hmrouter"
-import { BaseVideoPlayer, GlobalContext, StandardGSYVideoModel, StandardGSYVideoPlayer } from "@ohos/gsyvideoplayer"
+import { GlobalContext,
+  IjkPlayerControl,
+  StandardGSYVideoModel, StandardGSYVideoPlayer } from "videoplayer"
 import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
@@ -79,7 +81,7 @@ struct CustomVideoPlayer {
   pipController?: PiPWindow.PiPController;
   xComponentController?: XComponentController
   backClickListener: () => void = () => {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.stop();
     }
@@ -106,7 +108,7 @@ struct CustomVideoPlayer {
   }
 
   aboutToDisappear(): void {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.stop();
       player.release()
@@ -115,7 +117,7 @@ struct CustomVideoPlayer {
 
   async createPipController() {
     if (canIUse('SystemCapability.Window.SessionManager')) {
-      let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+      let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
       if (player) {
         this.xComponentController = player.xComponentController
       }
@@ -135,7 +137,7 @@ struct CustomVideoPlayer {
   }
 
   onStateChange(state: PiPWindow.PiPState, reason: string) {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (canIUse('SystemCapability.Window.SessionManager')) {
       switch (state) {
         case PiPWindow.PiPState.ABOUT_TO_START:
@@ -176,7 +178,7 @@ struct CustomVideoPlayer {
   }
 
   onActionEvent(event: PiPWindow.PiPActionEventType, status: number | undefined) {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     switch (event) {
       case 'playbackStateChanged':
         if (status === 0) {

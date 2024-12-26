@@ -22,8 +22,6 @@ import audio from '@ohos.multimedia.audio';
 import { PlayStatus } from './CommonConstants';
 import emitter from '@ohos.events.emitter';
 import { GlobalContext } from './GlobalContext';
-import { PlayerType } from './CommonConstants';
-import { AvVideoPlayer } from './AvVideoPlayer';
 import settings from '@ohos.settings';
 import { StandardGSYVideoModel } from './StandardGSYVideoModel';
 import systemDateTime from '@ohos.systemDateTime';
@@ -406,13 +404,9 @@ export struct StandardGSYVideoPlayer {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
-      if (GlobalContext.getContext().getObject('playType') == PlayerType.SYSTEM_AVPLAYER) {
-        AvVideoPlayer({ videoInit: this.videoInit }).height('100%').aspectRatio(this.customAspectRatio)
-      } else {
-        IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible })
-          .height('100%')
-          .aspectRatio(this.customAspectRatio)
-      }
+      IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible })
+        .height('100%')
+        .aspectRatio(this.customAspectRatio)
 
       if (this.videoModel.getCoverImage()) {
         Image(this.videoModel.getCoverImage())
@@ -694,13 +688,7 @@ export struct StandardGSYVideoPlayer {
     emitter.on(videoPauseEvent, (data: emitter.EventData) => {
       if (data && data.data && typeof data.data.xid === 'string') {
         if (this.xComponentId == data.data.xid) {
-          if (GlobalContext.getContext().getObject('playType') == PlayerType.SYSTEM_AVPLAYER) {
-            if (this.mIVideoPlayer && this.mIVideoPlayer.isPlaying()) {
-              this.goPause();
-            }
-          } else {
-            this.goPause();
-          }
+          this.goPause();
         }
       }
     })
@@ -726,10 +714,6 @@ export struct StandardGSYVideoPlayer {
   private goInit() {
     LogUtils.getInstance().LOGI('standardGSYVideoPlayer onErrorListener');
     clearTimeout(uiTime);
-    if (this.mIVideoPlayer && GlobalContext.getContext().getObject('playType') == PlayerType.SYSTEM_AVPLAYER) {
-      LogUtils.getInstance().LOGI('PlayerType.SYSTEM_AVPLAYER need to stop');
-      this.mIVideoPlayer.stop();
-    }
     this.loadingVisible = Visibility.None;
     this.coverVisible = Visibility.Visible;
     this.ijkComponentVisible = Visibility.Hidden;

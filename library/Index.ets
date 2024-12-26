@@ -14,13 +14,7 @@
  */
 export { StandardGSYVideoPlayer } from './src/main/ets/components/mainpage/StandardGSYVideoPlayer'
 
-export { StandardForListGSYVideoPlayer } from './src/main/ets/components/mainpage/StandardForListGSYVideoPlayer'
-
-export { OrientationUtil } from './src/main/ets/components/utils/OrientationUtil'
-
 export { LogUtils } from './src/main/ets/components/utils/LogUtils'
-
-export { BaseVideoPlayer } from './src/main/ets/components/mainpage/BaseVideoPlayer'
 
 export { GSYVideoShotSaveListener } from './src/main/ets/components/listener/GSYVideoShotSaveListener'
 
@@ -28,15 +22,11 @@ export { IjkVideoPlayer } from './src/main/ets/components/mainpage/IjkVideoPlaye
 
 export { IjkPlayerControl } from './src/main/ets/components/mainpage/IjkPlayerControl'
 
-export { AvPlayerControl } from './src/main/ets/components/mainpage/AvPlayerControl'
-
-export { AvVideoPlayer } from './src/main/ets/components/mainpage/AvVideoPlayer'
-
 export { IVideoPlayer } from './src/main/ets/components/mainpage/IVideoPlayer'
 
 export { GlobalContext } from './src/main/ets/components/mainpage/GlobalContext'
 
-export { PlayerType, PlayStatus } from './src/main/ets/components/mainpage/CommonConstants'
+export { PlayStatus } from './src/main/ets/components/mainpage/CommonConstants'
 
 export { StandardGSYVideoModel } from './src/main/ets/components/mainpage/StandardGSYVideoModel'
 

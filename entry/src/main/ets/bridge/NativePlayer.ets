@@ -1,7 +1,7 @@
 import { PlayOptions } from "../player/interaction/PlayOptions";
 import { ActivityEvents } from "../events/ActivityEvent";
-import { GlobalContext } from "@ohos/gsyvideoplayer/src/main/ets/components/mainpage/GlobalContext";
-import { BaseVideoPlayer } from "@ohos/gsyvideoplayer/Index";
+import { GlobalContext } from "videoplayer/src/main/ets/components/mainpage/GlobalContext";
+import { IjkPlayerControl } from "videoplayer/Index";
 import { Constants } from "../utils/Constants";
 import { audio } from "@kit.AudioKit";
 
@@ -27,7 +27,7 @@ export class NativePlayer {
 
   pausePlayer() {
     console.log(TAG, 'pausePlayer');
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.pause();
     }
@@ -35,7 +35,7 @@ export class NativePlayer {
 
   resumePlayer() {
     console.log(TAG, 'resumePlayer');
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.resumePlay();
     }
@@ -43,7 +43,7 @@ export class NativePlayer {
 
   stopPlayer() {
     console.log(TAG, 'stopPlayer');
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.stop();
     }
@@ -51,7 +51,7 @@ export class NativePlayer {
 
   destroyPlayer() {
     console.log(TAG, 'destroyPlayer');
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.release();
     }
@@ -59,7 +59,7 @@ export class NativePlayer {
 
   seek(ticks: number) {
     console.log(TAG, 'seek');
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.seekTo(ticks / Constants.TICKS_PER_MILLISECOND);
     }
@@ -67,7 +67,7 @@ export class NativePlayer {
 
   seekMs(ms: number) {
     console.log(TAG, 'seekMs');
-    let player = GlobalContext.getContext().getObject("currentPlayer") as BaseVideoPlayer;
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.seekTo(ms);
     }
