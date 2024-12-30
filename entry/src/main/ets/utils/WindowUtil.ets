@@ -90,6 +90,7 @@ export class WindowUtil {
       // Setting restricted display.
       windowClass.setPreferredOrientation(window.Orientation.AUTO_ROTATION_RESTRICTED);
       windowClass.setWindowLayoutFullScreen(false)
+      windowClass.setWindowSystemBarEnable(['status','navigation'])
     });
   }
 
@@ -113,6 +114,7 @@ export class WindowUtil {
       // Setting restricted display.
       windowClass.setPreferredOrientation(window.Orientation.LANDSCAPE);
       windowClass.setWindowLayoutFullScreen(true)
+      windowClass.setWindowSystemBarEnable([])
     });
   }
 
