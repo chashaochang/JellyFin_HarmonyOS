@@ -14,10 +14,11 @@
  */
 import { GSYVideoGifSaveListener } from '../listener/GSYVideoGifSaveListener';
 import { GSYVideoShotSaveListener } from '../listener/GSYVideoShotSaveListener';
-import { PlayStatus } from './CommonConstants';
+import { PlayerStatus, PlayStatus } from './CommonConstants';
 
 export interface IVideoPlayer {
   playStatus: PlayStatus;
+  playerStatus: PlayerStatus;
   videoUrl: string;
   context: object | undefined;
   firstOrSeek: boolean;
@@ -81,6 +82,8 @@ export interface IVideoPlayer {
   setOnPauseListener(onPauseListener: () => void): void;
 
   setOnErrorListener(onErrorListener: () => void): void;
+
+  setOnStateChangedListener(onStateChangedListener: () => void): void;
 
   saveFrame(fileSavePath: string, gsyVideoShotSaveListener: GSYVideoShotSaveListener): void;
 

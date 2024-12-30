@@ -16,6 +16,7 @@ import { LogUtils } from '../utils/LogUtils';
 import { IVideoPlayer } from './IVideoPlayer';
 import { IjkPlayerControl } from './IjkPlayerControl';
 import { GlobalContext } from './GlobalContext';
+import { PlayerStatus } from './CommonConstants';
 
 @Component
 export struct IjkVideoPlayer {
@@ -56,5 +57,6 @@ export struct IjkVideoPlayer {
     this.mIVideoPlayer.setXComponentController(this.xComponentController)
     this.videoInit(this.mIVideoPlayer, this.xComponentId);
     LogUtils.getInstance().LOGI("initDelayPlay end");
+    this.mIVideoPlayer.playerStatus = PlayerStatus.INITIALIZED
   }
 }

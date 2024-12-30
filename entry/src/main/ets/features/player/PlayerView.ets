@@ -14,8 +14,8 @@ import { Subtitle } from "../../entity/Subtitle"
 @HMRouter({
   pageUrl: '/Player',
   interceptors: ['jumpInfoInterceptor'],
-  lifecycle: 'playerLifecycle',
-  animator: 'pageAnimator'
+  // lifecycle: 'playerLifecycle',
+  // animator: 'pageAnimator'
 })
 @ComponentV2
 export struct PlayerView {
@@ -72,6 +72,10 @@ struct CustomVideoPlayer {
   @Consumer() viewModel: PlayerViewModel = new PlayerViewModel()
   @Param @Require subtitle:Subtitle
   @Monitor('subtitle') onSubtitleChanged(){
+    if(this.subtitle.format === 'loading'){
+      this.videoModel.currentSubtitle = this.subtitle.subtitle
+      return
+    }
     this.videoModel.setSubtitle(this.subtitle.subtitle,this.subtitle.format)
   }
   pipController?: PiPWindow.PiPController;

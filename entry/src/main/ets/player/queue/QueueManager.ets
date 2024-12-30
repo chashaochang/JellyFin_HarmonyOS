@@ -62,7 +62,7 @@ export class QueueManager {
       this.viewModel.load(jellyfinMediaSource, await this.prepareStreams(jellyfinMediaSource), playWhenReady)
       this.viewModel.getSubtitle(jellyfinMediaSource)
     }).catch((e: BusinessError) => {
-
+      return e
     })
     return null
   }

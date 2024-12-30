@@ -118,6 +118,10 @@ export class PlayerViewModel {
 
   getSubtitle(source: JellyfinMediaSource) {
     if (source.selectedSubtitleStream) {
+      this.uiState.subtitle = {
+        subtitle: "正在加载字幕...",
+        format: 'loading'
+      }
       getSubtitleApi(ApiClient.Instance()).getSubtitle({
         routeItemId: source.itemId,
         routeMediaSourceId: source.id,

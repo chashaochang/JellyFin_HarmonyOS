@@ -854,15 +854,15 @@ export struct StandardGSYVideoPlayer {
         pos = curPercent * 100;
         this.progressValue = pos;
       }
-      LogUtils.getInstance()
-        .LOGI('setProgress position: ' + position + ' duration: ' + duration + ' progressValue: ' + pos);
+      // LogUtils.getInstance()
+      //   .LOGI('setProgress position: ' + position + ' duration: ' + duration + ' progressValue: ' + pos);
       this.totalTime = this.stringForTime(duration);
       if (position > duration) {
         position = duration;
       }
       this.currentTime = this.stringForTime(position);
-      this.videoModel.updateSubtitle(duration)
-      console.log('setProgress','updateSubtitle')
+      this.videoModel.updateSubtitle(position)
+      //console.log('setProgress','updateSubtitle:'+position)
     }
   }
 

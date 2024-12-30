@@ -25,7 +25,7 @@ import { ICallBack, MP4Parser } from '@ohos/mp4parser';
 import { GSYVideoGifSaveListener } from '../listener/GSYVideoGifSaveListener';
 import { GSYVideoShotSaveListener } from '../listener/GSYVideoShotSaveListener';
 import { LogUtils } from '../utils/LogUtils';
-import { PlayStatus } from './CommonConstants';
+import { PlayerStatus, PlayStatus } from './CommonConstants';
 import { GlobalContext } from './GlobalContext';
 import { IVideoPlayer } from './IVideoPlayer';
 import { BusinessError, emitter } from '@kit.BasicServicesKit';
@@ -40,7 +40,6 @@ let gifTempPath: string = "";
 
 @Observed
 export class IjkPlayerControl implements IVideoPlayer {
-
   xComponentController: XComponentController = new XComponentController()
   mIjkMediaPlayer: IjkMediaPlayer | undefined = undefined;
 
@@ -51,6 +50,7 @@ export class IjkPlayerControl implements IVideoPlayer {
   surfaceID: string = '';
   firstOrSeek: boolean = true;
   playStatus = PlayStatus.INIT;
+  playerStatus = PlayerStatus.IDLE;
   context: object | undefined = undefined;
   vId: string = 'vid';
   xComponentId: string = "xid";
@@ -77,6 +77,9 @@ export class IjkPlayerControl implements IVideoPlayer {
   onErrorListener: () => void = () => {
 
   };
+  onStateChangedListener: () => void = () => {
+
+  }
 
   release(): void {
     this.mIjkMediaPlayer?.release()
@@ -118,6 +121,10 @@ export class IjkPlayerControl implements IVideoPlayer {
 
   setOnPlayingListener(onPlayingListener: () => void) {
     this.onPlayingListener = onPlayingListener;
+  }
+
+  setOnStateChangedListener(onStateChangedListener: () => void): void {
+    this.onStateChangedListener = onStateChangedListener;
   }
 
   play() {
@@ -163,7 +170,7 @@ export class IjkPlayerControl implements IVideoPlayer {
   setContext(context: object, id: string): void {
     this.context = context;
     if (id) {
-      this.xComponentId=id
+      this.xComponentId = id
     }
     if (this.mIjkMediaPlayer) {
       this.mIjkMediaPlayer.setContext(this.context, id);
@@ -245,11 +252,13 @@ export class IjkPlayerControl implements IVideoPlayer {
       let mOnPreparedListener: OnPreparedListener = {
         onPrepared: () => {
           LogUtils.getInstance().LOGI("setOnPreparedListener--->go");
+          this.playerStatus = PlayerStatus.PREPARED
         }
       }
       this.mIjkMediaPlayer.setOnPreparedListener(mOnPreparedListener);
       let mOnCompletionListener: OnCompletionListener = {
         onCompletion: () => {
+          this.playerStatus = PlayerStatus.COMPLETED
           LogUtils.getInstance().LOGI("OnCompletionListener--->go");
           this.firstOrSeek = true;
           this.onInitStatus();
@@ -277,6 +286,7 @@ export class IjkPlayerControl implements IVideoPlayer {
       this.mIjkMediaPlayer.setOnInfoListener(mOnInfoListener);
       let mOnErrorListener: OnErrorListener = {
         onError: (what: number, extra: number) => {
+          this.playerStatus = PlayerStatus.ERROR
           LogUtils.getInstance().LOGI("OnErrorListener--->go:" + what + "====" + extra);
           this.onInitStatus()
         }
@@ -302,7 +312,9 @@ export class IjkPlayerControl implements IVideoPlayer {
     this.playStatus = PlayStatus.INIT;
     if (this.mIjkMediaPlayer) {
       this.mIjkMediaPlayer.stop();
+      this.playerStatus = PlayerStatus.STOPPED
       this.mIjkMediaPlayer.release();
+      this.playerStatus = PlayerStatus.RELEASED
     }
   }
 
@@ -401,6 +413,7 @@ export class IjkPlayerControl implements IVideoPlayer {
    */
   public onPlayingStatus() {
     this.playStatus = PlayStatus.PLAY;
+    this.playerStatus = PlayerStatus.PLAYING
     this.onPlayingListener();
     LogUtils.getInstance().LOGI('onPlayingStatus: ' + this.xComponentId);
     let eventData: emitter.EventData = {
@@ -418,6 +431,7 @@ export class IjkPlayerControl implements IVideoPlayer {
   public onPauseStatus() {
     if (this.playStatus == PlayStatus.PLAY) {
       this.playStatus = PlayStatus.PAUSE;
+      this.playerStatus = PlayerStatus.PAUSED
     }
     this.onPauseListener();
     let eventData: emitter.EventData = {
@@ -443,6 +457,6 @@ export class IjkPlayerControl implements IVideoPlayer {
   }
 
   selectTrack(track: number): void {
-    this.mIjkMediaPlayer?.selectTrack(track+'')
+    this.mIjkMediaPlayer?.selectTrack(track + '')
   }
 }

@@ -16,7 +16,7 @@
 /**
  * Player component status.
  */
-export enum AvPlayerStatus {
+export enum PlayerStatus {
   IDLE = 'idle',
   INITIALIZED = 'initialized',
   PREPARED = 'prepared',

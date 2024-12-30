@@ -19,8 +19,9 @@ export class ApiClientController {
   }
 
   async setupUser(serverId: number, userId: string, accessToken: string) {
-    let id = await this.userDao.upsert(serverId,userId,accessToken)
-    await this.appPreference.setCurrentUserId(id)
+    this.userDao.upsert(serverId,userId,accessToken).then((id)=>{
+      this.appPreference.setCurrentUserId(id)
+    })
     this.configureApiClientUser(userId, accessToken)
   }
 
