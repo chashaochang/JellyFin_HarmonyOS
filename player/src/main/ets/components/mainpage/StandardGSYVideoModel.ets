@@ -1,3 +1,5 @@
+import { SubtitleManager } from "../utils/SubtitleManager";
+
 /*
  * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@ObservedV2
 export class StandardGSYVideoModel {
   private videoUrl: string = '';
   private cacheWithPlay: boolean = false;
@@ -21,12 +24,18 @@ export class StandardGSYVideoModel {
   };
   private fullClickListener: () => void = () => {
   };
+  @Trace currentSubtitle: string = ''
+  subtitleManager: SubtitleManager = new SubtitleManager()
 
   public setUrl(videoUrl: string, cacheWithPlay?: boolean) {
     this.videoUrl = videoUrl;
     if (cacheWithPlay) {
       this.cacheWithPlay = cacheWithPlay;
     }
+  }
+
+  public setSubtitle(subtitle: string, format: string) {
+    this.subtitleManager.parse(subtitle, format)
   }
 
   public getUrl() {
@@ -65,7 +74,15 @@ export class StandardGSYVideoModel {
     return this.coverImage;
   }
 
-  public setCoverImage(coverImage:Resource) {
+  public setCoverImage(coverImage: Resource) {
     this.coverImage = coverImage;
+  }
+
+  public updateSubtitle(pos: number) {
+    let text = this.subtitleManager.getSubtitle(pos)
+    console.log('updateSubtitle',text);
+    if (text != this.currentSubtitle) { //防止频繁刷新
+      this.currentSubtitle = text
+    }
   }
 }

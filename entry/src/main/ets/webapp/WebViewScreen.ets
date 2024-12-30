@@ -145,9 +145,9 @@ export struct WebViewScreen {
           }
           return null
         })
-        .onErrorReceive(() => {
-          this.handleError()
-        })
+        // .onErrorReceive((err) => {
+        //   this.handleError()
+        // })
         .onHttpErrorReceive(() => {
           this.handleError()
         })

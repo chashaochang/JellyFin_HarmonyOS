@@ -1,12 +1,11 @@
 import { ApiClientController } from "../../data/ApiClientController"
-import { CheckUrlState } from "../../ui/state/CheckUrlState"
 import { ServerSelectionMode } from "../../ui/state/ServerSelectionMode"
 import { inputMethod } from "@kit.IMEKit"
 import connectionHelper from "../../setup/ConnectionHelper"
 import { KeyCode } from "@kit.InputKit"
 import Theme from "../../ui/Theme"
 import { ServerSuggestion, Type } from "./ServerSuggestion"
-import { ComposeListItem } from "@ohos.arkui.advanced.ComposeListItem"
+import { CheckUrlState, CheckUrlStateType, Pending, Success, Unchecked,Error } from "../../ui/state/CheckUrlState"
 
 @ComponentV2
 export struct ServerSelection {
@@ -17,7 +16,7 @@ export struct ServerSelection {
   @Local serverSelectionMode: ServerSelectionMode = ServerSelectionMode.ADDRESS
   @Consumer() showExternalConnectionError: boolean = false
   @Local externalError: boolean = this.showExternalConnectionError
-  @Local checkUrlState: CheckUrlState = CheckUrlState.Unchecked
+  @Local checkUrlState: CheckUrlState = new Unchecked()
   @Local serverSuggestions: ServerSuggestion[] = []
 
   async aboutToAppear(): Promise<void> {
@@ -52,11 +51,12 @@ export struct ServerSelection {
 
   async onSubmit() {
     this.externalError = false
-    this.checkUrlState = CheckUrlState.Pending
+    this.showExternalConnectionError = false
+    this.checkUrlState = new Pending()
     let state = await connectionHelper.checkServerUrl(this.hostname)
     this.checkUrlState = state
-    if (state === CheckUrlState.Success) {
-      this.onConnected(state.address!)
+    if (state.type === CheckUrlStateType.Success) {
+      this.onConnected((state as Success).address!)
     }
   }
 
@@ -67,11 +67,11 @@ export struct ServerSelection {
         AddressSelection({
           text: this.hostname,
           errorText: this.showExternalConnectionError ? '无法建立连接。 请检查主机名和你的网络连接。' :
-            (this.checkUrlState === CheckUrlState.Error ? this.checkUrlState.message : undefined),
-          loading: this.checkUrlState === CheckUrlState.Pending,
+            (this.checkUrlState.type === CheckUrlStateType.Error ? (this.checkUrlState as Error).message : undefined),
+          loading: this.checkUrlState.type === CheckUrlStateType.Pending,
           onTextChange: (value: string) => {
             this.externalError = false
-            this.checkUrlState = CheckUrlState.Unchecked
+            this.checkUrlState = new Unchecked()
             this.hostname = value
           },
           onDiscoveryClick: () => {

@@ -1,8 +1,7 @@
 import jellyfin, { PublicSystemInfo, RecommendedServerInfo } from "sdk"
-import { DiscoveryService } from "sdk/src/main/ets/discovery/discovery-service"
 import { ServerDiscoveryInfo } from "sdk/src/main/ets/generated-client/models"
 import { RecommendedServerInfoScore } from "sdk/src/main/ets/models/recommended-server-info"
-import { CheckUrlState } from "../ui/state/CheckUrlState"
+import { CheckUrlState, Error, Success } from "../ui/state/CheckUrlState"
 
 class ConnectionHelper {
   async checkServerUrl(enteredUrl: string): Promise<CheckUrlState> {
@@ -28,8 +27,7 @@ class ConnectionHelper {
       const systemInfo:PublicSystemInfo|undefined = server.systemInfo
       const serverVersion = systemInfo?.Version
       console.log(`Found valid server at ${server.address} with rating ${server.score} and version ${serverVersion}`)
-      let suc = CheckUrlState.Success
-      suc.address = server.address
+      let suc = new Success(server.address)
       return suc
     }
     const loggedServers = badServers.map(it => `${it.address}/${it.systemInfo}`).join(', ')
@@ -55,8 +53,7 @@ class ConnectionHelper {
 
       error = errorMessage
     }
-    let err = CheckUrlState.Error
-    err.message = error??''
+    let err = new Error(error??'')
     return err
   }
 

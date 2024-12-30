@@ -265,10 +265,10 @@ export class IjkPlayerControl implements IVideoPlayer {
       this.mIjkMediaPlayer.setOnSeekCompleteListener(mOnSeekCompleteListener);
       let mOnInfoListener: OnInfoListener = {
         onInfo: (what: number, extra: number) => {
-          LogUtils.getInstance().LOGI("OnInfoListener--->go:" + what + "====" + extra);
-          LogUtils.getInstance().LOGI("OnInfoListener--->go: firstOrSeek===" + this.firstOrSeek);
+          // LogUtils.getInstance().LOGI("OnInfoListener--->go:" + what + "====" + extra);
+          // LogUtils.getInstance().LOGI("OnInfoListener--->go: firstOrSeek===" + this.firstOrSeek);
           if (this.firstOrSeek) {
-            LogUtils.getInstance().LOGI("OnInfoListener--->first onplay:" + this.firstOrSeek);
+            // LogUtils.getInstance().LOGI("OnInfoListener--->first onplay:" + this.firstOrSeek);
             this.onPlayingStatus();
             this.firstOrSeek = false;
           }

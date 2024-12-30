@@ -56,8 +56,8 @@
       "srcPath": "./sdk",
     },
     {
-      "name": "library",
-      "srcPath": "./library",
+      "name": "player",
+      "srcPath": "./player"
     }
   ]
 }

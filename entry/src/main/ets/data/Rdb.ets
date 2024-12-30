@@ -108,7 +108,6 @@ export default class Rdb {
 
 
   insertDataSync(data: relationalStore.ValuesBucket) : number {
-
     const valueBucket: relationalStore.ValuesBucket = data;
     if (this.rdbStore) {
       return this.rdbStore.insertSync(this.tableName, valueBucket);

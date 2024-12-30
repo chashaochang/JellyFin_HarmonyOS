@@ -29,29 +29,25 @@ export class AppPreference {
 
   async setValue<T>(key: string, value: T): Promise<void> {
     if (this.preferences) {
-      this.preferences.put(key, JSON.stringify(value)).then(() => {
-        this.saveUserData();
-      })
+      await this.preferences.put(key, JSON.stringify(value))
+      this.saveUserData();
     } else {
-      this.initPreference(PREFERENCES_NAME).then(() => {
-        this.setValue<T>(key, value);
-      });
+      await this.initPreference(PREFERENCES_NAME)
+      this.setValue<T>(key, value);
     }
   }
 
   async getValue<T>(key: string): Promise<T | null> {
     if (this.preferences) {
-      return this.preferences.get(key, '').then((res: preferences.ValueType) => {
-        let value: T | null = null;
-        if (res) {
-          value = JSON.parse(res as string) as T;
-        }
-        return value;
-      });
+      let value: T | null = null;
+      let res = await this.preferences.get(key, '')
+      if (res) {
+        value = JSON.parse(res as string) as T;
+      }
+      return value;
     } else {
-      return this.initPreference(PREFERENCES_NAME).then(() => {
-        return this.getValue<T>(key);
-      });
+      await this.initPreference(PREFERENCES_NAME)
+      return this.getValue<T>(key);
     }
   }
 
@@ -59,21 +55,18 @@ export class AppPreference {
     if (this.preferences) {
       return this.preferences.has(key);
     } else {
-      return this.initPreference(PREFERENCES_NAME).then(() => {
-        return this.hasValue(key);
-      });
+      await this.initPreference(PREFERENCES_NAME)
+      return this.hasValue(key);
     }
   }
 
   async deleteValue(key: string): Promise<void> {
     if (this.preferences) {
-      this.preferences.delete(key).then(() => {
-        this.saveUserData();
-      });
+      await this.preferences.delete(key)
+      this.saveUserData();
     } else {
-      this.initPreference(PREFERENCES_NAME).then(() => {
-        this.deleteValue(key);
-      });
+      await this.initPreference(PREFERENCES_NAME)
+      this.deleteValue(key);
     }
   }
 

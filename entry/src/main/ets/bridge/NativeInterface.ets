@@ -1,5 +1,5 @@
 import jellyfin from 'sdk'
-import { ActivityEvents } from '../events/ActivityEvent'
+import { ActivityEventType } from '../events/ActivityEvent';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
 
 const TAG = 'NativeInterface'
@@ -25,19 +25,19 @@ export class NativeInterface {
 
   enableFullscreen(): boolean {
     console.log(TAG, 'enableFullscreen');
-    this.emitEvent(ActivityEvents.CHANGE_FULLSCREEN, true)
+    this.emitEvent(ActivityEventType.ChangeFullscreen, true)
     return true
   }
 
   disableFullscreen(): boolean {
     console.log(TAG, 'disableFullscreen');
-    this.emitEvent(ActivityEvents.CHANGE_FULLSCREEN, false)
+    this.emitEvent(ActivityEventType.ChangeFullscreen, false)
     return true
   }
 
   openUrl(uri: string): boolean {
     console.log(TAG, 'openUrl');
-    this.emitEvent(ActivityEvents.OPEN_URL, uri)
+    this.emitEvent(ActivityEventType.OpenUrl, uri)
     return true
   }
 
@@ -62,17 +62,17 @@ export class NativeInterface {
 
   openClientSettings() {
     console.log(TAG, 'openClientSettings');
-    this.emitEvent(ActivityEvents.OPEN_SETTINGS)
+    this.emitEvent(ActivityEventType.OpenSettings)
   }
 
   openServerSelection() {
     console.log(TAG, 'openServerSelection');
-    this.emitEvent(ActivityEvents.SELECT_SERVER)
+    this.emitEvent(ActivityEventType.SelectServer)
   }
 
   exitApp() {
     console.log(TAG, 'exitApp');
-    this.emitEvent(ActivityEvents.EXIT_APP)
+    this.emitEvent(ActivityEventType.ExitApp)
   }
 
   emitEvent(event: string, ...args: Object[]) {

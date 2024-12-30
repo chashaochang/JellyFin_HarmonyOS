@@ -1,9 +1,9 @@
 import { PlayOptions } from "../player/interaction/PlayOptions";
-import { ActivityEvents } from "../events/ActivityEvent";
-import { GlobalContext } from "videoplayer/src/main/ets/components/mainpage/GlobalContext";
-import { IjkPlayerControl } from "videoplayer/Index";
+import { GlobalContext } from "player/src/main/ets/components/mainpage/GlobalContext";
+import { IjkPlayerControl } from "player/Index";
 import { Constants } from "../utils/Constants";
 import { audio } from "@kit.AudioKit";
+import { ActivityEventType } from "../events/ActivityEvent";
 
 const TAG = 'NativePlayer'
 
@@ -21,7 +21,7 @@ export class NativePlayer {
     console.log(TAG, 'loadPlayer');
     let options = PlayOptions.fromJson(args)
     if (options) {
-      getContext().eventHub.emit(ActivityEvents.LAUNCH_NATIVE_PLAYER, options)
+      getContext().eventHub.emit(ActivityEventType.LaunchNativePlayer, options)
     }
   }
 

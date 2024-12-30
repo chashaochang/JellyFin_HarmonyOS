@@ -2,7 +2,7 @@ import { HMRouterMgr } from "@hadss/hmrouter";
 import { common } from "@kit.AbilityKit";
 import { MainViewModel } from "../pages/MainViewModel";
 import { PlayOptions } from "../player/interaction/PlayOptions";
-import { ActivityEvents } from "./ActivityEvent";
+import { ActivityEventType } from "./ActivityEvent";
 
 export class ActivityEventHandler {
   eventHub: common.EventHub
@@ -15,31 +15,31 @@ export class ActivityEventHandler {
 
   subscribe() {
     // 订阅事件
-    this.eventHub.on(ActivityEvents.CHANGE_FULLSCREEN, (isFullScreen: boolean) => {
+    this.eventHub.on(ActivityEventType.ChangeFullscreen, (isFullScreen: boolean) => {
 
     });
-    this.eventHub.on(ActivityEvents.OPEN_URL, (uri: string) => {
+    this.eventHub.on(ActivityEventType.OpenUrl, (uri: string) => {
 
     });
-    this.eventHub.on(ActivityEvents.REQUEST_BLUETOOTH_PERMISSION, () => {
+    this.eventHub.on(ActivityEventType.RequestBluetoothPermission, () => {
 
     });
-    this.eventHub.on(ActivityEvents.EXIT_APP, () => {
+    this.eventHub.on(ActivityEventType.ExitApp, () => {
       getContext().getApplicationContext().killAllProcesses()
     });
-    this.eventHub.on(ActivityEvents.SELECT_SERVER, () => {
+    this.eventHub.on(ActivityEventType.SelectServer, () => {
       this.vm.resetServer()
     })
-    this.eventHub.on(ActivityEvents.LAUNCH_NATIVE_PLAYER, (options: PlayOptions) => {
+    this.eventHub.on(ActivityEventType.LaunchNativePlayer, (options: PlayOptions) => {
       HMRouterMgr.push({ pageUrl: '/Player', param: options })
     })
   }
 
   unsubscribe() {
-    this.eventHub.off(ActivityEvents.CHANGE_FULLSCREEN)
-    this.eventHub.off(ActivityEvents.OPEN_URL)
-    this.eventHub.off(ActivityEvents.REQUEST_BLUETOOTH_PERMISSION)
-    this.eventHub.off(ActivityEvents.EXIT_APP)
-    this.eventHub.off(ActivityEvents.LAUNCH_NATIVE_PLAYER)
+    this.eventHub.off(ActivityEventType.ChangeFullscreen)
+    this.eventHub.off(ActivityEventType.OpenUrl)
+    this.eventHub.off(ActivityEventType.RequestBluetoothPermission)
+    this.eventHub.off(ActivityEventType.ExitApp)
+    this.eventHub.off(ActivityEventType.LaunchNativePlayer)
   }
 }

@@ -1,6 +1,6 @@
 {
   "module": {
-    "name": "library",
+    "name": "player",
     "type": "har",
     "deviceTypes": [
       "default",

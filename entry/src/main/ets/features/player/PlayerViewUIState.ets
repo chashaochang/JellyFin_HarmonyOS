@@ -1,3 +1,5 @@
+import { Subtitle } from "../../entity/Subtitle"
+
 /**
  * @Author: csc
  * @CreateDate: 2024/12/17 8:58
@@ -8,5 +10,5 @@ export class PlayerViewUIState {
 
   @Trace url?:string
   @Trace title?:string
-  @Trace subtitle?:string
+  @Trace subtitle?:Subtitle
 }

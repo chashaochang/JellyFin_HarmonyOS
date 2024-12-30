@@ -7,7 +7,7 @@
   "license": "",
   "dependencies": {
     "sdk": 'file:../sdk',
-    "videoplayer": "file:../library"
+    "player": "file:../player"
   }
 }
 

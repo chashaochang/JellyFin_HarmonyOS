@@ -3,21 +3,16 @@ import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { PlayerViewUIState } from "./PlayerViewUIState";
-import {
-  GlobalContext, IjkPlayerControl, PlayStatus
-} from "videoplayer/Index";
+import { GlobalContext, IjkPlayerControl, PlayStatus } from "player/Index";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
 import { PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
 import { AxiosResponse } from "@ohos/axios";
 import { buffer } from "@kit.ArkTS";
-import { SubtitleManager } from "../../player/SubtitleManager";
 
 export class PlayerViewModel {
-
   queueManager: QueueManager = new QueueManager(this)
-  subtitleManager:SubtitleManager = new SubtitleManager()
 
   get mediaSourceOrNull(): JellyfinMediaSource | undefined {
     return this.queueManager.currentMediaSourceOrNull
@@ -59,21 +54,6 @@ export class PlayerViewModel {
       } else {
         console.log('外挂字幕:' + element);
       }
-    }
-    let subtitleStream = source.selectedSubtitleStream
-    if (subtitleStream) {
-      getSubtitleApi(ApiClient.Instance()).getSubtitle({
-        routeItemId: source.itemId,
-        routeMediaSourceId: source.id,
-        routeIndex: source.selectedSubtitleStreamIndex,
-        routeFormat: subtitleStream.Codec
-      }).then((res: AxiosResponse<string, ArrayBuffer>) => {
-        let resText = buffer.from(res.data).toString()
-        console.log('subtitle', resText);
-        this.subtitleManager.parse(resText,subtitleStream?.Codec??'')
-      }).catch((e: BusinessError) => {
-        console.error(e.message)
-      })
     }
   }
 
@@ -136,8 +116,23 @@ export class PlayerViewModel {
     this.stopTranscoding(mediaSource)
   }
 
-  updateSubtitle(pos: number) {
-    this.uiState.subtitle = this.subtitleManager.getSubtitle(pos)
-    console.log('updateSubtitle',this.uiState.subtitle);
+  getSubtitle(source: JellyfinMediaSource) {
+    if (source.selectedSubtitleStream) {
+      getSubtitleApi(ApiClient.Instance()).getSubtitle({
+        routeItemId: source.itemId,
+        routeMediaSourceId: source.id,
+        routeIndex: source.selectedSubtitleStreamIndex,
+        routeFormat: source.selectedSubtitleStream.Codec
+      }).then((res: AxiosResponse<string, ArrayBuffer>) => {
+        let resText = buffer.from(res.data).toString()
+        console.log('subtitle', resText)
+        this.uiState.subtitle = {
+          subtitle: resText,
+          format: source.selectedSubtitleStream!.Codec!
+        }
+      }).catch((e: BusinessError) => {
+        console.error(e.message)
+      })
+    }
   }
 }

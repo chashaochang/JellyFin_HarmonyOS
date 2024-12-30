@@ -9,7 +9,6 @@ import { MediaProtocol, MediaStream, PlayMethod } from "sdk/src/main/ets/generat
 import { ApiClient } from "../../network/ApiClient";
 
 export class QueueManager {
-
   private viewModel: PlayerViewModel
 
   constructor(viewModel: PlayerViewModel) {
@@ -61,6 +60,7 @@ export class QueueManager {
       }
       this.currentMediaSourceOrNull = jellyfinMediaSource
       this.viewModel.load(jellyfinMediaSource, await this.prepareStreams(jellyfinMediaSource), playWhenReady)
+      this.viewModel.getSubtitle(jellyfinMediaSource)
     }).catch((e: BusinessError) => {
 
     })
@@ -73,8 +73,8 @@ export class QueueManager {
     return [videoSource, ...subtitleSources]
   }
 
-  createExternalSubtitleMediaSources(source: JellyfinMediaSource):string[] {
-    return source.externalSubtitleStreams.map(stream=>{
+  createExternalSubtitleMediaSources(source: JellyfinMediaSource): string[] {
+    return source.externalSubtitleStreams.map(stream => {
       return stream.deliveryUrl
     })
   }
@@ -111,21 +111,21 @@ export class QueueManager {
         }
       case PlayMethod.Transcode:
         let transcodingPath = sourceInfo.TranscodingUrl
-        if(transcodingPath){
+        if (transcodingPath) {
           let protocol = sourceInfo.TranscodingSubProtocol
-          if(protocol == 'hls'){
+          if (protocol == 'hls') {
             let transcodingUrl = ApiClient.Instance().createUrl(transcodingPath)
             return transcodingUrl
-          }else{
+          } else {
             throw new Error(`Unsupported transcode protocol "${protocol}"`)
           }
-        }else{
+        } else {
           throw new Error('Missing transcode URL')
         }
     }
   }
 
-  selectSubtitleStreamAndRestartPlayback(selectedMediaStream: MediaStream):boolean {
+  selectSubtitleStreamAndRestartPlayback(selectedMediaStream: MediaStream): boolean {
     return true
   }
 }

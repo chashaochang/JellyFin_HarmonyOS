@@ -104,7 +104,6 @@ export struct StandardGSYVideoPlayer {
   PROGRESS_MAX_VALUE: number = 100;
   public videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
   onInit?: () => void
-  onTimeUpdate?: (position: number) => void
   videoInit: (iVideoPlayer: IVideoPlayer, xid: string) => void = (iVideoPlayer: IVideoPlayer, xid: string) => {
     LogUtils.getInstance().LOGI('VideoInit')
     this.mIVideoPlayer = iVideoPlayer
@@ -407,6 +406,18 @@ export struct StandardGSYVideoPlayer {
       IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible })
         .height('100%')
         .aspectRatio(this.customAspectRatio)
+
+      //字幕
+      Text(this.videoModel.currentSubtitle)
+        .fontSize(16)
+        .fontColor(Color.White)
+        .width('100%')
+        .padding(20)
+        .textAlign(TextAlign.Center)
+        .textShadow({
+          radius:vp2px(2),
+        })
+        .hitTestBehavior(HitTestMode.None)
 
       if (this.videoModel.getCoverImage()) {
         Image(this.videoModel.getCoverImage())
@@ -850,7 +861,8 @@ export struct StandardGSYVideoPlayer {
         position = duration;
       }
       this.currentTime = this.stringForTime(position);
-      this.onTimeUpdate?.(position)
+      this.videoModel.updateSubtitle(duration)
+      console.log('setProgress','updateSubtitle')
     }
   }
 

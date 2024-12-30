@@ -47,7 +47,9 @@ export class SubtitleManager {
       // 只处理Events区段中的Dialogue行
       if (currentSection === 'Events' && trimmedLine.startsWith('Dialogue:')) {
         const parts = trimmedLine.substring(9).split(',');
-        if (parts.length < 10) continue;
+        if (parts.length < 10) {
+          continue;
+        }
 
         // 解析开始和结束时间
         const startTime = this.parseASSTime(parts[1].trim());
@@ -150,6 +152,9 @@ export class SubtitleManager {
 
   // 根据当前时间获取字幕
   getSubtitle(currentTime: number): string {
+    if (this.subtitles.length === 0) {
+      return ''
+    }
     const subtitle = this.subtitles.find(item =>
     currentTime >= item.startTime && currentTime <= item.endTime
     );

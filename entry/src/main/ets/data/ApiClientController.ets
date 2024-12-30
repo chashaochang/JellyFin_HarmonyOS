@@ -7,7 +7,6 @@ import ServerEntity from "./ServerEntity";
 import { UserDao } from "./UserDao";
 
 export class ApiClientController {
-
   appPreference: AppPreference
   serverDao: ServerDao
   userDao: UserDao
@@ -20,18 +19,20 @@ export class ApiClientController {
   }
 
   async setupUser(serverId: number, userId: string, accessToken: string) {
-    //let id = await this.userDao.upsert(serverId,userId,accessToken)
-    //await this.appPreference.setCurrentUserId(id)
+    let id = await this.userDao.upsert(serverId,userId,accessToken)
+    await this.appPreference.setCurrentUserId(id)
     this.configureApiClientUser(userId, accessToken)
   }
 
   async setupServer(hostname: string) {
     let server = this.serverDao.getServerByHostname(hostname)
+    let id: number
     if (!server) {
-      this.serverDao.insert(hostname)
+      id = this.serverDao.insert(hostname)
     } else {
-      this.appPreference.setCurrentServerId(server.id)
+      id = server.id
     }
+    this.appPreference.setCurrentServerId(id)
     ApiClient.init(hostname)
   }
 
@@ -45,14 +46,14 @@ export class ApiClientController {
     return server
   }
 
-  loadPreviouslyUsedServers():ServerEntity[] {
-    return this.serverDao.getAllServers().filter(async server=>{
+  loadPreviouslyUsedServers(): ServerEntity[] {
+    return this.serverDao.getAllServers().filter(async server => {
       server.id === await this.appPreference.getCurrentServerId()
     })
   }
 
   configureApiClientServer(server: ServerEntity | null) {
-    if(server){
+    if (server) {
       ApiClient.init(server?.hostname)
     }
   }

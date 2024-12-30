@@ -79,8 +79,8 @@ export class ServerDao {
     return null;
   }
 
-  insert(hostname:string){
-    this.serverTable.insertDataSync(new ServerEntity(hostname).toValuesBucket())
+  insert(hostname:string):number{
+    return this.serverTable.insertDataSync(new ServerEntity(hostname).toValuesBucket())
   }
 
   getAllServers():ServerEntity[]{

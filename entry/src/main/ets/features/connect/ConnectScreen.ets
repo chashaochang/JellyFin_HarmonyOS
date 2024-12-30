@@ -4,14 +4,14 @@ import { ServerSelection } from "./ServerSelection"
 
 @ComponentV2
 export struct ConnectScreen {
-  @Local viewModel: MainViewModel = mainViewModel
+  @Consumer() mainViewModel: MainViewModel = mainViewModel
 
   build() {
     Column() {
       LogoHeader()
       ServerSelection({
         onConnected: (hostname) => {
-          this.viewModel.switchServer(hostname)
+          this.mainViewModel.switchServer(hostname)
         }
       }).width('100%').layoutWeight(1)
     }

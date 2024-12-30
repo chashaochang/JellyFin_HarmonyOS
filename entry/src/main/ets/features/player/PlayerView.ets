@@ -1,7 +1,7 @@
 import { HMRouter, HMRouterMgr } from "@hadss/hmrouter"
 import { GlobalContext,
   IjkPlayerControl,
-  StandardGSYVideoModel, StandardGSYVideoPlayer } from "videoplayer"
+  StandardGSYVideoModel, StandardGSYVideoPlayer } from "player"
 import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
@@ -9,6 +9,7 @@ import { PlayerViewModel } from "./PlayerViewModel"
 import { PiPWindow } from "@kit.ArkUI"
 import { Constants } from "../../utils/Constants"
 import { common } from "@kit.AbilityKit"
+import { Subtitle } from "../../entity/Subtitle"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -54,18 +55,9 @@ export struct PlayerView {
         CustomVideoPlayer({
           url: this.viewModel.uiState.url,
           title: this.viewModel.uiState.title,
+          subtitle:this.viewModel.uiState.subtitle
         })
       }
-      Text(this.viewModel.uiState.subtitle)
-        .fontSize(16)
-        .fontColor(Color.White)
-        .width('100%')
-        .padding(20)
-        .textAlign(TextAlign.Center)
-        .textShadow({
-          radius:vp2px(2),
-        })
-        .hitTestBehavior(HitTestMode.None)
     }.width('100%')
     .height('100%')
     .alignContent(Alignment.Bottom)
@@ -76,8 +68,12 @@ export struct PlayerView {
 struct CustomVideoPlayer {
   @Param @Require url: string
   @Param title: string = ''
-  @Local videoModel: StandardGSYVideoModel | null = null
+  @Local videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
   @Consumer() viewModel: PlayerViewModel = new PlayerViewModel()
+  @Param @Require subtitle:Subtitle
+  @Monitor('subtitle') onSubtitleChanged(){
+    this.videoModel.setSubtitle(this.subtitle.subtitle,this.subtitle.format)
+  }
   pipController?: PiPWindow.PiPController;
   xComponentController?: XComponentController
   backClickListener: () => void = () => {
@@ -89,7 +85,6 @@ struct CustomVideoPlayer {
   }
 
   aboutToAppear(): void {
-    this.videoModel = new StandardGSYVideoModel();
     this.videoModel.setUrl(this.url, false);
     this.videoModel.setTitle(this.title);
     this.videoModel.setBackClickListener(this.backClickListener);
@@ -215,9 +210,6 @@ struct CustomVideoPlayer {
             }
           }
         },
-        onTimeUpdate: (pos) => {
-          this.viewModel.updateSubtitle(pos)
-        }
       }).width('100%')
         .height('100%')
     }
