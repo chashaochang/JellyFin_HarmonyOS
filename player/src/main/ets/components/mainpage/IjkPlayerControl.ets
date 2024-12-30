@@ -38,19 +38,26 @@ let screenshotTimerStatus: boolean = false;
 let screenshotTimer: number = 0;
 let gifTempPath: string = "";
 
-@Observed
+@ObservedV2
 export class IjkPlayerControl implements IVideoPlayer {
   xComponentController: XComponentController = new XComponentController()
   mIjkMediaPlayer: IjkMediaPlayer | undefined = undefined;
 
   public constructor() {
     this.mIjkMediaPlayer = IjkMediaPlayer.getInstance();
+    GlobalContext.getContext().setObject('currentPlayer', this);
   }
 
   surfaceID: string = '';
   firstOrSeek: boolean = true;
   playStatus = PlayStatus.INIT;
-  playerStatus = PlayerStatus.IDLE;
+  @Trace playerStatus = PlayerStatus.IDLE;
+
+  @Monitor('playerStatus')
+  onStateChanged() {
+    this.onStateChangedListener(this.playerStatus)
+  }
+
   context: object | undefined = undefined;
   vId: string = 'vid';
   xComponentId: string = "xid";
@@ -77,7 +84,7 @@ export class IjkPlayerControl implements IVideoPlayer {
   onErrorListener: () => void = () => {
 
   };
-  onStateChangedListener: () => void = () => {
+  onStateChangedListener: (playbackState: number) => void = () => {
 
   }
 
@@ -123,7 +130,7 @@ export class IjkPlayerControl implements IVideoPlayer {
     this.onPlayingListener = onPlayingListener;
   }
 
-  setOnStateChangedListener(onStateChangedListener: () => void): void {
+  setOnStateChangedListener(onStateChangedListener: (playbackState: number) => void): void {
     this.onStateChangedListener = onStateChangedListener;
   }
 
@@ -186,7 +193,6 @@ export class IjkPlayerControl implements IVideoPlayer {
       this.mIjkMediaPlayer.setContext(this.context, this.xComponentId);
       this.mIjkMediaPlayer.reset();
       GlobalContext.getContext().setObject('xid', this.xComponentId);
-      GlobalContext.getContext().setObject('currentPlayer', this);
 
       // 设置debug模式
       this.mIjkMediaPlayer.setDebug(false);

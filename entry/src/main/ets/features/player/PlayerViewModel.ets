@@ -36,7 +36,10 @@ export class PlayerViewModel {
       this.initialTracksSelected = false
       let startTime = this.initSource.startTimeMs
       if (startTime > 0) {
-        this._player.seekTo(startTime)
+        //这块不加延迟不好使,以后再研究
+        setTimeout(()=>{
+          this._player?.seekTo(startTime)
+        },1000)
       }
       this.reportPlaybackStart(this.initSource)
     }

@@ -1,4 +1,6 @@
 import { HMInterceptor, HMInterceptorAction, HMInterceptorInfo, IHMInterceptor } from "@hadss/hmrouter";
+import { GlobalContext } from "@pura/harmony-utils";
+import { IjkPlayerControl } from "player/Index";
 import { WindowUtil } from "../../utils/WindowUtil";
 
 @HMInterceptor({ interceptorName: 'jumpInfoInterceptor', global: true })
@@ -12,6 +14,11 @@ export class JumpInfoInterceptor implements IHMInterceptor {
     } else if(info.type === 'pop' && info.srcName === '/Player'){
       //跳出PlayerView竖屏
       WindowUtil.setMainWindowRestricted(getContext(this))
+      let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl
+      if(player){
+        player.stop()
+        player.release()
+      }
     }
     return HMInterceptorAction.DO_NEXT;
   }

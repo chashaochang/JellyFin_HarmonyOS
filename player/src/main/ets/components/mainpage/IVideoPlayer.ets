@@ -83,7 +83,7 @@ export interface IVideoPlayer {
 
   setOnErrorListener(onErrorListener: () => void): void;
 
-  setOnStateChangedListener(onStateChangedListener: () => void): void;
+  setOnStateChangedListener(onStateChangedListener: (playbackState: number) => void): void;
 
   saveFrame(fileSavePath: string, gsyVideoShotSaveListener: GSYVideoShotSaveListener): void;
 

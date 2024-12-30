@@ -110,11 +110,8 @@ export struct StandardGSYVideoPlayer {
     this.xComponentId = xid;
     this.mIVideoPlayer.setUp(this.videoModel.getUrl(), this.videoModel.getCacheWithPlay())
     this.onInit?.()
-    //自动播放 avplayer不加延时播放不了
-    setTimeout(() => {
-      //自动播放
-      this.videoToPlay()
-    }, 200)
+    //自动播放
+    this.videoToPlay()
   }
 
   @Builder

@@ -17,15 +17,15 @@
  * Player component status.
  */
 export enum PlayerStatus {
-  IDLE = 'idle',
-  INITIALIZED = 'initialized',
-  PREPARED = 'prepared',
-  PLAYING = 'playing',
-  PAUSED = 'paused',
-  COMPLETED = 'completed',
-  STOPPED = 'stopped',
-  RELEASED = 'released',
-  ERROR = 'error'
+  IDLE,
+  INITIALIZED,
+  PREPARED,
+  PLAYING,
+  PAUSED,
+  COMPLETED,
+  STOPPED,
+  RELEASED,
+  ERROR
 }
 
 /**
