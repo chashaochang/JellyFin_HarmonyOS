@@ -15,27 +15,28 @@
 import { LogUtils } from '../utils/LogUtils';
 import { IVideoPlayer } from './IVideoPlayer';
 import { IjkPlayerControl } from './IjkPlayerControl';
-import { GlobalContext } from './GlobalContext';
 import { PlayerStatus } from './CommonConstants';
 
-@Component
+@ComponentV2
 export struct IjkVideoPlayer {
   mIVideoPlayer: IVideoPlayer | undefined = undefined;
   private videoId: string = 'videoId' + Math.random();
   private xComponentId = 'xid' + Math.random();
   private xComponentController = new XComponentController();
-  public videoInit: (mIVideoPlayer: IVideoPlayer, xid: string) => void = (mIVideoPlayer: IVideoPlayer, xid: string) => {
+  @Param videoInit: (mIVideoPlayer: IVideoPlayer, xid: string) => void = (_mIVideoPlayer: IVideoPlayer, _xid: string) => {
   }
-  @Link isVisible : Visibility;
+  @Param isVisible: Visibility = Visibility.Visible
+  @Event visibleChanged: (isVisible: Visibility) => void
+
   build() {
     Stack() {
       XComponent({
         id: this.xComponentId,
-        controller:this.xComponentController,
+        controller: this.xComponentController,
         type: XComponentType.SURFACE,
         libraryname: 'ijkplayer_napi',
       })
-        .onLoad((context:object) => {
+        .onLoad((context: object) => {
           LogUtils.getInstance().LOGI("ijkplayer_napi onload");
           this.initDelayPlay(context);
         })
@@ -51,10 +52,11 @@ export struct IjkVideoPlayer {
     LogUtils.getInstance().LOGI("initDelayPlay create IjkPlayerControl videoId: " + this.videoId);
     LogUtils.getInstance().LOGI("initDelayPlay create IjkPlayerControl xComponentId: " + this.xComponentId);
     this.mIVideoPlayer = new IjkPlayerControl();
-    this.mIVideoPlayer.setContext(context,this.xComponentId);
-    this.mIVideoPlayer.setVideoId(this.videoId);
-    this.mIVideoPlayer.setXComponentId(this.xComponentId);
-    this.mIVideoPlayer.setXComponentController(this.xComponentController)
+    this.mIVideoPlayer.init(context, this.videoId, this.xComponentId, this.xComponentController)
+    // this.mIVideoPlayer.setContext(context,this.xComponentId);
+    // this.mIVideoPlayer.setVideoId(this.videoId);
+    // this.mIVideoPlayer.setXComponentId(this.xComponentId);
+    // this.mIVideoPlayer.setXComponentController(this.xComponentController)
     this.videoInit(this.mIVideoPlayer, this.xComponentId);
     LogUtils.getInstance().LOGI("initDelayPlay end");
     this.mIVideoPlayer.playerStatus = PlayerStatus.INITIALIZED

@@ -20,7 +20,17 @@ import { Subtitle } from "../../entity/Subtitle"
 @ComponentV2
 export struct PlayerView {
   options: PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
-  @Provider() viewModel: PlayerViewModel = new PlayerViewModel()
+  @Local videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
+  @Local viewModel: PlayerViewModel = new PlayerViewModel(this.videoModel)
+  pipController?: PiPWindow.PiPController;
+  xComponentController?: XComponentController
+  backClickListener: () => void = () => {
+    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
+    if (player) {
+      player.stop();
+    }
+    HMRouterMgr.pop()
+  }
 
   async aboutToAppear(): Promise<void> {
     switch (this.viewModel.queueManager.initializePlaybackQueue(this.options)) {
@@ -36,61 +46,6 @@ export struct PlayerView {
       default:
         break
     }
-  }
-
-  async aboutToDisappear(): Promise<void> {
-    //后台播放音频
-    // if (!this.viewModel.notificationHelper.allowBackgroundAudio) {
-    //   this.viewModel.pause()
-    // }
-    await this.viewModel.reportPlaybackStop()
-    let context = getContext(this) as common.UIAbilityContext;
-    context.eventHub.off('onForeground')
-    context.eventHub.off('onBackground')
-  }
-
-  build() {
-    Stack() {
-      if (this.viewModel.uiState.url) {
-        CustomVideoPlayer({
-          url: this.viewModel.uiState.url,
-          title: this.viewModel.uiState.title,
-          subtitle:this.viewModel.uiState.subtitle
-        })
-      }
-    }.width('100%')
-    .height('100%')
-    .alignContent(Alignment.Bottom)
-  }
-}
-
-@ComponentV2
-struct CustomVideoPlayer {
-  @Param @Require url: string
-  @Param title: string = ''
-  @Local videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
-  @Consumer() viewModel: PlayerViewModel = new PlayerViewModel()
-  @Param @Require subtitle:Subtitle
-  @Monitor('subtitle') onSubtitleChanged(){
-    if(this.subtitle.format === 'loading'){
-      this.videoModel.currentSubtitle = this.subtitle.subtitle
-      return
-    }
-    this.videoModel.setSubtitle(this.subtitle.subtitle,this.subtitle.format)
-  }
-  pipController?: PiPWindow.PiPController;
-  xComponentController?: XComponentController
-  backClickListener: () => void = () => {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (player) {
-      player.stop();
-    }
-    HMRouterMgr.pop()
-  }
-
-  aboutToAppear(): void {
-    this.videoModel.setUrl(this.url, false);
-    this.videoModel.setTitle(this.title);
     this.videoModel.setBackClickListener(this.backClickListener);
     // this.videoModel.setFullClickListener(this.fullClickListener);
     this.videoModel.setCoverImage($r('app.media.app_icon'));
@@ -106,12 +61,20 @@ struct CustomVideoPlayer {
     })
   }
 
-  aboutToDisappear(): void {
+  async aboutToDisappear(): Promise<void> {
+    //后台播放音频
+    // if (!this.viewModel.notificationHelper.allowBackgroundAudio) {
+    //   this.viewModel.pause()
+    // }
     let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
     if (player) {
       player.stop();
       player.release()
     }
+    await this.viewModel.reportPlaybackStop()
+    let context = getContext(this) as common.UIAbilityContext;
+    context.eventHub.off('onForeground')
+    context.eventHub.off('onBackground')
   }
 
   async createPipController() {
@@ -201,11 +164,11 @@ struct CustomVideoPlayer {
   }
 
   build() {
-    if (this.videoModel) {
+    Stack() {
       StandardGSYVideoPlayer({
         videoModel: this.videoModel,
         onInit: async () => {
-          this.viewModel.setupPlayer()
+          // this.viewModel.setupPlayer()
           //开启自动画中画
           if (canIUse('SystemCapability.Window.SessionManager')) {
             if (!this.pipController) {
@@ -216,6 +179,8 @@ struct CustomVideoPlayer {
         },
       }).width('100%')
         .height('100%')
-    }
+    }.width('100%')
+    .height('100%')
+    .alignContent(Alignment.Bottom)
   }
 }

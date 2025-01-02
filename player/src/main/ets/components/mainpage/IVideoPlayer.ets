@@ -57,25 +57,26 @@ export interface IVideoPlayer {
 
   release(): void;
 
-  /**
-   * 设置XComponent context,用户不用操作
-   * @param context xComponent上下文
-   */
-  setContext(context: Object,id?:string): void;
-
-  /**
-   * 设置XComponent vid,用户不用操作
-   * @param id
-   */
-  setVideoId(id: string): void;
-
-  /**
-   * 设置XComponent xComponentId,用户不用操作
-   * @param id
-   */
-  setXComponentId(id: string): void;
-
-  setXComponentController(controller: XComponentController): void;
+  // /**
+  //  * 设置XComponent context,用户不用操作
+  //  * @param context xComponent上下文
+  //  */
+  // setContext(context: Object,id?:string): void;
+  //
+  // /**
+  //  * 设置XComponent vid,用户不用操作
+  //  * @param id
+  //  */
+  // setVideoId(id: string): void;
+  //
+  // /**
+  //  * 设置XComponent xComponentId,用户不用操作
+  //  * @param id
+  //  */
+  // setXComponentId(id: string): void;
+  //
+  // setXComponentController(controller: XComponentController): void;
+  init(context: Object,videoId: string,xComponentId: string,controller: XComponentController):void;
 
   setOnPlayingListener(onPlayingListener: () => void): void;
 

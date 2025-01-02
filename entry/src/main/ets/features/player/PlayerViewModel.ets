@@ -2,8 +2,7 @@ import { getPlaystateApi, getSubtitleApi, getVideosApi, PlaybackInfoResponse } f
 import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
-import { PlayerViewUIState } from "./PlayerViewUIState";
-import { GlobalContext, IjkPlayerControl, PlayStatus } from "player/Index";
+import { GlobalContext, IjkPlayerControl, PlayStatus, StandardGSYVideoModel } from "player/Index";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
 import { PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
@@ -12,13 +11,17 @@ import { AxiosResponse } from "@ohos/axios";
 import { buffer } from "@kit.ArkTS";
 
 export class PlayerViewModel {
+  videoModel: StandardGSYVideoModel
   queueManager: QueueManager = new QueueManager(this)
+
+  constructor(videoModel: StandardGSYVideoModel) {
+    this.videoModel = videoModel
+  }
 
   get mediaSourceOrNull(): JellyfinMediaSource | undefined {
     return this.queueManager.currentMediaSourceOrNull
   }
 
-  uiState: PlayerViewUIState = new PlayerViewUIState()
   trackSelectionHelper: TrackSelectionHelper = new TrackSelectionHelper(this)
   _player?: IjkPlayerControl
   initialTracksSelected: boolean = false
@@ -26,22 +29,23 @@ export class PlayerViewModel {
   initSource?: JellyfinMediaSource
 
   get playerOrNull(): IjkPlayerControl | undefined | null {
+    this._player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl
     return this._player
   }
 
   //相当于prepare
   setupPlayer() {
-    this._player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl
+
     if (this.initSource) {
       this.initialTracksSelected = false
       let startTime = this.initSource.startTimeMs
       if (startTime > 0) {
         //这块不加延迟不好使,以后再研究
-        setTimeout(()=>{
-          this._player?.seekTo(startTime)
-        },1000)
+        // setTimeout(()=>{
+        //   this._player?.seekTo(startTime)
+        // },1000)
       }
-      this.reportPlaybackStart(this.initSource)
+      //this.reportPlaybackStart(this.initSource)
     }
 
   }
@@ -52,8 +56,18 @@ export class PlayerViewModel {
       const element = url[index];
       if (index === 0) {
         //设置播放器url,开始播放
-        this.uiState.url = element
-        this.uiState.title = source.sourceInfo.Name ?? ''
+        // this.uiState.url = element
+        // this.uiState.title = source.sourceInfo.Name ?? ''
+        this.videoModel.setUrl(element, true)
+        this.videoModel.setTitle(source.sourceInfo.Name ?? '')
+        this.videoModel.playWhenReady = playWhenReady
+        this.initialTracksSelected = false
+        let startTime = this.initSource.startTimeMs
+        if (startTime > 0) {
+          //这块不加延迟不好使,以后再研究
+          this.playerOrNull?.seekTo(startTime)
+        }
+        this.reportPlaybackStart(source)
       } else {
         console.log('外挂字幕:' + element);
       }
@@ -121,10 +135,7 @@ export class PlayerViewModel {
 
   getSubtitle(source: JellyfinMediaSource) {
     if (source.selectedSubtitleStream) {
-      this.uiState.subtitle = {
-        subtitle: "正在加载字幕...",
-        format: 'loading'
-      }
+      this.videoModel.currentSubtitle = '正在加载字幕...'
       getSubtitleApi(ApiClient.Instance()).getSubtitle({
         routeItemId: source.itemId,
         routeMediaSourceId: source.id,
@@ -132,11 +143,8 @@ export class PlayerViewModel {
         routeFormat: source.selectedSubtitleStream.Codec
       }).then((res: AxiosResponse<string, ArrayBuffer>) => {
         let resText = buffer.from(res.data).toString()
-        console.log('subtitle', resText)
-        this.uiState.subtitle = {
-          subtitle: resText,
-          format: source.selectedSubtitleStream!.Codec!
-        }
+        // console.log('subtitle', resText)
+        this.videoModel.setSubtitle(resText, source.selectedSubtitleStream!.Codec!)
       }).catch((e: BusinessError) => {
         console.error(e.message)
       })

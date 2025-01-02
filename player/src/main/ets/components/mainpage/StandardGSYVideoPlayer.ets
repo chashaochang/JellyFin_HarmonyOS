@@ -48,70 +48,81 @@ let videoPauseEvent: emitter.InnerEvent = {
 let touchStartX: number = 0;
 let touchStartY: number = 0;
 
-@Component
+@ComponentV2
 export struct StandardGSYVideoPlayer {
   mIVideoPlayer: IVideoPlayer | undefined = undefined;
-  @Provide currentTime: string = "00:00";
-  @Provide totalTime: string = "00:00";
-  @State progressValue: number = 0;
-  @State slideEnable: boolean = false;
-  @State eventType: string = '';
-  @State showBottomUi: boolean = false;
-  @State fullShowTop: boolean = false;
-  @State fullShowLock: boolean = false;
-  @State lock: boolean = false;
-  @State showPlay: boolean = true;
-  @State showPause: boolean = false;
-  @State showFullScreen: boolean = false
-  @State mDestroyPage: boolean = false;
-  @State loadingVisible: Visibility = Visibility.None;
-  @State mDirection: number = 0;
-  @State screenIsFull: boolean = false;
+  @Provider() currentTime: string = "00:00";
+  @Provider() totalTime: string = "00:00";
+  @Local progressValue: number = 0;
+  @Local slideEnable: boolean = false;
+  @Local eventType: string = '';
+  @Local showBottomUi: boolean = false;
+  @Local fullShowTop: boolean = false;
+  @Local fullShowLock: boolean = false;
+  @Local lock: boolean = false;
+  @Local showPlay: boolean = true;
+  @Local showPause: boolean = false;
+  @Local showFullScreen: boolean = false
+  @Local mDestroyPage: boolean = false;
+  @Local loadingVisible: Visibility = Visibility.None;
+  @Local mDirection: number = 0;
+  @Local screenIsFull: boolean = false;
   // 是否显示音量数值的布局
-  @State showVolumeUi: boolean = false;
+  @Local showVolumeUi: boolean = false;
   // 是否显示亮度数值的布局
-  @State showBrightnessUi: boolean = false;
+  @Local showBrightnessUi: boolean = false;
   // 是否显示横向滑动的进度布局
-  @State showSeekProgressUi: boolean = false;
+  @Local showSeekProgressUi: boolean = false;
   // 当前音量 [0-20]
-  @State mCurrentVolumeValue: number = 0;
+  @Local mCurrentVolumeValue: number = 0;
   // 系统最大音量
-  @State mMaxVolumeValue: number = 20;
+  @Local mMaxVolumeValue: number = 20;
   // 当前亮度 [0-255]
-  @State mCurrentBrightness: number = 10;
+  @Local mCurrentBrightness: number = 10;
   // 拖拽的时间
-  @State mSeekCurrentTime: string = this.currentTime;
+  @Local mSeekCurrentTime: string = this.currentTime;
   // 当前进度
-  @State mSeekTimePosition: number = 0;
+  @Local mSeekTimePosition: number = 0;
   // 视频画面比例
-  @State customAspectRatio: number = 16 / 9
+  @Local customAspectRatio: number = 16 / 9
   // 是否拖动进度条
   private isSeek: boolean = false;
   // 是否正在加载手势滑动禁止
   private isLoadNotSeek: boolean = false;
   // 当前拖拽进度的方向资源
-  @State mSeekDirectionRes: Resource = $r('app.media.video_forward_icon');
+  @Local mSeekDirectionRes: Resource = $r('app.media.video_forward_icon');
   private mAudioManager: audio.AudioManager | null = null;
   private isVerticalDrag: boolean = false;
   private isHorizontalDrag: boolean = false;
-  @State coverVisible: Visibility = Visibility.Visible;
+  @Local coverVisible: Visibility = Visibility.Visible;
   private panOptionBrightAndVolume: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.Vertical });
   private panOptionSeek: PanGestureOptions = new PanGestureOptions({ direction: PanDirection.Horizontal });
   public title: string = "";
   private xComponentId: string = 'xid';
-  @State ijkComponentVisible: Visibility = Visibility.Hidden;
+  @Local ijkComponentVisible: Visibility = Visibility.Hidden;
   sec: number = 3;
   PROGRESS_MAX_VALUE: number = 100;
-  public videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
-  onInit?: () => void
+  @Param videoModel: StandardGSYVideoModel = new StandardGSYVideoModel();
+  @Monitor('videoModel.videoUrl')
+  onModelChange(monitor: IMonitor) {
+    monitor.dirty.forEach((path: string) => {
+      console.info(`${path} changed from ${monitor.value(path)?.before} to ${monitor.value(path)?.now}`)
+    })
+    if(this.videoModel.videoUrl.length > 0){
+      this.mIVideoPlayer?.setUp(this.videoModel.getUrl(), this.videoModel.getCacheWithPlay())
+      this.onInit()
+      if (this.videoModel.playWhenReady) {
+        //自动播放
+        this.videoToPlay()
+      }
+    }
+  }
+
+  @Param @Require onInit: () => void
   videoInit: (iVideoPlayer: IVideoPlayer, xid: string) => void = (iVideoPlayer: IVideoPlayer, xid: string) => {
     LogUtils.getInstance().LOGI('VideoInit')
     this.mIVideoPlayer = iVideoPlayer
     this.xComponentId = xid;
-    this.mIVideoPlayer.setUp(this.videoModel.getUrl(), this.videoModel.getCacheWithPlay())
-    this.onInit?.()
-    //自动播放
-    this.videoToPlay()
   }
 
   @Builder
@@ -400,19 +411,23 @@ export struct StandardGSYVideoPlayer {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
-      IjkVideoPlayer({ videoInit: this.videoInit, isVisible: this.ijkComponentVisible })
+      IjkVideoPlayer({
+        videoInit: this.videoInit,
+        isVisible: this.ijkComponentVisible,
+        visibleChanged: (e) => this.ijkComponentVisible = e
+      })
         .height('100%')
         .aspectRatio(this.customAspectRatio)
 
       //字幕
       Text(this.videoModel.currentSubtitle)
-        .fontSize(16)
+        .fontSize(21)
         .fontColor(Color.White)
         .width('100%')
         .padding(20)
         .textAlign(TextAlign.Center)
         .textShadow({
-          radius:vp2px(2),
+          radius: vp2px(2),
         })
         .hitTestBehavior(HitTestMode.None)
 

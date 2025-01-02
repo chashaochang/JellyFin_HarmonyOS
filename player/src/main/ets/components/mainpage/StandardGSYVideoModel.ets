@@ -16,8 +16,9 @@ import { SubtitleManager } from "../utils/SubtitleManager";
  */
 @ObservedV2
 export class StandardGSYVideoModel {
-  private videoUrl: string = '';
+  @Trace videoUrl: string = '';
   private cacheWithPlay: boolean = false;
+  playWhenReady: boolean = true
   private title: string = '';
   private coverImage: Resource | undefined = undefined;
   private backClickListener: () => void = () => {
