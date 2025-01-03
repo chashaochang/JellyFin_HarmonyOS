@@ -41,6 +41,7 @@ export struct IjkVideoPlayer {
           this.initDelayPlay(context);
         })
         .onDestroy(() => {
+          LogUtils.getInstance().LOGI("ijkplayer_napi on destroy");
         })
         .width("100%")
         .height("100%")
@@ -60,5 +61,10 @@ export struct IjkVideoPlayer {
     this.videoInit(this.mIVideoPlayer, this.xComponentId);
     LogUtils.getInstance().LOGI("initDelayPlay end");
     this.mIVideoPlayer.playerStatus = PlayerStatus.INITIALIZED
+  }
+
+  aboutToDisappear(): void {
+    this.mIVideoPlayer?.stop()
+    this.mIVideoPlayer?.release()
   }
 }

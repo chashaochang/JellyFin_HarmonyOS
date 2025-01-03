@@ -11,12 +11,7 @@ import { Constants } from "../../utils/Constants"
 import { common } from "@kit.AbilityKit"
 import { Subtitle } from "../../entity/Subtitle"
 
-@HMRouter({
-  pageUrl: '/Player',
-  interceptors: ['jumpInfoInterceptor'],
-  // lifecycle: 'playerLifecycle',
-  // animator: 'pageAnimator'
-})
+@HMRouter({ pageUrl: '/Player',singleton:true })
 @ComponentV2
 export struct PlayerView {
   options: PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
@@ -25,10 +20,7 @@ export struct PlayerView {
   pipController?: PiPWindow.PiPController;
   xComponentController?: XComponentController
   backClickListener: () => void = () => {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (player) {
-      player.stop();
-    }
+    this.viewModel.playerOrNull?.stop()
     HMRouterMgr.pop()
   }
 
@@ -61,17 +53,14 @@ export struct PlayerView {
     })
   }
 
-  async aboutToDisappear(): Promise<void> {
+  aboutToDisappear() {
     //后台播放音频
     // if (!this.viewModel.notificationHelper.allowBackgroundAudio) {
     //   this.viewModel.pause()
     // }
-    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (player) {
-      player.stop();
-      player.release()
-    }
-    await this.viewModel.reportPlaybackStop()
+    this.viewModel.playerOrNull?.stop()
+    this.viewModel.playerOrNull?.release()
+    this.viewModel.reportPlaybackStop()
     let context = getContext(this) as common.UIAbilityContext;
     context.eventHub.off('onForeground')
     context.eventHub.off('onBackground')

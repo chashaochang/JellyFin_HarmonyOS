@@ -4,9 +4,11 @@ import mainViewModel, { MainViewModel, ServerState } from './MainViewModel'
 import { common } from '@kit.AbilityKit';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
 import { AttributeUpdater } from '@kit.ArkUI';
-import { HMDefaultGlobalAnimator, HMNavigation } from '@hadss/hmrouter';
+import { HMDefaultGlobalAnimator, HMNavigation, HMRouterMgr } from '@hadss/hmrouter';
 import { Constants } from '../utils/Constants';
 import { BackController } from '../webapp/BackController';
+import { JumpInfoInterceptor } from '../router/interceptors/JumpInfoInterceptor';
+import { PlayerLifecycle } from '../router/lifecycles/PlayerLifecycle';
 
 @Entry
 @ComponentV2
@@ -19,6 +21,16 @@ struct Index {
   backController?: BackController
 
   aboutToAppear(): void {
+    HMRouterMgr.registerGlobalInterceptor({
+      interceptor:new JumpInfoInterceptor(),
+      interceptorName:"jumpInfoInterceptor",
+      priority:5
+    })
+    HMRouterMgr.registerGlobalLifecycle({
+      lifecycle:new PlayerLifecycle(),
+      lifecycleName:'playerLifecycle',
+      priority:5
+    })
     this.mainViewModel.refreshServer()
     this.activityEventHandler.subscribe()
   }

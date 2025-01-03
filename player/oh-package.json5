@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@ohos/mp4parser": "^2.0.5-rc.1",
-    "@ohos/ijkplayer": "^2.0.6-rc.2",
+    "@ohos/ijkplayer": "^2.0.6-rc.3",
     "@ohos/video-cache": "^1.0.3-rc.0"
   },
   "tags": [
