@@ -1,7 +1,7 @@
 // SubtitleManager.ets
 
 // 字幕项结构
-interface SubtitleItem {
+export interface SubtitleItem {
   index: number; // 序号
   startTime: number; // 开始时间(毫秒)
   endTime: number; // 结束时间(毫秒)
@@ -11,7 +11,7 @@ interface SubtitleItem {
 export class SubtitleManager {
   private subtitles: SubtitleItem[] = [];
 
-  parse(resText: string, format: string) {
+  parse(resText: string, format: string):SubtitleItem[] {
     switch (format.toLowerCase()) {
       case 'srt':
       case 'subrip':
@@ -21,6 +21,7 @@ export class SubtitleManager {
         this.parseASS(resText)
         break
     }
+    return this.subtitles
   }
 
   // 解析ASS格式字幕

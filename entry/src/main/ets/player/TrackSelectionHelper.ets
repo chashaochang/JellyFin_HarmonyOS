@@ -35,8 +35,8 @@ export class TrackSelectionHelper {
       // trackSelector.clearSelectionAndDisableRendererByType(C.TRACK_TYPE_TEXT)
       return true
     }
-    let player = this.viewModel.playerOrNull
-    if(!player) return false
+    // let player = this.viewModel.playerOrNull
+    // if(!player) return false
     switch (subtitleStream.DeliveryMethod){
 
       default :

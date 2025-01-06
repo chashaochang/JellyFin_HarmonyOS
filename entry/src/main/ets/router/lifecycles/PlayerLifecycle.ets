@@ -1,5 +1,8 @@
 import { HMLifecycle, HMLifecycleContext, HMRouterMgr, IHMLifecycle } from "@hadss/hmrouter";
-import { GlobalContext, IjkPlayerControl } from "player/Index";
+import { emitter } from "@kit.BasicServicesKit";
+import { SmartDialog } from "ohos_smart_dialog";
+import { Constants } from "../../utils/Constants";
+
 
 /**
  * @Author: csc
@@ -10,42 +13,38 @@ import { GlobalContext, IjkPlayerControl } from "player/Index";
 export class PlayerLifecycle implements IHMLifecycle {
 
   onBackPressed(ctx: HMLifecycleContext): boolean {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (player) {
-      player.stop()
-      player.release();
-    }
-    HMRouterMgr.pop()
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'onBackPressed'
+      }
+    })
+    SmartDialog.dismiss()
     return true
   }
 
   onPageShow() {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (player) {
-      player.resumePlay();
-    }
+
   }
 
   onPageHide() {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (player) {
-      player.pause();
-    }
+
   }
 
   onShown(ctx: HMLifecycleContext): void {
-
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'onPageShow'
+      }
+    })
   }
 
   onHidden(ctx: HMLifecycleContext): void {
-
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'onPageHide'
+      }
+    })
   }
 
-  onDisAppear(ctx: HMLifecycleContext): void {
-    let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (player) {
-      player.stop();
-      player.release();
-    }
-  }
+
 }

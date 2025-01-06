@@ -5,9 +5,7 @@ export class BackController {
     this.callback = callback
   }
 
-  onBackPress(): boolean | void {
-    if (this.callback) {
-      return this.callback()
-    }
+  onBackPress(): boolean {
+    return this.callback?.() ?? false
   }
 }

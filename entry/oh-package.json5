@@ -7,7 +7,9 @@
   "license": "",
   "dependencies": {
     "sdk": 'file:../sdk',
-    "player": "file:../player"
+    "@ohos/ijkplayer": "^2.0.6-rc.3",
+    "ohos_smart_dialog": "^1.7.5"
+    //"player": "file:../player"
   }
 }
 

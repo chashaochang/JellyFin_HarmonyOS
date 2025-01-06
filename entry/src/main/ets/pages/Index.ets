@@ -9,27 +9,28 @@ import { Constants } from '../utils/Constants';
 import { BackController } from '../webapp/BackController';
 import { JumpInfoInterceptor } from '../router/interceptors/JumpInfoInterceptor';
 import { PlayerLifecycle } from '../router/lifecycles/PlayerLifecycle';
+import { OhosSmartDialog } from 'ohos_smart_dialog';
 
 @Entry
 @ComponentV2
 struct Index {
   private eventHub: common.EventHub = (getContext() as common.UIAbilityContext).eventHub;
   @Provider() mainViewModel: MainViewModel = mainViewModel
-  @Provider() activityEventHandler: ActivityEventHandler = new ActivityEventHandler(this.eventHub,this.mainViewModel)
+  @Provider() activityEventHandler: ActivityEventHandler = new ActivityEventHandler(this.eventHub, this.mainViewModel)
   @Provider() showExternalConnectionError: boolean = false
   modifier: NavModifier = new NavModifier();
   backController?: BackController
 
   aboutToAppear(): void {
     HMRouterMgr.registerGlobalInterceptor({
-      interceptor:new JumpInfoInterceptor(),
-      interceptorName:"jumpInfoInterceptor",
-      priority:5
+      interceptor: new JumpInfoInterceptor(),
+      interceptorName: "jumpInfoInterceptor",
+      priority: 5
     })
     HMRouterMgr.registerGlobalLifecycle({
-      lifecycle:new PlayerLifecycle(),
-      lifecycleName:'playerLifecycle',
-      priority:5
+      lifecycle: new PlayerLifecycle(),
+      lifecycleName: 'playerLifecycle',
+      priority: 5
     })
     this.mainViewModel.refreshServer()
     this.activityEventHandler.subscribe()
@@ -41,7 +42,7 @@ struct Index {
 
   build() {
     // @Entry中需要再套一层容器组件,Column或者Stack
-    Column() {
+    Stack() {
       // 使用HMNavigation容器
       HMNavigation({
         navigationId: Constants.NAVIGATION_ID, options: {
@@ -62,6 +63,8 @@ struct Index {
           }
         }.width('100%').height('100%')
       }
+      // here dialog init
+      OhosSmartDialog()
     }
     .height('100%')
     .width('100%')

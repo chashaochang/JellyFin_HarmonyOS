@@ -11,6 +11,105 @@
     {
       "name": "EntryAbility_label",
       "value": "JellyFin"
+    }, {
+      "name": "Play",
+      "value": "Play"
+    },
+    {
+      "name": "Pause",
+      "value": "Pause"
+    },
+    {
+      "name": "Switch",
+      "value": "Switch"
+    },
+    {
+      "name": "Stop",
+      "value": "Stop"
+    },
+    {
+      "name": "1x",
+      "value": "1x"
+    },
+    {
+      "name": "1_5x",
+      "value": "1.5x"
+    },
+    {
+      "name": "2x",
+      "value": "2x"
+    },
+    {
+      "name": "Video_volume",
+      "value": "Video volume"
+    },
+    {
+      "name": "Honey_the_video_is_playing_errant_The_system_is_wandering",
+      "value": "Honey, the video is playing errant. The system is wandering."
+    },
+    {
+      "name": "ijkplayer_Audio_player",
+      "value": "ijkplayer Audio player"
+    },
+    {
+      "name": "ijkplayer_Example",
+      "value": "ijkplayer Example"
+    },
+    {
+      "name": "Test_address",
+      "value": "Test address:"
+    },
+    {
+      "name": "destroy",
+      "value": "destroy"
+    },
+    {
+      "name": "startRecord",
+      "value": "startRecord"
+    },
+    {
+      "name": "stopRecord",
+      "value": "stopRecord"
+    },
+    {
+      "name": "screenshot",
+      "value": "screenshot"
+    },
+    {
+      "name": "recordIng",
+      "value": "recordIng"
+    },
+    {
+      "name": "start_record_success",
+      "value": "start record success"
+    },
+    {
+      "name": "start_record_failed",
+      "value": "start record failed"
+    },
+    {
+      "name": "record_not_enabled",
+      "value": "record not enabled"
+    },
+    {
+      "name": "stop_record_success",
+      "value": "stop record success"
+    },
+    {
+      "name": "stop_record_failed",
+      "value": "stop record failed"
+    },
+    {
+      "name": "screenshot_success",
+      "value": "screenshot success"
+    },
+    {
+      "name": "screenshot_failed",
+      "value": "screenshot failed"
+    },
+    {
+      "name": "IMAGEVIDEO_REQUEST_PERMISSION",
+      "value": "api apply image video request permission."
     }
   ]
 }

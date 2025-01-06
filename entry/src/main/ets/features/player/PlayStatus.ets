@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,33 +13,21 @@
  * limitations under the License.
  */
 
-/**
- * Player component status.
- */
-export enum PlayerStatus {
-  IDLE,
-  INITIALIZED,
-  PREPARED,
-  PLAYING,
-  PAUSED,
-  COMPLETED,
-  STOPPED,
-  RELEASED,
-  ERROR
-}
-
-/**
- * AVPlayer binding event.
- */
-export enum Events {
-  STATE_CHANGE = 'stateChange',
-  TIME_UPDATE = 'timeUpdate',
-  ERROR = 'error'
-}
-
 export enum PlayStatus {
-  INIT,
-  PLAY,
-  PAUSE,
-  DONE
+    INIT,
+    PLAY,
+    PAUSE,
+    DONE
+}
+
+export enum PlayerStatus {
+    IDLE,
+    INITIALIZED,
+    PREPARED,
+    PLAYING,
+    PAUSED,
+    COMPLETED,
+    STOPPED,
+    RELEASED,
+    ERROR
 }

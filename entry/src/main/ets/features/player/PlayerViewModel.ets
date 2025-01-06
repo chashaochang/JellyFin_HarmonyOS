@@ -1,21 +1,27 @@
-import { getPlaystateApi, getSubtitleApi, getVideosApi, PlaybackInfoResponse } from "sdk";
+import { getPlaystateApi, getSubtitleApi } from "sdk";
 import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
-import { GlobalContext, IjkPlayerControl, PlayStatus, StandardGSYVideoModel } from "player/Index";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
 import { PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
 import { AxiosResponse } from "@ohos/axios";
 import { buffer } from "@kit.ArkTS";
+import { PlayerUIState } from "./PlayerUIState";
+import { SubtitleManager } from "../../utils/SubtitleManager";
+import { PlayStatus } from "./PlayStatus";
+import { IjkMediaPlayer } from "@ohos/ijkplayer";
 
+@ObservedV2
 export class PlayerViewModel {
-  videoModel: StandardGSYVideoModel
-  queueManager: QueueManager = new QueueManager(this)
 
-  constructor(videoModel: StandardGSYVideoModel) {
-    this.videoModel = videoModel
+  queueManager: QueueManager = new QueueManager(this)
+  subtitleManager: SubtitleManager = new SubtitleManager()
+  uiState:PlayerUIState
+  @Trace url?:string
+  constructor(uiState:PlayerUIState) {
+    this.uiState = uiState
   }
 
   get mediaSourceOrNull(): JellyfinMediaSource | undefined {
@@ -23,49 +29,23 @@ export class PlayerViewModel {
   }
 
   trackSelectionHelper: TrackSelectionHelper = new TrackSelectionHelper(this)
-  _player?: IjkPlayerControl
   initialTracksSelected: boolean = false
   //由于这个player要设置完url才能得到,暂时保存初始化信息
   initSource?: JellyfinMediaSource
-
-  get playerOrNull(): IjkPlayerControl | undefined | null {
-    this._player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl
-    return this._player
-  }
-
-  //相当于prepare
-  setupPlayer() {
-
-    if (this.initSource) {
-      this.initialTracksSelected = false
-      let startTime = this.initSource.startTimeMs
-      if (startTime > 0) {
-        //这块不加延迟不好使,以后再研究
-        // setTimeout(()=>{
-        //   this._player?.seekTo(startTime)
-        // },1000)
-      }
-      //this.reportPlaybackStart(this.initSource)
-    }
-
-  }
 
   load(source: JellyfinMediaSource, url: string[], playWhenReady: boolean) {
     this.initSource = source
     for (let index = 0; index < url.length; index++) {
       const element = url[index];
       if (index === 0) {
+        this.url = element
         //设置播放器url,开始播放
-        // this.uiState.url = element
-        // this.uiState.title = source.sourceInfo.Name ?? ''
-        this.videoModel.setUrl(element, true)
-        this.videoModel.setTitle(source.sourceInfo.Name ?? '')
-        this.videoModel.playWhenReady = playWhenReady
+        this.uiState.title = source.sourceInfo.Name ?? ''
+        this.uiState.playWhenReady = playWhenReady
         this.initialTracksSelected = false
         let startTime = this.initSource.startTimeMs
         if (startTime > 0) {
-          //这块不加延迟不好使,以后再研究
-          this.playerOrNull?.seekTo(startTime)
+          this.uiState.initSeek = startTime
         }
         this.reportPlaybackStart(source)
       } else {
@@ -106,13 +86,9 @@ export class PlayerViewModel {
     if (!mediaSource) {
       return
     }
-    let player = this.playerOrNull
-    if (!player) {
-      return
-    }
-    let hasFinished = player.playStatus == PlayStatus.DONE
+    let hasFinished = this.uiState.CONTROL_PlayStatus == PlayStatus.DONE
     let lastPositionTicks =
-      hasFinished ? mediaSource.runTimeTicks : player.getCurrentPosition() * Constants.TICKS_PER_MILLISECOND
+      hasFinished ? mediaSource.runTimeTicks : IjkMediaPlayer.getInstance().getCurrentPosition() * Constants.TICKS_PER_MILLISECOND
     let playStateApi = getPlaystateApi(ApiClient.Instance())
     await playStateApi.reportPlaybackStopped({
       playbackStopInfo: {
@@ -135,7 +111,6 @@ export class PlayerViewModel {
 
   getSubtitle(source: JellyfinMediaSource) {
     if (source.selectedSubtitleStream) {
-      this.videoModel.currentSubtitle = '正在加载字幕...'
       getSubtitleApi(ApiClient.Instance()).getSubtitle({
         routeItemId: source.itemId,
         routeMediaSourceId: source.id,
@@ -143,8 +118,7 @@ export class PlayerViewModel {
         routeFormat: source.selectedSubtitleStream.Codec
       }).then((res: AxiosResponse<string, ArrayBuffer>) => {
         let resText = buffer.from(res.data).toString()
-        // console.log('subtitle', resText)
-        this.videoModel.setSubtitle(resText, source.selectedSubtitleStream!.Codec!)
+        this.uiState.subtitles = this.subtitleManager.parse(resText, source.selectedSubtitleStream!.Codec!)
       }).catch((e: BusinessError) => {
         console.error(e.message)
       })

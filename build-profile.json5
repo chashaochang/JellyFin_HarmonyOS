@@ -54,10 +54,6 @@
     {
       "name": "sdk",
       "srcPath": "./sdk",
-    },
-    {
-      "name": "player",
-      "srcPath": "./player"
     }
   ]
 }
