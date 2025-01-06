@@ -43,20 +43,24 @@ export class NativeInterface {
 
   updateMediaSession(args: string): boolean {
     console.log(TAG, 'updateMediaSession');
+    //暂时不知道哪用的
     return true
   }
 
   hideMediaSession(): boolean {
     console.log(TAG, 'hideMediaSession');
+    //暂时不知道哪用的
     return true
   }
 
   updateVolumeLevel(value: number) {
     console.log(TAG, 'updateVolumeLevel');
+    //暂时不知道哪用的
   }
 
   downloadFiles(args: string): boolean {
-    console.log(TAG, 'downloadFiles');
+    console.log(TAG, 'downloadFiles:'+args);
+    //待开发
     return true
   }
 

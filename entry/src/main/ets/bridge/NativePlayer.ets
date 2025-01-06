@@ -1,14 +1,12 @@
 import { PlayOptions } from "../player/interaction/PlayOptions";
-// import { GlobalContext } from "player/src/main/ets/components/mainpage/GlobalContext";
-// import { IjkPlayerControl } from "player/Index";
-import { Constants } from "../utils/Constants";
 import { audio } from "@kit.AudioKit";
 import { ActivityEventType } from "../events/ActivityEvent";
+import { emitter } from "@kit.BasicServicesKit";
+import { Constants } from "../utils/Constants";
 
 const TAG = 'NativePlayer'
 
 export class NativePlayer {
-
   private mAudioManager: audio.AudioManager = audio.getAudioManager();
   volumeManager: audio.AudioVolumeManager = this.mAudioManager.getVolumeManager();
 
@@ -27,53 +25,67 @@ export class NativePlayer {
 
   pausePlayer() {
     console.log(TAG, 'pausePlayer');
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    // if (player) {
-    //   player.pause();
-    // }
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Pause'
+      }
+    })
   }
 
   resumePlayer() {
     console.log(TAG, 'resumePlayer');
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    // if (player) {
-    //   player.resumePlay();
-    // }
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Resume'
+      }
+    })
   }
 
   stopPlayer() {
     console.log(TAG, 'stopPlayer');
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    // if (player) {
-    //   player.stop();
-    // }
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Stop'
+      }
+    })
   }
 
   destroyPlayer() {
     console.log(TAG, 'destroyPlayer');
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    // if (player) {
-    //   player.release();
-    // }
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Destroy'
+      }
+    })
   }
 
   seek(ticks: number) {
     console.log(TAG, 'seek');
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    // if (player) {
-    //   player.seekTo(ticks / Constants.TICKS_PER_MILLISECOND);
-    // }
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Seek',
+        'args': ticks / Constants.TICKS_PER_MILLISECOND
+      }
+    })
   }
 
   seekMs(ms: number) {
     console.log(TAG, 'seekMs');
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    // if (player) {
-    //   player.seekTo(ms);
-    // }
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Seek',
+        'args': ms + ''
+      }
+    })
   }
 
   setVolume(volume: number) {
     console.log(TAG, 'setVolume');
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'SetVolume',
+        'args': volume
+      }
+    })
   }
 }

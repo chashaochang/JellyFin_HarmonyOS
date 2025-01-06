@@ -132,6 +132,37 @@ export struct PlayerView {
           case 'onPageHide':
             this.pause()
             break
+          case 'Pause':
+            this.pause()
+            break
+          case 'Resume':
+            this.startPlayOrResumePlay()
+            break
+          case 'Stop':
+            this.stop()
+            break
+          case 'Destroy':
+            this.stop()
+            break
+          case 'Seek':
+            let ms = data.data['args'] as number|undefined
+            if(ms){
+              this.seekTo(ms+'')
+            }
+            break
+          case 'setVolume':
+            let volume = data.data['args'] as number|undefined
+            if(volume){
+              if (this.mAudioManager) {
+                this.mAudioManager.setVolume(audio.AudioVolumeType.MEDIA, volume, (err: BusinessError) => {
+                  if (err) {
+                    LogUtils.getInstance().LOGI(`Failed to set the volume. ${err}`);
+                    return;
+                  }
+                })
+              }
+            }
+            break
         }
       }
     })
