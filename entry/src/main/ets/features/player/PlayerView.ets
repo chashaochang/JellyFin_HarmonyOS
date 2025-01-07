@@ -14,12 +14,8 @@ import {
 } from "@ohos/ijkplayer";
 import { PlayStatus } from "./PlayStatus";
 import prompt from "@ohos.promptAction";
-import fs from '@ohos.file.fs';
-import { photoAccessHelper } from "@kit.MediaLibraryKit";
-import { abilityAccessCtrl } from "@kit.AbilityKit";
 import { BusinessError, emitter, settings } from "@kit.BasicServicesKit";
 import { Constants } from "../../utils/Constants";
-import { WindowUtil } from "../../utils/WindowUtil";
 import { PlayerUIState } from "./PlayerUIState";
 import { SmartDialog } from "ohos_smart_dialog";
 import { SubtitleItem } from "../../utils/SubtitleManager";
@@ -92,6 +88,24 @@ export struct PlayerView {
   private mAudioManager: audio.AudioManager | null = null;
   sec: number = 3;
   @Consumer() screenIsFull: boolean = false;
+
+  @Monitor('screenIsFull')
+  onScreenChanged() {
+    if (this.screenIsFull) {
+      windowClass?.setWindowLayoutFullScreen(true)
+      windowClass?.setWindowSystemBarEnable([])
+      if(canIUse('SystemCapability.Window.SessionManager')){
+        windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_LANDSCAPE);
+      }
+    } else {
+      windowClass?.setWindowLayoutFullScreen(false)
+      windowClass?.setWindowSystemBarEnable(['status', 'navigation'])
+      if(canIUse('SystemCapability.Window.SessionManager')){
+        windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_PORTRAIT);
+      }
+    }
+  }
+
   @Consumer() uiState: PlayerUIState = new PlayerUIState()
 
   @Monitor('uiState.subtitles')
@@ -118,8 +132,10 @@ export struct PlayerView {
     let audioVolumeGroupManager = volumeManager.getVolumeGroupManagerSync(groupid);
     this.mMaxVolumeValue = audioVolumeGroupManager.getMaxVolumeSync(audio.AudioVolumeType.MEDIA);
     this.mCurrentVolumeValue = audioVolumeGroupManager.getVolumeSync(audio.AudioVolumeType.MEDIA);
-    this.mCurrentBrightness =
-      Number(settings.getValueSync(getContext(this), settings.display.SCREEN_BRIGHTNESS_STATUS, '10'));
+    if(canIUse('SystemCapability.Applications.Settings.Core')){
+      this.mCurrentBrightness =
+        Number(settings.getValueSync(getContext(this), settings.display.SCREEN_BRIGHTNESS_STATUS, '10'));
+    }
     emitter.on(Constants.PLAYER_EVENT, (data) => {
       if (data.data && data.data['eventName']) {
         let name = data.data['eventName'] as string
@@ -145,14 +161,14 @@ export struct PlayerView {
             this.stop()
             break
           case 'Seek':
-            let ms = data.data['args'] as number|undefined
-            if(ms){
-              this.seekTo(ms+'')
+            let ms = data.data['args'] as number | undefined
+            if (ms) {
+              this.seekTo(ms + '')
             }
             break
           case 'setVolume':
-            let volume = data.data['args'] as number|undefined
-            if(volume){
+            let volume = data.data['args'] as number | undefined
+            if (volume) {
               if (this.mAudioManager) {
                 this.mAudioManager.setVolume(audio.AudioVolumeType.MEDIA, volume, (err: BusinessError) => {
                   if (err) {
@@ -187,7 +203,7 @@ export struct PlayerView {
     LogUtils.getInstance().LOGI("aboutToDisappear");
     this.mDestroyPage = true;
     this.mIjkMediaPlayer.setScreenOnWhilePlaying(false);
-    this.stopRecord(false);
+    // this.stopRecord(false);
     if (this.uiState.CONTROL_PlayStatus != PlayStatus.INIT) {
       this.stop();
     }
@@ -279,7 +295,6 @@ export struct PlayerView {
           })
           .onClick(() => {
             this.screenIsFull = false
-            WindowUtil.setMainWindowRestricted(getContext(this))
           })
         Text(this.uiState.title)
           .fontColor(Color.White)
@@ -423,7 +438,6 @@ export struct PlayerView {
 
         Image($r('app.media.ic_full')).width(48).height(48).padding(12).onClick(() => {
           this.screenIsFull = true
-          WindowUtil.setMainWindowLandscape(getContext(this))
         })
       }.height(52).width('100%')
     }
@@ -585,6 +599,7 @@ export struct PlayerView {
         .visibility(this.loadingVisible)
         .border({ width: 0 })
         .borderStyle(BorderStyle.Dashed)
+
     }
     .width('100%')
     .backgroundColor($r('sys.color.black'))
@@ -671,7 +686,7 @@ export struct PlayerView {
             touchStartY = touchY;
           }
         })
-        .onActionEnd((event: GestureEvent | undefined) => {
+        .onActionEnd((_event: GestureEvent | undefined) => {
           LogUtils.getInstance().LOGI('Vertical Pan End')
           this.showVolumeUi = false;
           this.showBrightnessUi = false;
@@ -743,7 +758,7 @@ export struct PlayerView {
             this.mSeekTimePosition = Number((seekTimePosition / totalTimeDuration).toFixed(2)) * 100;
           }
         })
-        .onActionEnd((event: GestureEvent | undefined) => {
+        .onActionEnd((_event: GestureEvent | undefined) => {
           if (!this.mIjkMediaPlayer) {
             return;
           }
@@ -765,7 +780,7 @@ export struct PlayerView {
           this.isHorizontalDrag = false;
           this.showSeekProgressUi = false;
         }),
-      TapGesture({ count: 2 }).onAction((event: GestureEvent | undefined) => {
+      TapGesture({ count: 2 }).onAction((_event: GestureEvent | undefined) => {
         if (this.loadingVisible == Visibility.Visible) {
           return;
         }
@@ -780,7 +795,7 @@ export struct PlayerView {
         }
       })
     ))
-    .onAreaChange((oldValue: Area, newValue: Area) => {
+    .onAreaChange((_oldValue: Area, newValue: Area) => {
       changeWidth = newValue.width as number;
       changeHeight = newValue.height as number;
     })
@@ -959,7 +974,7 @@ export struct PlayerView {
         setTimeout(() => {
           this.seekTo(this.uiState.initSeek + "")
           this.uiState.initSeek = 0
-        }, 1000)
+        }, 1500)
       }
       this.timeCountdown()
     }
@@ -1263,112 +1278,112 @@ export struct PlayerView {
     return false;
   }
 
-  private startRecord() {
-    let isRecord = this.mIjkMediaPlayer.isRecord()
-    if (isRecord) {
-      prompt.showToast({
-        message: $r('app.string.recordIng')
-      });
-      return
-    }
-    this.recordSaveFilePath = getContext(this).cacheDir + "/record.mp4";
-    let result = this.mIjkMediaPlayer.startRecord(this.recordSaveFilePath);
-    prompt.showToast({
-      message: result ? $r('app.string.start_record_success') : $r('app.string.start_record_failed')
-    });
-  }
+  // private startRecord() {
+  //   let isRecord = this.mIjkMediaPlayer.isRecord()
+  //   if (isRecord) {
+  //     prompt.showToast({
+  //       message: $r('app.string.recordIng')
+  //     });
+  //     return
+  //   }
+  //   this.recordSaveFilePath = getContext(this).cacheDir + "/record.mp4";
+  //   let result = this.mIjkMediaPlayer.startRecord(this.recordSaveFilePath);
+  //   prompt.showToast({
+  //     message: result ? $r('app.string.start_record_success') : $r('app.string.start_record_failed')
+  //   });
+  // }
 
-  private stopRecord(isShowTip: boolean) {
-    let isRecord = this.mIjkMediaPlayer.isRecord()
-    if (!isRecord) {
-      if (isShowTip) {
-        prompt.showToast({
-          message: $r('app.string.record_not_enabled')
-        });
-      }
-      return
-    }
-    this.recordProgressVisible = Visibility.Visible;
-    let that = this;
-    this.mIjkMediaPlayer.stopRecord().then((result) => {
-      that.recordProgressVisible = Visibility.None;
-      if (!result) {
-        prompt.showToast({
-          message: $r('app.string.stop_record_failed')
-        });
-        return;
-      }
-      let atManager = abilityAccessCtrl.createAtManager();
-      atManager.requestPermissionsFromUser(getContext(that), ['ohos.permission.WRITE_IMAGEVIDEO']).then(async () => {
-        let photoType: photoAccessHelper.PhotoType = photoAccessHelper.PhotoType.VIDEO;
-        let extension: string = 'mp4';
-        let options: photoAccessHelper.CreateOptions = {
-          title: "record_" + new Date().getTime() + ""
-        }
-        let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(getContext(that));
-        phAccessHelper.createAsset(photoType, extension, options, (err, uri) => {
-          LogUtils.getInstance().LOGI(`createAsset success uri:${uri}`)
-          if (uri !== undefined) {
-            let recordFile = fs.openSync(that.recordSaveFilePath);
-            let albumFile = fs.openSync(uri, fs.OpenMode.READ_WRITE);
-            fs.copyFileSync(recordFile.fd, albumFile.fd);
-            fs.closeSync(recordFile);
-            fs.closeSync(albumFile);
-            prompt.showToast({
-              message: $r('app.string.stop_record_success')
-            });
-          } else {
-            prompt.showToast({
-              message: $r('app.string.stop_record_failed')
-            });
-            LogUtils.getInstance().LOGI(`createAsset failed, error: ${err.code}, ${err.message}`)
-          }
-        });
-      })
-    })
-  }
-
-  private screenshot() {
-    let that = this;
-    let saveFilePath = getContext(this).cacheDir + "/screen.jpg";
-    this.screenshotProgressVisible = Visibility.Visible;
-    this.mIjkMediaPlayer.screenshot(saveFilePath).then((result) => {
-      that.screenshotProgressVisible = Visibility.None;
-      if (!result) {
-        prompt.showToast({
-          message: $r('app.string.screenshot_failed')
-        });
-        return;
-      }
-      let atManager = abilityAccessCtrl.createAtManager();
-      atManager.requestPermissionsFromUser(getContext(that), ['ohos.permission.WRITE_IMAGEVIDEO']).then(async () => {
-        let photoType: photoAccessHelper.PhotoType = photoAccessHelper.PhotoType.IMAGE;
-        let extension: string = 'jpg';
-        let options: photoAccessHelper.CreateOptions = {
-          title: "screenshot_" + new Date().getTime() + ""
-        }
-        let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(getContext(that));
-        phAccessHelper.createAsset(photoType, extension, options, (err, uri) => {
-          LogUtils.getInstance().LOGI(`createAsset success uri:${uri}`)
-          if (uri !== undefined) {
-            let screenshotFile = fs.openSync(saveFilePath);
-            let albumFile = fs.openSync(uri, fs.OpenMode.READ_WRITE);
-            fs.copyFileSync(screenshotFile.fd, albumFile.fd);
-            fs.closeSync(screenshotFile);
-            fs.closeSync(albumFile);
-            prompt.showToast({
-              message: $r('app.string.screenshot_success')
-            });
-          } else {
-            prompt.showToast({
-              message: $r('app.string.screenshot_failed')
-            });
-            LogUtils.getInstance().LOGI(`createAsset failed, error: ${err.code}, ${err.message}`)
-          }
-        });
-      })
-    });
-  }
+  // private stopRecord(isShowTip: boolean) {
+  //   let isRecord = this.mIjkMediaPlayer.isRecord()
+  //   if (!isRecord) {
+  //     if (isShowTip) {
+  //       prompt.showToast({
+  //         message: $r('app.string.record_not_enabled')
+  //       });
+  //     }
+  //     return
+  //   }
+  //   this.recordProgressVisible = Visibility.Visible;
+  //   let that = this;
+  //   this.mIjkMediaPlayer.stopRecord().then((result) => {
+  //     that.recordProgressVisible = Visibility.None;
+  //     if (!result) {
+  //       prompt.showToast({
+  //         message: $r('app.string.stop_record_failed')
+  //       });
+  //       return;
+  //     }
+  //     let atManager = abilityAccessCtrl.createAtManager();
+  //     atManager.requestPermissionsFromUser(getContext(that), ['ohos.permission.WRITE_IMAGEVIDEO']).then(async () => {
+  //       let photoType: photoAccessHelper.PhotoType = photoAccessHelper.PhotoType.VIDEO;
+  //       let extension: string = 'mp4';
+  //       let options: photoAccessHelper.CreateOptions = {
+  //         title: "record_" + new Date().getTime() + ""
+  //       }
+  //       let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(getContext(that));
+  //       phAccessHelper.createAsset(photoType, extension, options, (err, uri) => {
+  //         LogUtils.getInstance().LOGI(`createAsset success uri:${uri}`)
+  //         if (uri !== undefined) {
+  //           let recordFile = fs.openSync(that.recordSaveFilePath);
+  //           let albumFile = fs.openSync(uri, fs.OpenMode.READ_WRITE);
+  //           fs.copyFileSync(recordFile.fd, albumFile.fd);
+  //           fs.closeSync(recordFile);
+  //           fs.closeSync(albumFile);
+  //           prompt.showToast({
+  //             message: $r('app.string.stop_record_success')
+  //           });
+  //         } else {
+  //           prompt.showToast({
+  //             message: $r('app.string.stop_record_failed')
+  //           });
+  //           LogUtils.getInstance().LOGI(`createAsset failed, error: ${err.code}, ${err.message}`)
+  //         }
+  //       });
+  //     })
+  //   })
+  // }
+  //
+  // private screenshot() {
+  //   let that = this;
+  //   let saveFilePath = getContext(this).cacheDir + "/screen.jpg";
+  //   this.screenshotProgressVisible = Visibility.Visible;
+  //   this.mIjkMediaPlayer.screenshot(saveFilePath).then((result) => {
+  //     that.screenshotProgressVisible = Visibility.None;
+  //     if (!result) {
+  //       prompt.showToast({
+  //         message: $r('app.string.screenshot_failed')
+  //       });
+  //       return;
+  //     }
+  //     let atManager = abilityAccessCtrl.createAtManager();
+  //     atManager.requestPermissionsFromUser(getContext(that), ['ohos.permission.WRITE_IMAGEVIDEO']).then(async () => {
+  //       let photoType: photoAccessHelper.PhotoType = photoAccessHelper.PhotoType.IMAGE;
+  //       let extension: string = 'jpg';
+  //       let options: photoAccessHelper.CreateOptions = {
+  //         title: "screenshot_" + new Date().getTime() + ""
+  //       }
+  //       let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(getContext(that));
+  //       phAccessHelper.createAsset(photoType, extension, options, (err, uri) => {
+  //         LogUtils.getInstance().LOGI(`createAsset success uri:${uri}`)
+  //         if (uri !== undefined) {
+  //           let screenshotFile = fs.openSync(saveFilePath);
+  //           let albumFile = fs.openSync(uri, fs.OpenMode.READ_WRITE);
+  //           fs.copyFileSync(screenshotFile.fd, albumFile.fd);
+  //           fs.closeSync(screenshotFile);
+  //           fs.closeSync(albumFile);
+  //           prompt.showToast({
+  //             message: $r('app.string.screenshot_success')
+  //           });
+  //         } else {
+  //           prompt.showToast({
+  //             message: $r('app.string.screenshot_failed')
+  //           });
+  //           LogUtils.getInstance().LOGI(`createAsset failed, error: ${err.code}, ${err.message}`)
+  //         }
+  //       });
+  //     })
+  //   });
+  // }
 
   private timeCountdown() {
     clearTimeout(uiTime);

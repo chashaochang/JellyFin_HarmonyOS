@@ -4,7 +4,7 @@ import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
-import { PiPWindow } from "@kit.ArkUI"
+import { display, PiPWindow, window } from "@kit.ArkUI"
 import { Constants } from "../../utils/Constants"
 import { common } from "@kit.AbilityKit"
 import { Subtitle } from "../../entity/Subtitle"
@@ -13,7 +13,7 @@ import { WindowUtil } from "../../utils/WindowUtil"
 import { emitter } from "@kit.BasicServicesKit"
 import { PlayerUIState } from "./PlayerUIState"
 
-@HMRouter({ pageUrl: '/Player', singleton: true, lifecycle: 'playerLifecycle' })
+@HMRouter({ pageUrl: '/Player', singleton: true, lifecycle: 'playerLifecycle',interceptors:['jumpInfoInterceptor'] })
 @ComponentV2
 export struct PlayerScreen {
   options: PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
@@ -27,6 +27,15 @@ export struct PlayerScreen {
   }
 
   async aboutToAppear(): Promise<void> {
+    let callback = async () => {
+      let defaultDisplay = display.getDefaultDisplaySync()
+      this.screenIsFull = defaultDisplay.width > defaultDisplay.height
+    }
+    try {
+      display.on("change", callback); // 监听屏幕状态改变
+    } catch (exception) {
+      console.error('PlayerScreen', 'Failed to register callback. Code: ' + JSON.stringify(exception));
+    }
     emitter.on(Constants.PLAYER_EVENT, (data) => {
       if (data.data && data.data['eventName']) {
         let name = data.data['eventName'] as string
@@ -64,7 +73,6 @@ export struct PlayerScreen {
 
   aboutToDisappear() {
     emitter.off(Constants.PLAYER_EVENT.eventId)
-    WindowUtil.setMainWindowRestricted(getContext(this))
     //后台播放音频
     // if (!this.viewModel.notificationHelper.allowBackgroundAudio) {
     //   this.viewModel.pause()
@@ -162,7 +170,6 @@ export struct PlayerScreen {
   onBackPress(): boolean | void {
     if (this.screenIsFull) {
       this.screenIsFull = false
-      WindowUtil.setMainWindowRestricted(getContext(this))
     } else {
       HMRouterMgr.pop()
     }
