@@ -15,12 +15,12 @@ import { IjkMediaPlayer } from "@ohos/ijkplayer";
 
 @ObservedV2
 export class PlayerViewModel {
-
   queueManager: QueueManager = new QueueManager(this)
   subtitleManager: SubtitleManager = new SubtitleManager()
-  uiState:PlayerUIState
-  @Trace url?:string
-  constructor(uiState:PlayerUIState) {
+  uiState: PlayerUIState
+  @Trace url?: string
+
+  constructor(uiState: PlayerUIState) {
     this.uiState = uiState
   }
 
@@ -35,6 +35,7 @@ export class PlayerViewModel {
 
   load(source: JellyfinMediaSource, url: string[], playWhenReady: boolean) {
     this.initSource = source
+    this.uiState.audioTrackIndex = source.audioStreamIndex
     for (let index = 0; index < url.length; index++) {
       const element = url[index];
       if (index === 0) {
@@ -88,7 +89,8 @@ export class PlayerViewModel {
     }
     let hasFinished = this.uiState.CONTROL_PlayStatus == PlayStatus.DONE
     let lastPositionTicks =
-      hasFinished ? mediaSource.runTimeTicks : IjkMediaPlayer.getInstance().getCurrentPosition() * Constants.TICKS_PER_MILLISECOND
+      hasFinished ? mediaSource.runTimeTicks :
+        IjkMediaPlayer.getInstance().getCurrentPosition() * Constants.TICKS_PER_MILLISECOND
     let playStateApi = getPlaystateApi(ApiClient.Instance())
     await playStateApi.reportPlaybackStopped({
       playbackStopInfo: {

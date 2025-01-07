@@ -970,12 +970,6 @@ export struct PlayerView {
       this.stopProgressTask();
       this.startProgressTask();
       this.play(this.videoUrl.toString());
-      if (this.uiState.initSeek > 0) {
-        setTimeout(() => {
-          this.seekTo(this.uiState.initSeek + "")
-          this.uiState.initSeek = 0
-        }, 1500)
-      }
       this.timeCountdown()
     }
     if (this.uiState.CONTROL_PlayStatus == PlayStatus.PAUSE) {
@@ -1151,6 +1145,15 @@ export struct PlayerView {
     let mOnPreparedListener: OnPreparedListener = {
       onPrepared: () => {
         LogUtils.getInstance().LOGI("setOnPreparedListener-->go");
+        if (this.uiState.initSeek > 0) {
+          setTimeout(() => {
+            this.seekTo(this.uiState.initSeek + "")
+            this.uiState.initSeek = 0
+            if(this.uiState.audioTrackIndex){
+              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex+'')
+            }
+          }, 500)
+        }
       }
     }
     this.mIjkMediaPlayer.setOnPreparedListener(mOnPreparedListener);
