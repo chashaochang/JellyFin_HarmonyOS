@@ -17,3 +17,5 @@ export { PlaybackInfoResponse } from './src/main/ets/generated-client/models/pla
 export { getItemsApi } from './src/main/ets/utils/api/items-api'
 
 export { getSubtitleApi } from './src/main/ets/utils/api/subtitle-api'
+
+export { ImageUrlsApi } from './src/main/ets/utils/api/image-urls-api'

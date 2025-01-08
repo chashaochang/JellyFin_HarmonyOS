@@ -33,6 +33,7 @@ export struct PlayerScreen {
   }
 
   async aboutToAppear(): Promise<void> {
+    this.viewModel.initAVSession()
     let callback = async () => {
       let defaultDisplay = display.getDefaultDisplaySync()
       this.screenIsFull = defaultDisplay.width > defaultDisplay.height
@@ -89,6 +90,7 @@ export struct PlayerScreen {
     let context = getContext(this) as common.UIAbilityContext;
     context.eventHub.off('onForeground')
     context.eventHub.off('onBackground')
+    this.viewModel.release()
   }
 
   async createPipController() {

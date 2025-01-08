@@ -9,9 +9,11 @@ import {
 import { Constants } from '../../utils/Constants'
 import { CodecHelpers } from '../deviceprofile/CodecHelpers'
 import { ExternalSubtitleStream } from './ExternalSubtitleStream'
+import { avSession, avSession as AVSessionManager } from '@kit.AVSessionKit';
+import { ImageUrlsApi } from 'sdk'
+import { ApiClient } from '../../network/ApiClient'
 
 export class JellyfinMediaSource {
-
   itemId: string
   item: BaseItemDto
   sourceInfo: MediaSourceInfo
@@ -161,19 +163,35 @@ export class JellyfinMediaSource {
     this.startTimeTicks = value * Constants.TICKS_PER_MILLISECOND
   }
 
-  selectSubtitleStream(stream: MediaStream|undefined|null) :boolean{
+  selectSubtitleStream(stream: MediaStream | undefined | null): boolean {
     if (!stream) {
       this.selectedSubtitleStream = undefined
       return true
     }
-    if(stream.Type == MediaStreamType.Subtitle){
+    if (stream.Type == MediaStreamType.Subtitle) {
       if (this.mediaStreams[stream.Index!] !== stream) {
         return false
       }
       this.selectedSubtitleStream = stream
       return true
-    }else{
+    } else {
       throw new Error('stream.Type Require')
     }
+  }
+
+  toMediaMetadata(): AVSessionManager.AVMetadata {
+    let image =
+      ApiClient.Instance().basePath + new ImageUrlsApi().getItemImageUrlById(this.item.SeriesId ?? this.itemId)
+    // 设置必要的媒体信息
+    let metadata: AVSessionManager.AVMetadata = {
+      assetId: this.itemId, // 由应用指定，用于标识应用媒体库里的媒体
+      title: this.item.SeriesName ?? this.item.Name ?? "TITLE",
+      mediaImage: image,
+      subtitle: this.item.SeriesName ? (this.item.Name ?? '') : '',
+      // 发现Cast+ Stream 和 DLNA协议设备，TYPE_CAST_PLUS_STREAM为默认必选。
+      filter: avSession.ProtocolType.TYPE_CAST_PLUS_STREAM | avSession.ProtocolType.TYPE_DLNA,
+      duration:this.runTimeMs,
+    };
+    return metadata
   }
 }

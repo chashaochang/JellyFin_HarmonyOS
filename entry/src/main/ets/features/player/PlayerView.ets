@@ -21,6 +21,8 @@ import { SmartDialog } from "ohos_smart_dialog";
 import { SubtitleItem } from "../../utils/SubtitleManager";
 import { audio } from "@kit.AudioKit";
 import { window } from "@kit.ArkUI";
+import avSessionManager from "../../utils/AVSessionManager";
+import { avSession } from "@kit.AVSessionKit";
 
 let uiTime: number = 0;
 let touchStartX: number = 0;
@@ -32,11 +34,13 @@ let windowClass: window.Window | undefined = undefined;
 @ComponentV2
 export struct PlayerView {
   @Param @Require videoUrl: string
+
   @Monitor('videoUrl')
-  onUrlChange(){
+  onUrlChange() {
     this.stop()
     this.startPlayOrResumePlay()
   }
+
   @Param @Require onNext: () => void
   @Local progressValue: number = 0;
   @Local currentTime: string = "00:00";
@@ -121,6 +125,11 @@ export struct PlayerView {
     }
   }
 
+  @Monitor('uiState.playerStatus')
+  onPlayerStateChanged() {
+    this.sendAVSessionState(this.uiState.playerStatus)
+  }
+
   aboutToAppear() {
     try {
       let promise = window.getLastWindow(getContext(this));
@@ -157,6 +166,7 @@ export struct PlayerView {
           case 'Pause':
             this.pause()
             break
+          case 'Play':
           case 'Resume':
             this.startPlayOrResumePlay()
             break
@@ -185,6 +195,11 @@ export struct PlayerView {
               }
             }
             break
+          case 'Speed':
+            let speed = data.data['args'] as string | undefined
+            if (speed) {
+              this.playSpeed = speed
+            }
         }
       }
     })
@@ -993,6 +1008,7 @@ export struct PlayerView {
       this.setProgress()
       this.timeCountdown()
     }
+    this.uiState.playerStatus = PlayerStatus.PLAYING
   }
 
   private completionNum(num: number): string | number {
@@ -1008,7 +1024,7 @@ export struct PlayerView {
     let newSeconds: number | string = totalSeconds % 60;
     let minutes: number | string = (totalSeconds / 60) % 60;
     let hours: number | string = totalSeconds / 3600;
-    LogUtils.getInstance().LOGI("stringForTime hours:" + hours + ",minutes:" + minutes + ",seconds:" + newSeconds);
+    //LogUtils.getInstance().LOGI("stringForTime hours:" + hours + ",minutes:" + minutes + ",seconds:" + newSeconds);
     hours = this.completionNum(Math.floor(Math.floor(hours * 100) / 100));
     minutes = this.completionNum(Math.floor(Math.floor(minutes * 100) / 100));
     newSeconds = Math.floor(Math.floor(newSeconds * 100) / 100)
@@ -1041,8 +1057,8 @@ export struct PlayerView {
         this.progressValue = pos;
       }
     }
-    LogUtils.getInstance()
-      .LOGI("setProgress position:" + position + ",duration:" + duration + ",progressValue:" + pos);
+    // LogUtils.getInstance()
+    //   .LOGI("setProgress position:" + position + ",duration:" + duration + ",progressValue:" + pos);
     this.totalTime = this.stringForTime(duration);
     if (position > duration) {
       position = duration;
@@ -1056,7 +1072,7 @@ export struct PlayerView {
   private startProgressTask() {
     let that = this;
     this.updateProgressTimer = setInterval(() => {
-      LogUtils.getInstance().LOGI("startProgressTask");
+      // LogUtils.getInstance().LOGI("startProgressTask");
       if (!that.mDestroyPage) {
         that.setProgress();
       }
@@ -1064,7 +1080,7 @@ export struct PlayerView {
   }
 
   private stopProgressTask() {
-    LogUtils.getInstance().LOGI("stopProgressTask");
+    // LogUtils.getInstance().LOGI("stopProgressTask");
     clearInterval(this.updateProgressTimer);
   }
 
@@ -1095,7 +1111,7 @@ export struct PlayerView {
     }
     this.uiState.CONTROL_PlayStatus = PlayStatus.PLAY;
     //设置debug模式
-    this.mIjkMediaPlayer.setDebug(true);
+    this.mIjkMediaPlayer.setDebug(false);
     //初始化配置
     this.mIjkMediaPlayer.native_setup();
     // 初始化配置后需要重新设置音频流音量，否则音量为默认值1.0
@@ -1228,11 +1244,12 @@ export struct PlayerView {
 
     let mOnInfoListener: OnInfoListener = {
       onInfo: (what: number, extra: number) => {
-        LogUtils.getInstance().LOGI("OnInfoListener-->go:" + what + "===" + extra);
+        //LogUtils.getInstance().LOGI("OnInfoListener-->go:" + what + "===" + extra);
         that.hideLoadIng();
       }
     }
     this.mIjkMediaPlayer.setOnInfoListener(mOnInfoListener);
+
 
 
     let mOnErrorListener: OnErrorListener = {
@@ -1289,6 +1306,7 @@ export struct PlayerView {
   private seekTo(value: string) {
     this.mIjkMediaPlayer.seekTo(value);
     this.seekToSubtitle()
+    this.sendAVSessionState(this.uiState.playerStatus)
   }
 
   debounce() {
@@ -1420,6 +1438,50 @@ export struct PlayerView {
         this.sec--;
       }
     }, 1000)
+  }
+
+  sendAVSessionState(status: number) {
+    let playbackState: avSession.AVPlaybackState = {
+      speed:Number(this.playSpeed.replace('f','')),
+      position:{
+        elapsedTime:this.mIjkMediaPlayer.getCurrentPosition(),
+        updateTime:Date.now()
+      },
+    }
+    switch (status) {
+      case PlayerStatus.IDLE:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_IDLE
+        break
+      case PlayerStatus.INITIALIZED:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_INITIAL
+        break
+      case PlayerStatus.PREPARED:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_PREPARE
+        break
+      case PlayerStatus.PLAYING:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_PLAY
+        break
+      case PlayerStatus.PAUSED:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_PAUSE
+        break
+      case PlayerStatus.COMPLETED:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_COMPLETED
+        break
+      case PlayerStatus.STOPPED:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_STOP
+        break
+      case PlayerStatus.RELEASED:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_RELEASED
+        break
+      case PlayerStatus.ERROR:
+        playbackState.state = avSession.PlaybackState.PLAYBACK_STATE_ERROR
+        break
+    }
+    avSessionManager.getSession()?.setAVPlaybackState(playbackState).then(() => {
+      console.info('SetAVPlaybackState successfully');
+    }).catch((err: BusinessError) => {
+      console.error(`SetAVPlaybackState BusinessError: code: ${err.code}, message: ${err.message}`);
+    });
   }
 }
 
