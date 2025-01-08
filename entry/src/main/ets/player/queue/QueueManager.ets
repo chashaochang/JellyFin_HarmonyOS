@@ -4,10 +4,13 @@ import { PlayerException } from "../PlayerException";
 import { JellyfinMediaSource } from "../source/JellyfinMediaSource";
 import { MediaSourceResolver } from "../source/MediaSourceResolver";
 import { BusinessError } from "@kit.BasicServicesKit";
-import { getVideosApi } from "sdk";
-import { MediaProtocol, MediaStream, PlayMethod } from "sdk/src/main/ets/generated-client/models";
+import { getItemsApi, getVideosApi } from "sdk";
+import {
+  BaseItemDtoQueryResult,
+  MediaProtocol, MediaStream, PlayMethod } from "sdk/src/main/ets/generated-client/models";
 import { ApiClient } from "../../network/ApiClient";
 import { VideosApi } from "sdk/src/main/ets/generated-client/api/videos-api";
+import { AxiosResponse } from "@ohos/axios";
 
 @ObservedV2
 export class QueueManager {
@@ -18,8 +21,8 @@ export class QueueManager {
   }
 
   private videosApi: VideosApi = getVideosApi(ApiClient.Instance())
-  private currentQueue: string[] = []
-  private currentQueueIndex: number = 0
+  @Trace currentQueue: string[] = []
+  @Trace currentQueueIndex: number = 0
   private mediaSourceResolver: MediaSourceResolver = new MediaSourceResolver()
   @Trace currentMediaSourceOrNull?: JellyfinMediaSource
   @Monitor('currentMediaSourceOrNull')
@@ -186,5 +189,18 @@ export class QueueManager {
 
   selectSubtitleStreamAndRestartPlayback(selectedMediaStream: MediaStream): boolean {
     return true
+  }
+
+  async getItems():Promise<AxiosResponse<BaseItemDtoQueryResult>>{
+    return getItemsApi(ApiClient.Instance()).getItems({
+      ids: this.currentQueue
+    })
+  }
+  async getItem(id:string):Promise<AxiosResponse<BaseItemDtoQueryResult>>{
+    return getItemsApi(ApiClient.Instance()).getItems({
+      ids:Array.of(id),
+      includeItemTypes: ['Series'],
+      fields: ['Overview', 'Genres'],
+    })
   }
 }

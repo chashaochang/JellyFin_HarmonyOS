@@ -12,6 +12,7 @@ import { PlayerView } from "./PlayerView"
 import { WindowUtil } from "../../utils/WindowUtil"
 import { emitter } from "@kit.BasicServicesKit"
 import { PlayerUIState } from "./PlayerUIState"
+import { QueueItem } from "../../entity/QueueItem"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -207,13 +208,83 @@ export struct PlayerScreen {
       }.width('100%')
       .alignContent(Alignment.Top)
 
-      Column() {
+      Column({ space: 10 }) {
         //标题
         Text(this.viewModel.uiState.seriesName ?? this.viewModel.uiState.title)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .width('100%')
           .textAlign(TextAlign.Start)
+
+        Text(this.uiState.overview)
+          .width('100%')
+          .textAlign(TextAlign.Start)
+          .maxLines(3)
+          .textOverflow({
+            overflow: TextOverflow.Ellipsis
+          })
+          .ellipsisMode(EllipsisMode.END)
+
+        Row() {
+          ForEach(this.uiState.genres, (item: string) => {
+            Text(item)
+              .fontSize(12)
+              .fontColor(Color.White)
+              .padding({
+                left: 6,
+                right: 6,
+                top: 2,
+                bottom: 2
+              })
+              .backgroundColor($r('app.color.color_main'))
+              .borderColor(Color.Black)
+              .borderRadius(4)
+          })
+        }.justifyContent(FlexAlign.Start)
+        .width('100%')
+
+        Row() {
+          //标题
+          Text('选集')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .textAlign(TextAlign.Start)
+          Blank().layoutWeight(1)
+          Image($r('app.media.ic_right')).width(24).height(24).padding(8)
+        }.alignItems(VerticalAlign.Bottom)
+
+        List({
+          scroller: this.uiState.scroller,
+        }) {
+          ForEach(this.uiState.playList, (item: QueueItem) => {
+            ListItem() {
+              Column({ space: 2 }) {
+                Text(`第 ${item.playIndex} 集`)
+                  .fontSize(14)
+                  .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+                Text(item.name)
+                  .width('100%')
+                  .fontSize(14)
+                  .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+                  .maxLines(1)
+                  .textOverflow({
+                    overflow: TextOverflow.Ellipsis
+                  })
+                  .ellipsisMode(EllipsisMode.END)
+              }
+              .width(140)
+              .alignItems(HorizontalAlign.Start)
+              .justifyContent(FlexAlign.Center)
+              .padding(12)
+              .backgroundColor('#eeeeee')
+              .borderRadius(8)
+              .margin({ right: 10 })
+            }
+          })
+        }.width('100%')
+        .height(60)
+        .listDirection(Axis.Horizontal)
+        .scrollBar(BarState.Off)
 
       }.width('100%')
       .layoutWeight(1)

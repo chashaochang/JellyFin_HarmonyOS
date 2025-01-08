@@ -3,7 +3,7 @@ import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
-import { PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
+import { BaseItemDtoQueryResult, PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
 import { AxiosResponse } from "@ohos/axios";
@@ -12,6 +12,7 @@ import { PlayerUIState } from "./PlayerUIState";
 import { SubtitleManager } from "../../utils/SubtitleManager";
 import { PlayStatus } from "./PlayStatus";
 import { IjkMediaPlayer } from "@ohos/ijkplayer";
+import { QueueItem } from "../../entity/QueueItem";
 
 @ObservedV2
 export class PlayerViewModel {
@@ -25,7 +26,7 @@ export class PlayerViewModel {
   }
 
   @Monitor('uiState.CONTROL_PlayStatus')
-  onPlayerStateChanged(){
+  onPlayerStateChanged() {
 
   }
 
@@ -40,6 +41,7 @@ export class PlayerViewModel {
 
   load(source: JellyfinMediaSource, url: string[], playWhenReady: boolean) {
     this.initSource = source
+    this.uiState.currentPlayId = this.queueManager.currentQueue[this.queueManager.currentQueueIndex]
     this.uiState.audioTrackIndex = source.audioStreamIndex
     this.uiState.title = source.name
     this.uiState.seriesName = source.item.SeriesName
@@ -59,6 +61,10 @@ export class PlayerViewModel {
       } else {
         console.log('外挂字幕:' + element);
       }
+    }
+    this.getItems()
+    if (source.item.SeriesId) {
+      this.getItems(source.item.SeriesId)
     }
   }
 
@@ -130,6 +136,40 @@ export class PlayerViewModel {
         this.uiState.subtitles = this.subtitleManager.parse(resText, source.selectedSubtitleStream!.Codec!)
       }).catch((e: BusinessError) => {
         console.error(e.message)
+      })
+    }
+  }
+
+  //获取播放列表信息
+  getItems(id?: string) {
+    if (id) { //剧id
+      this.queueManager.getItem(id).then((res: AxiosResponse<BaseItemDtoQueryResult>) => {
+        if (res.data.Items && res.data.Items.length > 0) {
+          this.uiState.overview = res.data.Items[0].Overview ?? ""
+          this.uiState.genres = res.data.Items[0].Genres ?? []
+        }
+      }).catch((e: BusinessError) => {
+
+      })
+    } else {
+      this.queueManager.getItems().then((res: AxiosResponse<BaseItemDtoQueryResult>) => {
+        console.log(this.initSource?.itemId)
+        console.log(JSON.stringify(res.data.Items));
+        let items = res.data.Items
+        if (this.queueManager.currentQueue.length > 0) {
+          this.uiState.playList = this.queueManager.currentQueue.map(e => {
+            let item = items?.find(i => i.Id == e)
+            let queueItem: QueueItem = {
+              id: e,
+              playIndex: item?.IndexNumber ?? NaN, //items?.find(i=>i.Id == e)
+              name: item?.Name ?? ''
+            }
+            return queueItem
+          })
+        }
+        this.uiState.scroller.scrollToIndex(this.uiState.playList.findIndex(e=>e.id == this.uiState.currentPlayId))
+      }).catch((e: BusinessError) => {
+
       })
     }
   }
