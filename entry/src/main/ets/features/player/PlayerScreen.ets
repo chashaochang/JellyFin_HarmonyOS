@@ -13,13 +13,18 @@ import { WindowUtil } from "../../utils/WindowUtil"
 import { emitter } from "@kit.BasicServicesKit"
 import { PlayerUIState } from "./PlayerUIState"
 
-@HMRouter({ pageUrl: '/Player', singleton: true, lifecycle: 'playerLifecycle',interceptors:['jumpInfoInterceptor'] })
+@HMRouter({
+  pageUrl: '/Player',
+  singleton: true,
+  lifecycle: 'playerLifecycle',
+  interceptors: ['jumpInfoInterceptor']
+})
 @ComponentV2
 export struct PlayerScreen {
   options: PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
   @Provider() screenIsFull: boolean = false;
   @Provider() uiState: PlayerUIState = new PlayerUIState()
-  @Local viewModel: PlayerViewModel = new PlayerViewModel(this.uiState)
+  @Provider() viewModel: PlayerViewModel = new PlayerViewModel(this.uiState)
   pipController?: PiPWindow.PiPController;
   xComponentController?: XComponentController
   backClickListener: () => void = () => {
@@ -180,7 +185,10 @@ export struct PlayerScreen {
       Stack() {
         if (this.viewModel.url) {
           PlayerView({
-            videoUrl: this.viewModel.url
+            videoUrl: this.viewModel.url,
+            onNext: () => {
+              this.viewModel.queueManager.next()
+            }
           }).height(this.screenIsFull ? '100%' : 240)
         }
         Row() {
@@ -201,7 +209,7 @@ export struct PlayerScreen {
 
       Column() {
         //标题
-        Text(this.viewModel.uiState.title)
+        Text(this.viewModel.uiState.seriesName ?? this.viewModel.uiState.title)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .width('100%')

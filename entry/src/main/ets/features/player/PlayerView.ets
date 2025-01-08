@@ -12,7 +12,7 @@ import {
   OnTimedTextListener,
   OnVideoSizeChangedListener
 } from "@ohos/ijkplayer";
-import { PlayStatus } from "./PlayStatus";
+import { PlayerStatus, PlayStatus } from "./PlayStatus";
 import prompt from "@ohos.promptAction";
 import { BusinessError, emitter, settings } from "@kit.BasicServicesKit";
 import { Constants } from "../../utils/Constants";
@@ -32,6 +32,12 @@ let windowClass: window.Window | undefined = undefined;
 @ComponentV2
 export struct PlayerView {
   @Param @Require videoUrl: string
+  @Monitor('videoUrl')
+  onUrlChange(){
+    this.stop()
+    this.startPlayOrResumePlay()
+  }
+  @Param @Require onNext: () => void
   @Local progressValue: number = 0;
   @Local currentTime: string = "00:00";
   @Local totalTime: string = "00:00";
@@ -94,13 +100,13 @@ export struct PlayerView {
     if (this.screenIsFull) {
       windowClass?.setWindowLayoutFullScreen(true)
       windowClass?.setWindowSystemBarEnable([])
-      if(canIUse('SystemCapability.Window.SessionManager')){
+      if (canIUse('SystemCapability.Window.SessionManager')) {
         windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_LANDSCAPE);
       }
     } else {
       windowClass?.setWindowLayoutFullScreen(false)
       windowClass?.setWindowSystemBarEnable(['status', 'navigation'])
-      if(canIUse('SystemCapability.Window.SessionManager')){
+      if (canIUse('SystemCapability.Window.SessionManager')) {
         windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_PORTRAIT);
       }
     }
@@ -132,7 +138,7 @@ export struct PlayerView {
     let audioVolumeGroupManager = volumeManager.getVolumeGroupManagerSync(groupid);
     this.mMaxVolumeValue = audioVolumeGroupManager.getMaxVolumeSync(audio.AudioVolumeType.MEDIA);
     this.mCurrentVolumeValue = audioVolumeGroupManager.getVolumeSync(audio.AudioVolumeType.MEDIA);
-    if(canIUse('SystemCapability.Applications.Settings.Core')){
+    if (canIUse('SystemCapability.Applications.Settings.Core')) {
       this.mCurrentBrightness =
         Number(settings.getValueSync(getContext(this), settings.display.SCREEN_BRIGHTNESS_STATUS, '10'));
     }
@@ -363,6 +369,15 @@ export struct PlayerView {
                 this.startPlayOrResumePlay();
               }
             })
+          if (this.uiState.hasNext) {
+            Image($r('app.media.ic_next'))
+              .width(44)
+              .height(44)
+              .padding(12)
+              .onClick(() => {
+                this.onNext()
+              })
+          }
           Blank().layoutWeight(1)
           Text('倍速')
             .fontColor(Color.White)
@@ -1144,13 +1159,14 @@ export struct PlayerView {
     this.mIjkMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
     let mOnPreparedListener: OnPreparedListener = {
       onPrepared: () => {
+        this.uiState.playerStatus = PlayerStatus.PREPARED
         LogUtils.getInstance().LOGI("setOnPreparedListener-->go");
         if (this.uiState.initSeek > 0) {
           setTimeout(() => {
             this.seekTo(this.uiState.initSeek + "")
             this.uiState.initSeek = 0
-            if(this.uiState.audioTrackIndex){
-              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex+'')
+            if (this.uiState.audioTrackIndex) {
+              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex + '')
             }
           }, 500)
         }
@@ -1221,6 +1237,7 @@ export struct PlayerView {
 
     let mOnErrorListener: OnErrorListener = {
       onError: (what: number, extra: number) => {
+        this.uiState.playerStatus = PlayerStatus.ERROR
         this.stopProgressTask();
         LogUtils.getInstance().LOGI("OnErrorListener-->go:" + what + "===" + extra)
         that.hideLoadIng();
@@ -1256,13 +1273,16 @@ export struct PlayerView {
       this.setProgress();
       this.mDestroyPage = true;
       this.uiState.CONTROL_PlayStatus = PlayStatus.PAUSE;
+      this.uiState.playerStatus = PlayerStatus.PAUSED
     }
   }
 
   private stop() {
     this.uiState.CONTROL_PlayStatus = PlayStatus.INIT;
+    this.uiState.playerStatus = PlayerStatus.STOPPED
     this.mIjkMediaPlayer.stop();
     this.mIjkMediaPlayer.release();
+    this.uiState.playerStatus = PlayerStatus.RELEASED
     this.stopProgressTask();
   }
 

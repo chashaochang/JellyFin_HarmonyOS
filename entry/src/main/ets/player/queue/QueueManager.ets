@@ -7,7 +7,9 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { getVideosApi } from "sdk";
 import { MediaProtocol, MediaStream, PlayMethod } from "sdk/src/main/ets/generated-client/models";
 import { ApiClient } from "../../network/ApiClient";
+import { VideosApi } from "sdk/src/main/ets/generated-client/api/videos-api";
 
+@ObservedV2
 export class QueueManager {
   private viewModel: PlayerViewModel
 
@@ -15,10 +17,16 @@ export class QueueManager {
     this.viewModel = viewModel
   }
 
+  private videosApi: VideosApi = getVideosApi(ApiClient.Instance())
   private currentQueue: string[] = []
   private currentQueueIndex: number = 0
   private mediaSourceResolver: MediaSourceResolver = new MediaSourceResolver()
-  currentMediaSourceOrNull?: JellyfinMediaSource
+  @Trace currentMediaSourceOrNull?: JellyfinMediaSource
+  @Monitor('currentMediaSourceOrNull')
+  onMediaSourceChanged(){
+    this.viewModel.uiState.hasPrevious = this.hasPrevious()
+    this.viewModel.uiState.hasNext = this.hasNext()
+  }
 
   initializePlaybackQueue(options: PlayOptions): PlayerException | null {
     this.currentQueue = options.ids
@@ -66,6 +74,57 @@ export class QueueManager {
     })
     return null
   }
+
+  hasPrevious(): boolean {
+    return this.currentQueue.length > 0 && this.currentQueueIndex > 0
+  }
+
+  hasNext(): boolean {
+    return this.currentQueue.length > 0 && this.currentQueueIndex < this.currentQueue.length - 1
+  }
+
+  async previous(): Promise<boolean> {
+    if (!this.hasPrevious()) {
+      return false
+    }
+
+    if (!this.currentMediaSourceOrNull) {
+      return false
+    }
+    this.currentQueueIndex--;
+    let currentMediaSource = this.currentMediaSourceOrNull
+
+    await this.startPlayback(
+      this.currentQueue[this.currentQueueIndex],
+      null,
+      currentMediaSource.maxStreamingBitrate ?? null,
+      null,
+      null,
+      null
+    )
+    return true
+  }
+
+  async next(): Promise<boolean> {
+    if (!this.hasNext()) {
+      return false
+    }
+    if (!this.currentMediaSourceOrNull) {
+      return false
+    }
+    let currentMediaSource = this.currentMediaSourceOrNull
+    this.currentQueueIndex++;
+    await this.startPlayback(
+      this.currentQueue[this.currentQueueIndex],
+      null,
+      currentMediaSource.maxStreamingBitrate??null,
+      null,
+      null,
+      null
+    )
+    return true
+  }
+
 
   async prepareStreams(source: JellyfinMediaSource): Promise<string[]> {
     let videoSource = await this.createVideoMediaSource(source)

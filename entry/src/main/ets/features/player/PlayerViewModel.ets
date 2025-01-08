@@ -1,4 +1,4 @@
-import { getPlaystateApi, getSubtitleApi } from "sdk";
+import { getMediaInfoApi, getPlaystateApi, getSubtitleApi } from "sdk";
 import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError } from "@kit.BasicServicesKit";
@@ -24,6 +24,11 @@ export class PlayerViewModel {
     this.uiState = uiState
   }
 
+  @Monitor('uiState.CONTROL_PlayStatus')
+  onPlayerStateChanged(){
+
+  }
+
   get mediaSourceOrNull(): JellyfinMediaSource | undefined {
     return this.queueManager.currentMediaSourceOrNull
   }
@@ -36,12 +41,14 @@ export class PlayerViewModel {
   load(source: JellyfinMediaSource, url: string[], playWhenReady: boolean) {
     this.initSource = source
     this.uiState.audioTrackIndex = source.audioStreamIndex
+    this.uiState.title = source.name
+    this.uiState.seriesName = source.item.SeriesName
     for (let index = 0; index < url.length; index++) {
       const element = url[index];
       if (index === 0) {
         this.url = element
         //设置播放器url,开始播放
-        this.uiState.title = source.sourceInfo.Name ?? ''
+
         this.uiState.playWhenReady = playWhenReady
         this.initialTracksSelected = false
         let startTime = this.initSource.startTimeMs
