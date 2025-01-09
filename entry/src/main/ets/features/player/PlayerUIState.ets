@@ -1,3 +1,4 @@
+import { BaseItemKind } from "sdk/src/main/ets/generated-client/models/base-item-kind"
 import { QueueItem } from "../../entity/QueueItem"
 import { SubtitleItem } from "../../utils/SubtitleManager"
 import { PlayerStatus, PlayStatus } from "./PlayStatus"
@@ -19,8 +20,10 @@ export class PlayerUIState {
   //整理后的播放列表
   @Trace playList: QueueItem[] = []
   //当前播放视频id
-  @Trace currentPlayId:string = ''
-  scroller:ListScroller = new ListScroller()
+  @Trace currentPlayId: string = ''
+  //媒体类型
+  @Trace mediaType: BaseItemKind = BaseItemKind.Video
+  scroller: ListScroller = new ListScroller()
   playWhenReady: boolean = true
   //初始进度
   initSeek: number = 0

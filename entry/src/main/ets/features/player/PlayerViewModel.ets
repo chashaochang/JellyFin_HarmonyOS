@@ -3,7 +3,7 @@ import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError, emitter } from "@kit.BasicServicesKit";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
-import { BaseItemDtoQueryResult, PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
+import { BaseItemDtoQueryResult, BaseItemKind, PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
 import { AxiosResponse } from "@ohos/axios";
@@ -37,7 +37,7 @@ export class PlayerViewModel {
     });
   }
 
-  setSessionCallBack(session:avSession.AVSession) {
+  setSessionCallBack(session: avSession.AVSession) {
     // 一般在监听器中会对播放器做相应逻辑处理
     // 不要忘记处理完后需要通过set接口同步播放相关信息，参考上面的用例
     avSessionManager.getSession()?.on('play', () => {
@@ -139,6 +139,7 @@ export class PlayerViewModel {
 
   load(source: JellyfinMediaSource, url: string[], playWhenReady: boolean) {
     this.initSource = source
+    this.uiState.mediaType = source.item.Type!
     this.uiState.currentPlayId = this.queueManager.currentQueue[this.queueManager.currentQueueIndex]
     this.uiState.audioTrackIndex = source.audioStreamIndex
     this.uiState.title = source.name
@@ -154,16 +155,18 @@ export class PlayerViewModel {
         if (startTime > 0) {
           this.uiState.initSeek = startTime
         }
-        avSessionManager.getSession()?.setAVQueueTitle(source.item.SeriesName ?? source.item.Name ?? "TITLE",)
+        if (source.item.Type == BaseItemKind.Episode) { //电视剧
+          this.getItems()
+          avSessionManager.getSession()?.setAVQueueTitle(source.item.SeriesName ?? source.item.Name ?? "TITLE",)
+          this.getItems(source.item.SeriesId!)
+        } else { //电影
+          this.getItems(source.itemId)
+        }
         avSessionManager?.getSession()?.setAVMetadata(source.toMediaMetadata())
         this.reportPlaybackStart(source)
       } else {
         console.log('外挂字幕:' + element);
       }
-    }
-    this.getItems()
-    if (source.item.SeriesId) {
-      this.getItems(source.item.SeriesId)
     }
   }
 
@@ -256,11 +259,13 @@ export class PlayerViewModel {
         console.log(JSON.stringify(res.data.Items));
         let items = res.data.Items
         if (this.queueManager.currentQueue.length > 0) {
-          let list:QueueItem[] = []
-          let sessionQueue:avSession.AVQueueItem[] = []
+          let list: QueueItem[] = []
+          let sessionQueue: avSession.AVQueueItem[] = []
           this.queueManager.currentQueue.forEach(e => {
             let item = items?.find(i => i.Id == e)
-            if(!item) return
+            if (!item) {
+              return
+            }
             let queueItem: QueueItem = {
               id: e,
               playIndex: item?.IndexNumber ?? NaN,
@@ -274,9 +279,9 @@ export class PlayerViewModel {
               title: item.SeriesName ?? item.Name ?? "TITLE",
               subtitle: item.SeriesName ? (item.Name ?? '') : '',
               description: 'music_description',
-              mediaImage : image,
-              startPosition:0,
-              duration:1000
+              mediaImage: image,
+              startPosition: 0,
+              duration: 1000
             };
             let avQueueItem: avSession.AVQueueItem = {
               itemId: item.IndexNumber!,

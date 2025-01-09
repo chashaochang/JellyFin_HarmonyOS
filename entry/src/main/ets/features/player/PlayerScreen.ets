@@ -13,6 +13,7 @@ import { WindowUtil } from "../../utils/WindowUtil"
 import { emitter } from "@kit.BasicServicesKit"
 import { PlayerUIState } from "./PlayerUIState"
 import { QueueItem } from "../../entity/QueueItem"
+import { BaseItemKind } from "sdk/src/main/ets/generated-client/models"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -238,6 +239,9 @@ export struct PlayerScreen {
                 top: 2,
                 bottom: 2
               })
+              .margin({
+                right:6
+              })
               .backgroundColor($r('app.color.color_main'))
               .borderColor(Color.Black)
               .borderRadius(4)
@@ -245,48 +249,50 @@ export struct PlayerScreen {
         }.justifyContent(FlexAlign.Start)
         .width('100%')
 
-        Row() {
-          //标题
-          Text('选集')
-            .fontSize(16)
-            .fontWeight(FontWeight.Bold)
-            .textAlign(TextAlign.Start)
-          Blank().layoutWeight(1)
-          Image($r('app.media.ic_right')).width(24).height(24).padding(8)
-        }.alignItems(VerticalAlign.Bottom)
+        if (this.viewModel.initSource?.item.Type == BaseItemKind.Episode){
+          Row() {
+            //标题
+            Text('选集')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .textAlign(TextAlign.Start)
+            Blank().layoutWeight(1)
+            Image($r('app.media.ic_right')).width(24).height(24).padding(8)
+          }.alignItems(VerticalAlign.Bottom)
 
-        List({
-          scroller: this.uiState.scroller,
-        }) {
-          ForEach(this.uiState.playList, (item: QueueItem) => {
-            ListItem() {
-              Column({ space: 2 }) {
-                Text(`第 ${item.playIndex} 集`)
-                  .fontSize(14)
-                  .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
-                Text(item.name)
-                  .width('100%')
-                  .fontSize(14)
-                  .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
-                  .maxLines(1)
-                  .textOverflow({
-                    overflow: TextOverflow.Ellipsis
-                  })
-                  .ellipsisMode(EllipsisMode.END)
+          List({
+            scroller: this.uiState.scroller,
+          }) {
+            ForEach(this.uiState.playList, (item: QueueItem) => {
+              ListItem() {
+                Column({ space: 2 }) {
+                  Text(`第 ${item.playIndex} 集`)
+                    .fontSize(14)
+                    .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+                  Text(item.name)
+                    .width('100%')
+                    .fontSize(14)
+                    .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+                    .maxLines(1)
+                    .textOverflow({
+                      overflow: TextOverflow.Ellipsis
+                    })
+                    .ellipsisMode(EllipsisMode.END)
+                }
+                .width(140)
+                .alignItems(HorizontalAlign.Start)
+                .justifyContent(FlexAlign.Center)
+                .padding(12)
+                .backgroundColor('#eeeeee')
+                .borderRadius(8)
+                .margin({ right: 10 })
               }
-              .width(140)
-              .alignItems(HorizontalAlign.Start)
-              .justifyContent(FlexAlign.Center)
-              .padding(12)
-              .backgroundColor('#eeeeee')
-              .borderRadius(8)
-              .margin({ right: 10 })
-            }
-          })
-        }.width('100%')
-        .height(60)
-        .listDirection(Axis.Horizontal)
-        .scrollBar(BarState.Off)
+            })
+          }.width('100%')
+          .height(60)
+          .listDirection(Axis.Horizontal)
+          .scrollBar(BarState.Off)
+        }
 
       }.width('100%')
       .layoutWeight(1)
