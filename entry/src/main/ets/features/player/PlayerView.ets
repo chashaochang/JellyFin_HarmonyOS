@@ -20,11 +20,12 @@ import { PlayerUIState } from "./PlayerUIState";
 import { SmartDialog } from "ohos_smart_dialog";
 import { SubtitleItem } from "../../utils/SubtitleManager";
 import { audio } from "@kit.AudioKit";
-import { window } from "@kit.ArkUI";
+import { window, PiPWindow } from "@kit.ArkUI";
 import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
 import { MediaStream } from "sdk/src/main/ets/generated-client/models";
 import { QualityOption } from "../../player/qualityoptions/QualityOption";
+import { common } from "@kit.AbilityKit";
 
 let uiTime: number = 0;
 let touchStartX: number = 0;
@@ -103,6 +104,9 @@ export struct PlayerView {
   private mAudioManager: audio.AudioManager | null = null;
   sec: number = 3;
   @Consumer() screenIsFull: boolean = false;
+  pipController?: PiPWindow.PiPController;
+  xComponentController: XComponentController = new XComponentController()
+  @Local hintMsgVisibility: boolean = false;
 
   @Monitor('screenIsFull')
   onScreenChanged() {
@@ -223,6 +227,17 @@ export struct PlayerView {
       }
     }
     this.mIjkMediaPlayer.on('audioInterrupt', event);
+
+    //监听切换到桌面/恢复状态开启关闭画中画
+    let context = getContext(this) as common.UIAbilityContext;
+    context.eventHub.on('onForeground', () => {
+      if (canIUse('SystemCapability.Window.SessionManager')) {
+        this.pipController?.stopPiP()
+      }
+    })
+    context.eventHub.on('onBackground', async () => {
+
+    })
   }
 
   aboutToDisappear() {
@@ -341,7 +356,7 @@ export struct PlayerView {
   }
 
   @Builder
-  qualityMenu(){
+  qualityMenu() {
     Menu() {
       ForEach(this.uiState.qualityOptions, (option: QualityOption) => {
         MenuItem({
@@ -485,10 +500,6 @@ export struct PlayerView {
                 alignment: Alignment.End,
               })
             })
-          // Text('自动')
-          //   .fontSize(16)
-          // Text('选集')
-          //   .fontSize(16)
         }.height(44).padding({
           left: 8,
           right: 8
@@ -542,7 +553,10 @@ export struct PlayerView {
             })
           Text(this.totalTime).fontColor(Color.White).fontSize(13).fontWeight(FontWeight.Bold)
         }.layoutWeight(1)
-
+        // Image($r('app.media.ic_pip')).width(48).height(48).padding(12).onClick(() => {
+        //   this.startPip();
+        //   this.hintMsgVisibility = true;
+        // })
         Image($r('app.media.ic_full')).width(48).height(48).padding(12).onClick(() => {
           this.screenIsFull = true
         })
@@ -638,15 +652,27 @@ export struct PlayerView {
 
   build() {
     Stack({ alignContent: Alignment.Center }) {
+      Text('当前视频正在画中画播放')
+        .fontColor(Color.Gray)
+        .margin({ bottom: 30 })
+        .visibility(this.hintMsgVisibility ? Visibility.Visible : Visibility.Hidden)
       Column() {
         XComponent({
           id: 'xcomponentId',
           type: XComponentType.SURFACE,
-          libraryname: 'ijkplayer_napi'
+          libraryname: 'ijkplayer_napi',
+          controller: this.xComponentController
         })
-          .onLoad((event?: object) => {
+          .onLoad(async (event?: object) => {
             if (!!event) {
               this.initDelayPlay(event);
+              //开启自动画中画
+              if (canIUse('SystemCapability.Window.SessionManager')) {
+                if (!this.pipController) {
+                  await this.createPipController();
+                  // this.pipController!.setAutoStartEnabled(true)
+                }
+              }
             }
           })
           .onDestroy(() => {
@@ -1259,7 +1285,7 @@ export struct PlayerView {
             this.seekTo(this.uiState.initSeek + "")
             this.uiState.initSeek = 0
             if (this.uiState.audioTrackIndex) {
-              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex+1 + '')
+              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex + 1 + '')
             }
           }, 500)
         }
@@ -1562,8 +1588,8 @@ export struct PlayerView {
   }
 
   formatBitrate(bitrate: number): string {
-    const BITRATE_MEGA_BIT: number = 1_000_000;  // 1M
-    const BITRATE_KILO_BIT: number = 1_000;      // 1K
+    const BITRATE_MEGA_BIT: number = 1_000_000; // 1M
+    const BITRATE_KILO_BIT: number = 1_000; // 1K
     let value: number;
     let unit: string;
 
@@ -1580,6 +1606,94 @@ export struct PlayerView {
     // Format to 2 decimal places and remove trailing zeros
     const formatted = value.toFixed(2).replace(/\.?0+$/, '');
     return formatted + unit;
+  }
+
+  async createPipController() {
+    if (canIUse('SystemCapability.Window.SessionManager')) {
+      this.pipController = await PiPWindow.create({
+        context: getContext(this),
+        componentController: this.xComponentController,
+        navigationId: Constants.NAVIGATION_ID,
+        templateType: PiPWindow.PiPTemplateType.VIDEO_PLAY
+      });
+      this.pipController.on('stateChange', (state: PiPWindow.PiPState, reason: string) => {
+        this.onStateChange(state, reason);
+      });
+      this.pipController.on('controlPanelActionEvent', (event: PiPWindow.PiPActionEventType, status?: number) => {
+        this.onActionEvent(event, status);
+      });
+    }
+  }
+
+  onStateChange(state: PiPWindow.PiPState, reason: string) {
+    if (canIUse('SystemCapability.Window.SessionManager')) {
+      switch (state) {
+        case PiPWindow.PiPState.ABOUT_TO_START:
+          // this.curState = 'ABOUT_TO_START';
+          // this.curError = $r('app.string.current_error_hint');
+          break;
+        case PiPWindow.PiPState.STARTED:
+          // this.curState = 'STARTED';
+          // this.curError = $r('app.string.current_error_hint');
+          this.startPlayOrResumePlay()
+          break;
+        case PiPWindow.PiPState.ABOUT_TO_STOP:
+          // this.curState = 'ABOUT_TO_STOP';
+          // this.curError = $r('app.string.current_error_hint');
+          //点了画中画的关闭按钮
+          this.startPlayOrResumePlay()
+          break;
+        case PiPWindow.PiPState.STOPPED:
+
+          break;
+        case PiPWindow.PiPState.ABOUT_TO_RESTORE:
+          // this.curState = 'ABOUT_TO_RESTORE';
+          // this.curError = $r('app.string.current_error_hint');
+          break;
+        case PiPWindow.PiPState.ERROR:
+          // this.curState = 'ERROR';
+          // this.curError = reason;
+          break;
+        default:
+          break;
+      }
+      // Logger.info(`[${TAG}] onStateChange: ${this.curState}, reason: ${reason}`);
+    }
+  }
+
+  onActionEvent(event: PiPWindow.PiPActionEventType, status: number | undefined) {
+    switch (event) {
+      case 'playbackStateChanged':
+        if (status === 0) {
+          this.pause()
+        } else {
+          this.startPlayOrResumePlay()
+        }
+        break;
+      default:
+        break;
+    }
+    // this.buttonAction = event + `-status:${status}`;
+    // Logger.info(`[${TAG}] onActionEvent: ${this.buttonAction} status:${status}}`);
+  }
+
+  async startPip() {
+    if (!this.pipController) {
+      await this.createPipController();
+    }
+    if (!this.pipController) {
+      console.info(`pipController create error`);
+      return;
+    }
+    await this.pipController.startPiP();
+  }
+
+  async stopPip() {
+    if (!this.pipController) {
+      console.info(`pipController is not exist`);
+      return;
+    }
+    await this.pipController.stopPiP();
   }
 }
 

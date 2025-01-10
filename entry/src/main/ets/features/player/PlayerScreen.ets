@@ -4,7 +4,7 @@ import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
-import { display, PiPWindow } from "@kit.ArkUI"
+import { display } from "@kit.ArkUI"
 import { Constants } from "../../utils/Constants"
 import { common } from "@kit.AbilityKit"
 import { PlayerView } from "./PlayerView"
@@ -26,8 +26,7 @@ export struct PlayerScreen {
   @Provider() screenIsFull: boolean = false;
   @Provider() uiState: PlayerUIState = new PlayerUIState()
   @Provider() viewModel: PlayerViewModel = new PlayerViewModel(this.uiState)
-  pipController?: PiPWindow.PiPController;
-  xComponentController?: XComponentController
+
   backClickListener: () => void = () => {
     HMRouterMgr.pop()
   }
@@ -66,16 +65,7 @@ export struct PlayerScreen {
       default:
         break
     }
-    //监听切换到桌面/恢复状态开启关闭画中画
-    let context = getContext(this) as common.UIAbilityContext;
-    context.eventHub.on('onForeground', () => {
-      if (canIUse('SystemCapability.Window.SessionManager')) {
-        this.pipController?.stopPiP()
-      }
-    })
-    context.eventHub.on('onBackground', async () => {
 
-    })
   }
 
   aboutToDisappear() {
@@ -93,87 +83,6 @@ export struct PlayerScreen {
     this.viewModel.release()
   }
 
-  async createPipController() {
-    if (canIUse('SystemCapability.Window.SessionManager')) {
-      this.pipController = await PiPWindow.create({
-        context: getContext(this),
-        componentController: this.xComponentController,
-        navigationId: Constants.NAVIGATION_ID,
-        templateType: PiPWindow.PiPTemplateType.VIDEO_PLAY
-      });
-      this.pipController.on('stateChange', (state: PiPWindow.PiPState, reason: string) => {
-        this.onStateChange(state, reason);
-      });
-      this.pipController.on('controlPanelActionEvent', (event: PiPWindow.PiPActionEventType, status?: number) => {
-        this.onActionEvent(event, status);
-      });
-    }
-  }
-
-  onStateChange(state: PiPWindow.PiPState, reason: string) {
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    if (canIUse('SystemCapability.Window.SessionManager')) {
-      switch (state) {
-        case PiPWindow.PiPState.ABOUT_TO_START:
-          // this.curState = 'ABOUT_TO_START';
-          // this.curError = $r('app.string.current_error_hint');
-          break;
-        case PiPWindow.PiPState.STARTED:
-          // this.curState = 'STARTED';
-          // this.curError = $r('app.string.current_error_hint');
-          break;
-        case PiPWindow.PiPState.ABOUT_TO_STOP:
-          // this.curState = 'ABOUT_TO_STOP';
-          // this.curError = $r('app.string.current_error_hint');
-          //点了画中画的关闭按钮
-          // if (player) {
-          //   player.stop();
-          // }
-          break;
-        case PiPWindow.PiPState.STOPPED:
-          // if (player) {
-          //   player.updatePlayStatus(true);
-          // player.resumePlay();
-          // }
-          break;
-        case PiPWindow.PiPState.ABOUT_TO_RESTORE:
-          // this.curState = 'ABOUT_TO_RESTORE';
-          // this.curError = $r('app.string.current_error_hint');
-          break;
-        case PiPWindow.PiPState.ERROR:
-          // this.curState = 'ERROR';
-          // this.curError = reason;
-          break;
-        default:
-          break;
-      }
-      // Logger.info(`[${TAG}] onStateChange: ${this.curState}, reason: ${reason}`);
-    }
-  }
-
-  onActionEvent(event: PiPWindow.PiPActionEventType, status: number | undefined) {
-    // let player = GlobalContext.getContext().getObject("currentPlayer") as IjkPlayerControl;
-    // switch (event) {
-    //   case 'playbackStateChanged':
-    //     if (status === 0) {
-    //this.player?.updatePlayStatus(false);
-    // if (player) {
-    //   player.pause();
-    // }
-    // } else {
-    //this.player?.updatePlayStatus(true);
-    // if (player) {
-    //player.updatePlayStatus(true);
-    // player.resumePlay();
-    // }
-    // }
-    // break;
-    // default:
-    //   break;
-    // }
-    // this.buttonAction = event + `-status:${status}`;
-    // Logger.info(`[${TAG}] onActionEvent: ${this.buttonAction} status:${status}}`);
-  }
 
   onBackPress(): boolean | void {
     if (this.screenIsFull) {
@@ -307,20 +216,6 @@ export struct PlayerScreen {
       .padding(16)
       .visibility(this.screenIsFull ? Visibility.None : Visibility.Visible)
 
-      //   StandardGSYVideoPlayer({
-      //     videoModel: this.videoModel,
-      //     onInit: async () => {
-      //       // this.viewModel.setupPlayer()
-      //       //开启自动画中画
-      //       if (canIUse('SystemCapability.Window.SessionManager')) {
-      //         if (!this.pipController) {
-      //           await this.createPipController();
-      //           this.pipController!.setAutoStartEnabled(true);
-      //         }
-      //       }
-      //     },
-      //   }).width('100%')
-      //     .height('100%')
     }
     .width('100%')
     .height('100%')
