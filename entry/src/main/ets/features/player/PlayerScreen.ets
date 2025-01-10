@@ -4,16 +4,14 @@ import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
-import { display, PiPWindow, window } from "@kit.ArkUI"
+import { display, PiPWindow } from "@kit.ArkUI"
 import { Constants } from "../../utils/Constants"
 import { common } from "@kit.AbilityKit"
-import { Subtitle } from "../../entity/Subtitle"
 import { PlayerView } from "./PlayerView"
-import { WindowUtil } from "../../utils/WindowUtil"
 import { emitter } from "@kit.BasicServicesKit"
 import { PlayerUIState } from "./PlayerUIState"
 import { QueueItem } from "../../entity/QueueItem"
-import { BaseItemKind } from "sdk/src/main/ets/generated-client/models"
+import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/models"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -192,6 +190,12 @@ export struct PlayerScreen {
             videoUrl: this.viewModel.url,
             onNext: () => {
               this.viewModel.queueManager.next()
+            },
+            onAudioTrackSelected:(stream:MediaStream)=>{
+              this.viewModel.trackSelectionHelper.selectAudioTrack(stream)
+            },
+            onSubtitleSelected:(stream:MediaStream)=>{
+              this.viewModel.trackSelectionHelper.selectSubtitleTrack(stream)
             }
           }).height(this.screenIsFull ? '100%' : 240)
         }

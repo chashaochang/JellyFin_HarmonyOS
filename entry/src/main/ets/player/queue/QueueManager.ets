@@ -7,10 +7,16 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { getItemsApi, getVideosApi } from "sdk";
 import {
   BaseItemDtoQueryResult,
-  MediaProtocol, MediaStream, PlayMethod } from "sdk/src/main/ets/generated-client/models";
+  DeviceProfile,
+  MediaProtocol,
+  MediaStream,
+  MediaStreamType,
+  PlayMethod
+} from "sdk/src/main/ets/generated-client/models";
 import { ApiClient } from "../../network/ApiClient";
-import { VideosApi } from "sdk/src/main/ets/generated-client/api/videos-api";
 import { AxiosResponse } from "@ohos/axios";
+import { Constants } from "../../utils/Constants";
+import { DeviceProfileBuilder } from "../deviceprofile/DeviceProfileBuilder";
 
 @ObservedV2
 export class QueueManager {
@@ -20,16 +26,19 @@ export class QueueManager {
     this.viewModel = viewModel
   }
 
-  private videosApi: VideosApi = getVideosApi(ApiClient.Instance())
   @Trace currentQueue: string[] = []
   @Trace currentQueueIndex: number = 0
   private mediaSourceResolver: MediaSourceResolver = new MediaSourceResolver()
   @Trace currentMediaSourceOrNull?: JellyfinMediaSource
+
   @Monitor('currentMediaSourceOrNull')
-  onMediaSourceChanged(){
+  onMediaSourceChanged() {
     this.viewModel.uiState.hasPrevious = this.hasPrevious()
     this.viewModel.uiState.hasNext = this.hasNext()
   }
+
+  private deviceProfileBuilder: DeviceProfileBuilder = new DeviceProfileBuilder()
+  private deviceProfile: DeviceProfile = this.deviceProfileBuilder.getDeviceProfile()
 
   initializePlaybackQueue(options: PlayOptions): PlayerException | null {
     this.currentQueue = options.ids
@@ -58,12 +67,13 @@ export class QueueManager {
   async startPlayback(
     itemId: string,
     mediaSourceId: string | null,
-    maxStreamingBitrate: number | null,
+    maxStreamingBitrate: number | null | undefined,
     startTimeTicks: number | null,
     audioStreamIndex: number | null,
     subtitleStreamIndex: number | null,
     playWhenReady: boolean = true): Promise<PlayerException | null> {
-    this.mediaSourceResolver.resolveMediaSource(itemId, mediaSourceId, maxStreamingBitrate, startTimeTicks,
+    this.mediaSourceResolver.resolveMediaSource(itemId, mediaSourceId, this.deviceProfile, maxStreamingBitrate,
+      startTimeTicks,
       audioStreamIndex, subtitleStreamIndex, playWhenReady)
     ?.then(async jellyfinMediaSource => {
       if (this.currentMediaSourceOrNull) {
@@ -120,7 +130,7 @@ export class QueueManager {
     await this.startPlayback(
       this.currentQueue[this.currentQueueIndex],
       null,
-      currentMediaSource.maxStreamingBitrate??null,
+      currentMediaSource.maxStreamingBitrate ?? null,
       null,
       null,
       null
@@ -187,18 +197,69 @@ export class QueueManager {
     }
   }
 
-  selectSubtitleStreamAndRestartPlayback(selectedMediaStream: MediaStream): boolean {
+  selectAudioStreamAndRestartPlayback(selectedMediaStream: MediaStream): boolean {
+    // 验证选中的是音频流
+    if (selectedMediaStream.Type !== MediaStreamType.Audio) {
+      throw new Error('Selected stream must be an audio stream');
+    }
+
+    let currentMediaSource = this.currentMediaSourceOrNull
+    if (!currentMediaSource) {
+      return false
+    }
+    let position = this.viewModel.getPositionAndPause()
+    if (!position) {
+      return false
+    }
+
+    this.startPlayback(
+      currentMediaSource.itemId,
+      currentMediaSource.id,
+      currentMediaSource.maxStreamingBitrate,
+      position * Constants.TICKS_PER_MILLISECOND,
+      selectedMediaStream.Index!,
+      currentMediaSource.selectedSubtitleStreamIndex,
+      true,
+    )
     return true
   }
 
-  async getItems():Promise<AxiosResponse<BaseItemDtoQueryResult>>{
+  selectSubtitleStreamAndRestartPlayback(selectedMediaStream?: MediaStream): boolean {
+    // 验证选中的是字幕
+    if (selectedMediaStream?.Type !== MediaStreamType.Subtitle) {
+      throw new Error('Selected stream must be an subtitle stream');
+    }
+
+    let currentMediaSource = this.currentMediaSourceOrNull
+    if (!currentMediaSource) {
+      return false
+    }
+    let position = this.viewModel.getPositionAndPause()
+    if (!position) {
+      return false
+    }
+
+    this.startPlayback(
+      currentMediaSource.itemId,
+      currentMediaSource.id,
+      currentMediaSource.maxStreamingBitrate,
+      position * Constants.TICKS_PER_MILLISECOND,
+      selectedMediaStream?.Index ?? -1,
+      currentMediaSource.selectedSubtitleStreamIndex,
+      true,
+    )
+    return true
+  }
+
+  async getItems(): Promise<AxiosResponse<BaseItemDtoQueryResult>> {
     return getItemsApi(ApiClient.Instance()).getItems({
       ids: this.currentQueue
     })
   }
-  async getItem(id:string):Promise<AxiosResponse<BaseItemDtoQueryResult>>{
+
+  async getItem(id: string): Promise<AxiosResponse<BaseItemDtoQueryResult>> {
     return getItemsApi(ApiClient.Instance()).getItems({
-      ids:Array.of(id),
+      ids: Array.of(id),
       includeItemTypes: ['Series'],
       fields: ['Overview', 'Genres'],
     })

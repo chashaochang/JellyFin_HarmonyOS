@@ -13,6 +13,7 @@ import { avSession, avSession as AVSessionManager } from '@kit.AVSessionKit';
 import { ImageUrlsApi } from 'sdk'
 import { ApiClient } from '../../network/ApiClient'
 
+@ObservedV2
 export class JellyfinMediaSource {
   itemId: string
   item: BaseItemDto
@@ -42,7 +43,7 @@ export class JellyfinMediaSource {
     return this._selectedVideoStream
   }
 
-  _selectedAudioStream?: MediaStream
+  @Trace _selectedAudioStream?: MediaStream
 
   private set selectedAudioStream(_selectedAudioStream: MediaStream | undefined) {
     this._selectedAudioStream = _selectedAudioStream
@@ -52,7 +53,7 @@ export class JellyfinMediaSource {
     return this._selectedAudioStream
   }
 
-  _selectedSubtitleStream?: MediaStream
+  @Trace _selectedSubtitleStream?: MediaStream
 
   private set selectedSubtitleStream(_selectedSubtitleStream: MediaStream | undefined) {
     this._selectedSubtitleStream = _selectedSubtitleStream
@@ -163,6 +164,22 @@ export class JellyfinMediaSource {
     this.startTimeTicks = value * Constants.TICKS_PER_MILLISECOND
   }
 
+  /**
+   * Select the specified [audio stream][stream] in the source.
+   *
+   * @param stream The stream to select.
+   * @return true if the stream was found and selected, false otherwise.
+   */
+  selectAudioStream(stream: MediaStream): boolean {
+    if(stream.Type !== MediaStreamType.Audio) return false
+    if (this.mediaStreams[stream.Index!] !== stream) {
+      return false
+    }
+
+    this.selectedAudioStream = stream
+    return true
+  }
+
   selectSubtitleStream(stream: MediaStream | undefined | null): boolean {
     if (!stream) {
       this.selectedSubtitleStream = undefined
@@ -193,5 +210,18 @@ export class JellyfinMediaSource {
       duration:this.runTimeMs,
     };
     return metadata
+  }
+
+  /**
+   * Returns the index of the media stream within the embedded streams.
+   * Useful for handling track selection in ExoPlayer, where embedded streams are mapped first.
+   */
+  getEmbeddedStreamIndex(mediaStream: MediaStream): number {
+    let index = 0
+    for (const stream of this.mediaStreams) {
+      if(stream === mediaStream) return index
+      if(!stream.IsExternal) return index++
+    }
+    throw new Error("Invalid media stream")
   }
 }

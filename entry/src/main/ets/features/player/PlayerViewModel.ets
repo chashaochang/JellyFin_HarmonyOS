@@ -3,7 +3,13 @@ import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError, emitter } from "@kit.BasicServicesKit";
 import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
-import { BaseItemDtoQueryResult, BaseItemKind, PlayMethod, RepeatMode } from "sdk/src/main/ets/generated-client/models";
+import {
+  BaseItemDtoQueryResult,
+  BaseItemKind,
+  MediaStream,
+  PlayMethod,
+  RepeatMode
+} from "sdk/src/main/ets/generated-client/models";
 import { Constants } from "../../utils/Constants";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
 import { AxiosResponse } from "@ohos/axios";
@@ -25,6 +31,16 @@ export class PlayerViewModel {
 
   constructor(uiState: PlayerUIState) {
     this.uiState = uiState
+  }
+
+  @Monitor('mediaSourceOrNull._selectedAudioStream')
+  onSelectedAudioStreamChanged(){
+    this.uiState.selectedAudioStream = this.mediaSourceOrNull?._selectedAudioStream
+  }
+
+  @Monitor('mediaSourceOrNull._selectedSubtitleStream')
+  onSelectedSubtitleStreamChanged(){
+    this.uiState.selectedSubtitleStream = this.mediaSourceOrNull?._selectedSubtitleStream
   }
 
   async initAVSession() {
@@ -144,6 +160,10 @@ export class PlayerViewModel {
     this.uiState.audioTrackIndex = source.audioStreamIndex
     this.uiState.title = source.name
     this.uiState.seriesName = source.item.SeriesName
+    this.uiState.audioStreams = source.audioStreams
+    this.uiState.subtitleStreams = source.subtitleStreams
+    this.uiState.selectedAudioStream = source.selectedAudioStream
+    this.uiState.selectedSubtitleStream = source.selectedSubtitleStream
     for (let index = 0; index < url.length; index++) {
       const element = url[index];
       if (index === 0) {
@@ -224,6 +244,20 @@ export class PlayerViewModel {
     }
     // Stop active encoding if transcoding
     this.stopTranscoding(mediaSource)
+  }
+
+  selectSubtitle(selectedSubtitleStream: MediaStream) {
+    getSubtitleApi(ApiClient.Instance()).getSubtitle({
+      routeItemId: this.initSource!.itemId,
+      routeMediaSourceId: this.initSource?.id,
+      routeIndex: selectedSubtitleStream.Index,
+      routeFormat: selectedSubtitleStream?.Codec
+    }).then((res: AxiosResponse<string, ArrayBuffer>) => {
+      let resText = buffer.from(res.data).toString()
+      this.uiState.subtitles = this.subtitleManager.parse(resText, selectedSubtitleStream!.Codec!)
+    }).catch((e: BusinessError) => {
+      console.error(e.message)
+    })
   }
 
   getSubtitle(source: JellyfinMediaSource) {
@@ -329,5 +363,18 @@ export class PlayerViewModel {
     session.off('setSpeed');
     // session.off('toggleFavorite');
     session.destroy()
+  }
+
+  getPositionAndPause(): number {
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Pause'
+      }
+    })
+    return IjkMediaPlayer.getInstance().getCurrentPosition()
+  }
+
+  logTracks() {
+
   }
 }

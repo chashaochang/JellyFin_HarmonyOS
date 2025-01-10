@@ -4,6 +4,8 @@ export class Constants {
   static readonly PLAYER_EVENT: emitter.InnerEvent = {
     eventId: 100001
   }
+
+  static readonly APP_INFO_NAME = "Jellyfin HarmonyOS"
   // Webapp constants
   static readonly INITIAL_CONNECTION_TIMEOUT = 10000 // 10 seconds
 

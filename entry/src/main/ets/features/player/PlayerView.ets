@@ -23,6 +23,7 @@ import { audio } from "@kit.AudioKit";
 import { window } from "@kit.ArkUI";
 import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
+import { MediaStream } from "sdk/src/main/ets/generated-client/models";
 
 let uiTime: number = 0;
 let touchStartX: number = 0;
@@ -42,6 +43,8 @@ export struct PlayerView {
   }
 
   @Param @Require onNext: () => void
+  @Param @Require onAudioTrackSelected: (stream: MediaStream) => void
+  @Param @Require onSubtitleSelected: (stream: MediaStream) => void
   @Local progressValue: number = 0;
   @Local currentTime: string = "00:00";
   @Local totalTime: string = "00:00";
@@ -122,6 +125,8 @@ export struct PlayerView {
   onSubtitleChanged() {
     if (this.uiState.subtitles.length > 0) {
       this.startSubTitle()
+    } else {
+      this.stopSubTitle()
     }
   }
 
@@ -304,6 +309,36 @@ export struct PlayerView {
   }
 
   @Builder
+  audioMenu() {
+    Menu() {
+      ForEach(this.uiState.audioStreams, (item: MediaStream) => {
+        MenuItem({
+          content: item.DisplayTitle
+        }).selectIcon(true)
+          .selected(this.uiState.selectedAudioStream == item)
+          .onClick(() => {
+            this.onAudioTrackSelected(item)
+          })
+      })
+    }
+  }
+
+  @Builder
+  subtitleMenu() {
+    Menu() {
+      ForEach(this.uiState.subtitleStreams, (item: MediaStream) => {
+        MenuItem({
+          content: item.DisplayTitle
+        }).selectIcon(true)
+          .selected(this.uiState.selectedSubtitleStream == item)
+          .onClick(() => {
+            this.onSubtitleSelected(item)
+          })
+      })
+    }
+  }
+
+  @Builder
   topControlView() {
     Row() {
       if (this.screenIsFull) {
@@ -393,7 +428,22 @@ export struct PlayerView {
                 this.onNext()
               })
           }
+          Button() {
+            Image($r("app.media.ic_audio"))
+              .width(44)
+              .height(44)
+              .padding(12)
+          }.backgroundColor(Color.Transparent).bindMenu(this.audioMenu())
+
+          Button() {
+            Image($r("app.media.ic_subtitle"))
+              .width(44)
+              .height(44)
+              .padding(12)
+          }.backgroundColor(Color.Transparent).bindMenu(this.subtitleMenu())
+
           Blank().layoutWeight(1)
+
           Text('倍速')
             .fontColor(Color.White)
             .fontSize(16)
@@ -1182,7 +1232,7 @@ export struct PlayerView {
             this.seekTo(this.uiState.initSeek + "")
             this.uiState.initSeek = 0
             if (this.uiState.audioTrackIndex) {
-              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex + '')
+              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex+1 + '')
             }
           }, 500)
         }
@@ -1249,7 +1299,6 @@ export struct PlayerView {
       }
     }
     this.mIjkMediaPlayer.setOnInfoListener(mOnInfoListener);
-
 
 
     let mOnErrorListener: OnErrorListener = {
@@ -1442,10 +1491,10 @@ export struct PlayerView {
 
   sendAVSessionState(status: number) {
     let playbackState: avSession.AVPlaybackState = {
-      speed:Number(this.playSpeed.replace('f','')),
-      position:{
-        elapsedTime:this.mIjkMediaPlayer.getCurrentPosition(),
-        updateTime:Date.now()
+      speed: Number(this.playSpeed.replace('f', '')),
+      position: {
+        elapsedTime: this.mIjkMediaPlayer.getCurrentPosition(),
+        updateTime: Date.now()
       },
     }
     switch (status) {

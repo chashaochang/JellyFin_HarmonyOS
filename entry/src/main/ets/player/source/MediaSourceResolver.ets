@@ -1,16 +1,15 @@
 import { getItemsApi, getMediaInfoApi, PlaybackInfoResponse } from "sdk"
 import { ApiClient } from "../../network/ApiClient"
 import { BusinessError } from "@kit.BasicServicesKit";
-import { AppPreference } from "../../data/AppPreference";
 import { AxiosResponse } from "@ohos/axios";
 import { JellyfinMediaSource } from "./JellyfinMediaSource";
-import { BaseItemDtoQueryResult } from "sdk/src/main/ets/generated-client/models";
+import { BaseItemDtoQueryResult, DeviceProfile } from "sdk/src/main/ets/generated-client/models";
 
 export class MediaSourceResolver {
   resolveMediaSource(itemId: string,
     mediaSourceId: string | null,
-    // deviceProfile: DeviceProfile | null,
-    maxStreamingBitrate: number | null,
+    deviceProfile: DeviceProfile | null,
+    maxStreamingBitrate: number | null | undefined,
     startTimeTicks: number | null,
     audioStreamIndex: number | null,
     subtitleStreamIndex: number | null,
@@ -19,11 +18,21 @@ export class MediaSourceResolver {
     return new Promise<JellyfinMediaSource>((resolve, reject) => {
       getMediaInfoApi(ApiClient.Instance()).getPostedPlaybackInfo({
         itemId: itemId,
-        userId: AppStorage.get('userId'),
-        mediaSourceId: mediaSourceId ?? itemId,
-        audioStreamIndex: audioStreamIndex,
-        subtitleStreamIndex: subtitleStreamIndex,
-        autoOpenLiveStream: autoOpenLiveStream,
+        playbackInfoDto:{
+          UserId:AppStorage.get('userId'),
+          // We need to remove the dashes so that the server can find the correct media source.
+          // And if we didn't pass the mediaSourceId, our stream indices would silently get ignored.
+          // https://github.com/jellyfin/jellyfin/blob/9a35fd673203cfaf0098138b2768750f4818b3ab/Jellyfin.Api/Helpers/MediaInfoHelper.cs#L196-L201
+          MediaSourceId: mediaSourceId ?? itemId,
+          DeviceProfile : deviceProfile,
+          MaxStreamingBitrate : maxStreamingBitrate,
+          StartTimeTicks : startTimeTicks,
+          AudioStreamIndex: audioStreamIndex,
+          SubtitleStreamIndex : subtitleStreamIndex,
+          AutoOpenLiveStream : autoOpenLiveStream,
+        }
+        // subtitleStreamIndex: subtitleStreamIndex,
+        // autoOpenLiveStream: autoOpenLiveStream,
       }).then((res: AxiosResponse<PlaybackInfoResponse>) => {
         if (res.data.PlaySessionId) {
           let playSessionId = res.data.PlaySessionId

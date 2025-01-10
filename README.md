@@ -34,14 +34,14 @@ PS:闲暇时间写的,禁止催更!
 - 播放默认选中的音轨/字幕
 - 下一集
 - 通知栏播放卡片(AVSession播控)
+- 切换音轨
+- 切换字幕
 
 ### 未完成/规划中
 
 #### V1.0.0
 - 投屏(AVCast)
 - 全屏锁
-- 切换音轨
-- 切换字幕
 - 切换清晰度
 - 视频详情页(选集列表,简介,更多推荐...)
 - 画中画
@@ -64,5 +64,6 @@ PS:闲暇时间写的,禁止催更!
 - 服务器相关操作,把Jellyfin的<a href="https://github.com/jellyfin/jellyfin-sdk-typescript">TypeScript SDK</a>进行鸿蒙化后使用
 - 播放器经过尝试后采用<a href="https://ohpm.openharmony.cn/#/cn/detail/@ohos%2Fijkplayer">ijkPlayer</a>
 - 播放控制页基于开源库<a href="https://gitee.com/openharmony-tpc/openharmony_tpc_samples/tree/master/GSYVideoPlayer">GSYVideoPlayer</a>修改
+- 弹窗使用<a href="https://github.com/xdd666t/ohos_smart_dialog">ohos_smart_dialog</a>
 
 感谢开源大佬们的无私奉献!
