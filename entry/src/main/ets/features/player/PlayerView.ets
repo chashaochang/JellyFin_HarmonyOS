@@ -24,6 +24,7 @@ import { window } from "@kit.ArkUI";
 import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
 import { MediaStream } from "sdk/src/main/ets/generated-client/models";
+import { QualityOption } from "../../player/qualityoptions/QualityOption";
 
 let uiTime: number = 0;
 let touchStartX: number = 0;
@@ -45,6 +46,7 @@ export struct PlayerView {
   @Param @Require onNext: () => void
   @Param @Require onAudioTrackSelected: (stream: MediaStream) => void
   @Param @Require onSubtitleSelected: (stream: MediaStream) => void
+  @Param @Require onQualitySelected: (option: QualityOption) => void
   @Local progressValue: number = 0;
   @Local currentTime: string = "00:00";
   @Local totalTime: string = "00:00";
@@ -339,6 +341,21 @@ export struct PlayerView {
   }
 
   @Builder
+  qualityMenu(){
+    Menu() {
+      ForEach(this.uiState.qualityOptions, (option: QualityOption) => {
+        MenuItem({
+          content: `${option.maxHeight}p - ${this.formatBitrate(option.bitrate)}`
+        }).selectIcon(true)
+          .selected(this.uiState.selectedBitrate == option.bitrate)
+          .onClick(() => {
+            this.onQualitySelected(option)
+          })
+      })
+    }
+  }
+
+  @Builder
   topControlView() {
     Row() {
       if (this.screenIsFull) {
@@ -443,6 +460,16 @@ export struct PlayerView {
           }.backgroundColor(Color.Transparent).bindMenu(this.subtitleMenu())
 
           Blank().layoutWeight(1)
+
+          Button() {
+            Text('质量')
+              .fontColor(Color.White)
+              .fontSize(16)
+              .height('100%')
+              .padding({
+                left: 16, right: 16
+              })
+          }.backgroundColor(Color.Transparent).bindMenu(this.qualityMenu())
 
           Text('倍速')
             .fontColor(Color.White)
@@ -1190,7 +1217,7 @@ export struct PlayerView {
     // 屏幕常亮
     this.mIjkMediaPlayer.setScreenOnWhilePlaying(true);
     // 设置超时
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "timeout", "10000000");
+    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "timeout", "30000000");
     this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "connect_timeout", "10000000");
     this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "addrinfo_timeout", "10000000");
     this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", "10000000");
@@ -1200,7 +1227,7 @@ export struct PlayerView {
     let Speed = this.mIjkMediaPlayer.getSpeed()
     LogUtils.getInstance().LOGI('getSpeed--' + Speed)
     //是否开启循环播放
-    this.mIjkMediaPlayer.setLoopCount(true);
+    this.mIjkMediaPlayer.setLoopCount(false);
     let mOnVideoSizeChangedListener: OnVideoSizeChangedListener = {
       onVideoSizeChanged: (width: number, height: number, sar_num: number, sar_den: number) => {
         if (height === 0) {
@@ -1350,6 +1377,7 @@ export struct PlayerView {
     this.mIjkMediaPlayer.release();
     this.uiState.playerStatus = PlayerStatus.RELEASED
     this.stopProgressTask();
+    this.stopSubTitle()
   }
 
   private seekTo(value: string) {
@@ -1531,6 +1559,27 @@ export struct PlayerView {
     }).catch((err: BusinessError) => {
       console.error(`SetAVPlaybackState BusinessError: code: ${err.code}, message: ${err.message}`);
     });
+  }
+
+  formatBitrate(bitrate: number): string {
+    const BITRATE_MEGA_BIT: number = 1_000_000;  // 1M
+    const BITRATE_KILO_BIT: number = 1_000;      // 1K
+    let value: number;
+    let unit: string;
+
+    if (bitrate > BITRATE_MEGA_BIT) {
+      value = bitrate / BITRATE_MEGA_BIT;
+      unit = " Mbps";
+    } else if (bitrate > BITRATE_KILO_BIT) {
+      value = bitrate / BITRATE_KILO_BIT;
+      unit = " kbps";
+    } else {
+      value = bitrate;
+      unit = " bps";
+    }
+    // Format to 2 decimal places and remove trailing zeros
+    const formatted = value.toFixed(2).replace(/\.?0+$/, '');
+    return formatted + unit;
   }
 }
 

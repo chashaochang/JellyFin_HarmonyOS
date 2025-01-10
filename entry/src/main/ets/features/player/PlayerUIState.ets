@@ -1,6 +1,7 @@
 import { MediaStream } from "sdk/src/main/ets/generated-client/models"
 import { BaseItemKind } from "sdk/src/main/ets/generated-client/models/base-item-kind"
 import { QueueItem } from "../../entity/QueueItem"
+import { QualityOption } from "../../player/qualityoptions/QualityOption"
 import { SubtitleItem } from "../../utils/SubtitleManager"
 import { PlayerStatus, PlayStatus } from "./PlayStatus"
 
@@ -32,6 +33,11 @@ export class PlayerUIState {
   selectedAudioStream?: MediaStream
   //选中字幕
   selectedSubtitleStream?: MediaStream
+  //质量列表
+  qualityOptions:QualityOption[] = []
+  //选中码率
+  selectedBitrate?: number | null
+
   scroller: ListScroller = new ListScroller()
   playWhenReady: boolean = true
   //初始进度

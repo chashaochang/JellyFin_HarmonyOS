@@ -11,7 +11,7 @@ export class MediaSourceResolver {
     deviceProfile: DeviceProfile | null,
     maxStreamingBitrate: number | null | undefined,
     startTimeTicks: number | null,
-    audioStreamIndex: number | null,
+    audioStreamIndex: number | null | undefined,
     subtitleStreamIndex: number | null,
     autoOpenLiveStream: boolean = true): Promise<JellyfinMediaSource> | null {
 

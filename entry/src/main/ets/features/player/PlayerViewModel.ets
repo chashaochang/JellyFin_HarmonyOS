@@ -21,6 +21,7 @@ import { IjkMediaPlayer } from "@ohos/ijkplayer";
 import { QueueItem } from "../../entity/QueueItem";
 import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
+import qualityOptionsProvider from "../../player/qualityoptions/QualityOptionsProvider";
 
 @ObservedV2
 export class PlayerViewModel {
@@ -31,6 +32,28 @@ export class PlayerViewModel {
 
   constructor(uiState: PlayerUIState) {
     this.uiState = uiState
+  }
+
+  @Monitor('mediaSourceOrNull')
+  onMediaSourceChanged(){
+    let source = this.mediaSourceOrNull
+    if(source){
+      this.uiState.audioTrackIndex = source.audioStreamIndex
+      this.uiState.title = source.name
+      this.uiState.seriesName = source.item.SeriesName
+      this.uiState.audioStreams = source.audioStreams
+      this.uiState.subtitleStreams = source.subtitleStreams
+      this.uiState.selectedAudioStream = source.selectedAudioStream
+      this.uiState.selectedSubtitleStream = source.selectedSubtitleStream
+      let videoStream = source.selectedVideoStream
+      let height = videoStream?.Height
+      let width = videoStream?.Width
+      if (height != null && width != null) {
+        this.uiState.qualityOptions = qualityOptionsProvider.getApplicableQualityOptions(width,height)
+      } else {
+        //qualityButton.isVisible = false
+      }
+    }
   }
 
   @Monitor('mediaSourceOrNull._selectedAudioStream')
@@ -155,15 +178,9 @@ export class PlayerViewModel {
 
   load(source: JellyfinMediaSource, url: string[], playWhenReady: boolean) {
     this.initSource = source
+    this.uiState.selectedBitrate = source.maxStreamingBitrate
     this.uiState.mediaType = source.item.Type!
     this.uiState.currentPlayId = this.queueManager.currentQueue[this.queueManager.currentQueueIndex]
-    this.uiState.audioTrackIndex = source.audioStreamIndex
-    this.uiState.title = source.name
-    this.uiState.seriesName = source.item.SeriesName
-    this.uiState.audioStreams = source.audioStreams
-    this.uiState.subtitleStreams = source.subtitleStreams
-    this.uiState.selectedAudioStream = source.selectedAudioStream
-    this.uiState.selectedSubtitleStream = source.selectedSubtitleStream
     for (let index = 0; index < url.length; index++) {
       const element = url[index];
       if (index === 0) {
@@ -261,6 +278,11 @@ export class PlayerViewModel {
   }
 
   getSubtitle(source: JellyfinMediaSource) {
+    if(source.playMethod == PlayMethod.Transcode){
+      this.uiState.currentSubtitle = ''
+      this.uiState.subtitles = []
+      return
+    }
     if (source.selectedSubtitleStream) {
       getSubtitleApi(ApiClient.Instance()).getSubtitle({
         routeItemId: source.itemId,
@@ -372,6 +394,10 @@ export class PlayerViewModel {
       }
     })
     return IjkMediaPlayer.getInstance().getCurrentPosition()
+  }
+
+  changeBitrate(bitrate?: number){
+    this.queueManager.changeBitrate(bitrate)
   }
 
   logTracks() {

@@ -1,5 +1,5 @@
 <h1 align="center">JellyFin HarmonyOS</h1>
-<h3 align="center">Part of the <a href="https://jellyfin.org">Jellyfin Project</a></h3>
+<h3 align="center">Unofficial client of the <a href="https://jellyfin.org">Jellyfin Project</a></h3>
 
 ---
 
@@ -19,7 +19,7 @@ Jellyfin_HarmonyOS 是一款 HarmonyOS 应用，可连接到 Jellyfin 实例并�
 PS:闲暇时间写的,禁止催更!
 
 ## 进度
-由于本人对项目也不是完全了解,具体都有什么功能也说不准
+由于本人对项目不太了解,具体都有什么功能也说不准,并且没开发过音视频类,大概率会有很多bug
 
 ### 已完成
 
@@ -55,9 +55,9 @@ PS:闲暇时间写的,禁止催更!
 🧬 效果图
 ------------
 
-|                            连接到服务器                            |                              现有服务器                              |
-|:------------------------------------------------------------:|:---------------------------------------------------------------:|
-| <img src="screenshots/connect.jpg" width="200" alt="连接到服务器"> | <img src="screenshots/findserver.jpg" width="200" alt="现有服务器"> |
+|                            连接到服务器                            |                              现有服务器                              |                              播控                               |
+|:------------------------------------------------------------:|:---------------------------------------------------------------:|:-------------------------------------------------------------:|
+| <img src="screenshots/connect.jpg" width="200" alt="连接到服务器"> | <img src="screenshots/findserver.jpg" width="200" alt="现有服务器"> | <img src="screenshots/avsession.jpg" width="200" alt="播控"> |
 
 ## 代码相关
 

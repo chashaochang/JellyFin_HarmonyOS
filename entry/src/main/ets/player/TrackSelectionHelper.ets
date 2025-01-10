@@ -72,7 +72,7 @@ export class TrackSelectionHelper {
     //let embeddedStreamIndex = mediaSource.getEmbeddedStreamIndex(audioStream)
     if (this.viewModel.uiState.audioTrackIndex && this.viewModel.uiState.audioTrackIndex > 0) {
       console.log(TAG,'deselectTrack:'+this.viewModel.uiState.audioTrackIndex);
-      IjkMediaPlayer.getInstance().deselectTrack(0+'')//deselectTrack(this.viewModel.uiState.audioTrackIndex + '')
+      IjkMediaPlayer.getInstance().deselectTrack(this.viewModel.uiState.audioTrackIndex + '')
     }
     console.log(TAG,'selectTrack:' + audioStream.Index);
     IjkMediaPlayer.getInstance().selectTrack(audioStream.Index + '')

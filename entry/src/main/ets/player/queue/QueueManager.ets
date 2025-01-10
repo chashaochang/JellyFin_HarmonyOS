@@ -69,7 +69,7 @@ export class QueueManager {
     mediaSourceId: string | null,
     maxStreamingBitrate: number | null | undefined,
     startTimeTicks: number | null,
-    audioStreamIndex: number | null,
+    audioStreamIndex: number | null | undefined,
     subtitleStreamIndex: number | null,
     playWhenReady: boolean = true): Promise<PlayerException | null> {
     this.mediaSourceResolver.resolveMediaSource(itemId, mediaSourceId, this.deviceProfile, maxStreamingBitrate,
@@ -86,6 +86,36 @@ export class QueueManager {
       return e
     })
     return null
+  }
+
+  /**
+   * Change the maximum bitrate to the specified value.
+   */
+  changeBitrate(bitrate?: number): boolean {
+    let currentMediaSource = this.currentMediaSourceOrNull
+    if (!currentMediaSource) {
+      return false
+    }
+
+    // Bitrate didn't change, ignore
+    if (currentMediaSource.maxStreamingBitrate == bitrate) {
+      return true
+    }
+
+    let position = this.viewModel.getPositionAndPause()
+    if (!position) {
+      return false
+    }
+
+    return this.startPlayback(
+      currentMediaSource.itemId,
+      currentMediaSource.id,
+      bitrate,
+      position * Constants.TICKS_PER_MILLISECOND,
+      currentMediaSource.selectedAudioStreamIndex,
+      currentMediaSource.selectedSubtitleStreamIndex,
+      true,
+    ) == null
   }
 
   hasPrevious(): boolean {

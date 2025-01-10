@@ -12,6 +12,7 @@ import { emitter } from "@kit.BasicServicesKit"
 import { PlayerUIState } from "./PlayerUIState"
 import { QueueItem } from "../../entity/QueueItem"
 import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/models"
+import { QualityOption } from "../../player/qualityoptions/QualityOption"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -191,11 +192,14 @@ export struct PlayerScreen {
             onNext: () => {
               this.viewModel.queueManager.next()
             },
-            onAudioTrackSelected:(stream:MediaStream)=>{
+            onAudioTrackSelected: (stream: MediaStream) => {
               this.viewModel.trackSelectionHelper.selectAudioTrack(stream)
             },
-            onSubtitleSelected:(stream:MediaStream)=>{
+            onSubtitleSelected: (stream: MediaStream) => {
               this.viewModel.trackSelectionHelper.selectSubtitleTrack(stream)
+            },
+            onQualitySelected: (option: QualityOption) => {
+              this.viewModel.changeBitrate(option.bitrate)
             }
           }).height(this.screenIsFull ? '100%' : 240)
         }
@@ -244,7 +248,7 @@ export struct PlayerScreen {
                 bottom: 2
               })
               .margin({
-                right:6
+                right: 6
               })
               .backgroundColor($r('app.color.color_main'))
               .borderColor(Color.Black)
@@ -253,7 +257,7 @@ export struct PlayerScreen {
         }.justifyContent(FlexAlign.Start)
         .width('100%')
 
-        if (this.viewModel.initSource?.item.Type == BaseItemKind.Episode){
+        if (this.viewModel.initSource?.item.Type == BaseItemKind.Episode) {
           Row() {
             //标题
             Text('选集')
