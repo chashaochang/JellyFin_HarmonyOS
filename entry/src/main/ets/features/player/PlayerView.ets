@@ -28,6 +28,7 @@ import { QualityOption } from "../../player/qualityoptions/QualityOption";
 import { common } from "@kit.AbilityKit";
 
 let uiTime: number = 0;
+let uiLockTime: number = 0;
 let touchStartX: number = 0;
 let touchStartY: number = 0;
 let changeWidth: number = 0;
@@ -57,6 +58,18 @@ export struct PlayerView {
   @Local aspRatio: number = 0.5;
   @Local mContext: object | undefined = undefined;
   @Local mFirst: boolean = true;
+  @Local fullShowLock: boolean = false;
+  @Local lock: boolean = false;
+
+  @Monitor('lock')
+  onLockChanged() {
+    if (this.lock) {
+      windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);
+    } else {
+      this.onScreenChanged()
+    }
+  }
+
   @Local mDestroyPage: boolean = false;
   @Local playSpeed: string = '1f';
   @Local oldSeconds: number = 0;
@@ -167,6 +180,7 @@ export struct PlayerView {
         let name = data.data['eventName'] as string
         switch (name) {
           case 'onPageShow':
+            this.onLockChanged()
             if (this.mContext && !this.mFirst) {
               this.startPlayOrResumePlay();
             }
@@ -553,6 +567,7 @@ export struct PlayerView {
             })
           Text(this.totalTime).fontColor(Color.White).fontSize(13).fontWeight(FontWeight.Bold)
         }.layoutWeight(1)
+
         // Image($r('app.media.ic_pip')).width(48).height(48).padding(12).onClick(() => {
         //   this.startPip();
         //   this.hintMsgVisibility = true;
@@ -706,6 +721,7 @@ export struct PlayerView {
       }.width('100%')
       .height('100%')
 
+
       Column() {
         //顶部菜单
         this.topControlView()
@@ -714,6 +730,23 @@ export struct PlayerView {
         this.bottomControlView()
       }.height('100%')
       .visibility(this.showControls ? Visibility.Visible : Visibility.Hidden)
+
+      if (this.screenIsFull && this.fullShowLock) {
+        Stack() {
+          Image(this.lock ? $r('app.media.lock') : $r('app.media.unlock'))
+            .width(20)
+            .height(20)
+            .objectFit(ImageFit.Contain)
+            .margin({ right: 60 })
+            .onClick(() => {
+              this.lock = !this.lock;
+              if (this.lock) {
+                this.showControls = false
+              }
+            })
+        }.width('100%')
+        .alignContent(Alignment.End)
+      }
 
       Image($r('app.media.icon_replay'))
         .objectFit(ImageFit.Auto)
@@ -740,6 +773,10 @@ export struct PlayerView {
     .gesture(GestureGroup(GestureMode.Parallel,
       TapGesture().onAction((event: GestureEvent | undefined) => {
         if (event) {
+          if (this.lock) {
+            this.timeLockCountdown();
+            return;
+          }
           if (this.loadingVisible == Visibility.Visible) {
             return;
           }
@@ -756,6 +793,9 @@ export struct PlayerView {
       PanGesture(this.panOptionBrightAndVolume)
         .onActionStart((event: GestureEvent | undefined) => {
           LogUtils.getInstance().LOGI('Vertical Pan Start');
+          if (this.lock) {
+            return;
+          }
           if (this.isHorizontalDrag) {
             return;
           }
@@ -767,6 +807,9 @@ export struct PlayerView {
           }
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
+          if (this.lock) {
+            return;
+          }
           if (this.isHorizontalDrag) {
             return;
           }
@@ -831,7 +874,9 @@ export struct PlayerView {
           if (!this.mIjkMediaPlayer) {
             return;
           }
-
+          if (this.lock) {
+            return;
+          }
           if (this.loadingVisible == Visibility.Visible) {
             this.isLoadNotSeek = true;
             return;
@@ -856,7 +901,9 @@ export struct PlayerView {
           if (!this.mIjkMediaPlayer) {
             return;
           }
-
+          if (this.lock) {
+            return;
+          }
           if (this.isLoadNotSeek) {
             return;
           }
@@ -914,6 +961,9 @@ export struct PlayerView {
           this.showSeekProgressUi = false;
         }),
       TapGesture({ count: 2 }).onAction((_event: GestureEvent | undefined) => {
+        if (this.lock) {
+          return;
+        }
         if (this.loadingVisible == Visibility.Visible) {
           return;
         }
@@ -931,6 +981,10 @@ export struct PlayerView {
     .onAreaChange((_oldValue: Area, newValue: Area) => {
       changeWidth = newValue.width as number;
       changeHeight = newValue.height as number;
+      // 如果用户不隐藏状态栏，全屏的时候组件高度与手机的高度差距小于50.就显示上方控制栏
+      if (this.screenIsFull) {
+        this.fullShowLock = true;
+      }
     })
 
 
@@ -1531,12 +1585,32 @@ export struct PlayerView {
 
   private timeCountdown() {
     clearTimeout(uiTime);
-    this.showControls = true;
+    if(!this.lock){
+      this.showControls = true;
+    }
+    if (this.screenIsFull) {
+      this.fullShowLock = true
+    }
     this.sec = 3;
     uiTime = setInterval(() => {
       if (this.sec <= 0) {
         clearTimeout(uiTime);
         this.showControls = false;
+        this.fullShowLock = false;
+      } else {
+        this.sec--;
+      }
+    }, 1000)
+  }
+
+  private timeLockCountdown() {
+    clearTimeout(uiLockTime);
+    this.fullShowLock = true;
+    this.sec = 3;
+    uiLockTime = setInterval(() => {
+      if (this.sec <= 0) {
+        clearTimeout(uiLockTime);
+        this.fullShowLock = false;
       } else {
         this.sec--;
       }
