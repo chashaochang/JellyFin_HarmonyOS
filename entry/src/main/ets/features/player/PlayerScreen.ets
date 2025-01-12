@@ -13,6 +13,8 @@ import { PlayerUIState } from "./PlayerUIState"
 import { QueueItem } from "../../entity/QueueItem"
 import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/models"
 import { QualityOption } from "../../player/qualityoptions/QualityOption"
+import { AVCastPicker, AVCastPickerState, avSession } from "@kit.AVSessionKit"
+import avSessionManager from "../../utils/AVSessionManager"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -26,6 +28,7 @@ export struct PlayerScreen {
   @Provider() screenIsFull: boolean = false;
   @Provider() uiState: PlayerUIState = new PlayerUIState()
   @Provider() viewModel: PlayerViewModel = new PlayerViewModel(this.uiState)
+  castController: avSession.AVCastController | undefined = undefined;
 
   backClickListener: () => void = () => {
     HMRouterMgr.pop()
@@ -109,6 +112,9 @@ export struct PlayerScreen {
             },
             onQualitySelected: (option: QualityOption) => {
               this.viewModel.changeBitrate(option.bitrate)
+            },
+            stopCast:()=>{
+              this.viewModel.stopCast()
             }
           }).height(this.screenIsFull ? '100%' : 240)
         }
@@ -117,13 +123,23 @@ export struct PlayerScreen {
             .width(44)
             .height(44)
             .padding(12)
+            .onClick(() => {
+              this.onBackPress()
+            })
+          Blank().layoutWeight(1)
+          AVCastPicker({
+            normalColor: Color.White,
+          })
+            .width('24vp')
+            .height('24vp')
+            .margin({
+              right:24
+            })
+            .visibility(this.uiState.isCastPlaying ? Visibility.None : Visibility.Visible)
         }
         .height(56)
         .width('100%')
         .justifyContent(FlexAlign.Start)
-        .onClick(() => {
-          this.onBackPress()
-        })
         .visibility(this.screenIsFull ? Visibility.None : Visibility.Visible)
       }.width('100%')
       .alignContent(Alignment.Top)
@@ -220,4 +236,5 @@ export struct PlayerScreen {
     .width('100%')
     .height('100%')
   }
+
 }

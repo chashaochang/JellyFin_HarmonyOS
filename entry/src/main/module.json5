@@ -32,6 +32,10 @@
               "action.system.home"
             ]
           }
+        ],
+        "backgroundModes": [
+          // 长时任务类型的配置项
+          "audioPlayback"
         ]
       }
     ],
@@ -55,6 +59,16 @@
       },
       {
         "name": "ohos.permission.GET_WIFI_INFO"
+      },
+      {
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+        "reason": "$string:reason_background",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
       }
     ]
   }

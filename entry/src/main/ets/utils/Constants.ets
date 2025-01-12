@@ -4,6 +4,30 @@ export class Constants {
   static readonly PLAYER_EVENT: emitter.InnerEvent = {
     eventId: 100001
   }
+  /**
+   *  Cast playing initial
+   */
+  static readonly PLAYBACK_STATE_INITIAL: number = 0;
+
+  /**
+   *  Cast playing prepare
+   */
+  static readonly PLAYBACK_STATE_PREPARE: number = 1;
+
+  /**
+   *  Cast playing pause
+   */
+  static readonly PLAYBACK_STATE_PAUSE: number = 3;
+
+  /**
+   *  Cast playing stop
+   */
+  static readonly PLAYBACK_STATE_STOP: number = 6;
+
+  /**
+   *  Cast playing play
+   */
+  static readonly PLAYBACK_STATE_PLAY: number = 2;
 
   static readonly APP_INFO_NAME = "Jellyfin HarmonyOS"
   // Webapp constants

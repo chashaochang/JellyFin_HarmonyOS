@@ -22,7 +22,7 @@ import { SubtitleItem } from "../../utils/SubtitleManager";
 import { audio } from "@kit.AudioKit";
 import { window, PiPWindow } from "@kit.ArkUI";
 import avSessionManager from "../../utils/AVSessionManager";
-import { avSession } from "@kit.AVSessionKit";
+import { AVCastPicker, avSession } from "@kit.AVSessionKit";
 import { MediaStream } from "sdk/src/main/ets/generated-client/models";
 import { QualityOption } from "../../player/qualityoptions/QualityOption";
 import { common } from "@kit.AbilityKit";
@@ -49,6 +49,7 @@ export struct PlayerView {
   @Param @Require onAudioTrackSelected: (stream: MediaStream) => void
   @Param @Require onSubtitleSelected: (stream: MediaStream) => void
   @Param @Require onQualitySelected: (option: QualityOption) => void
+  @Param @Require stopCast: () => void
   @Local progressValue: number = 0;
   @Local currentTime: string = "00:00";
   @Local totalTime: string = "00:00";
@@ -154,6 +155,13 @@ export struct PlayerView {
     this.sendAVSessionState(this.uiState.playerStatus)
   }
 
+  @Monitor('uiState.isCastPlaying')
+  onCastChanged(){
+    if(this.uiState.isCastPlaying){
+      this.screenIsFull = false
+    }
+  }
+
   aboutToAppear() {
     try {
       let promise = window.getLastWindow(getContext(this));
@@ -175,11 +183,12 @@ export struct PlayerView {
       this.mCurrentBrightness =
         Number(settings.getValueSync(getContext(this), settings.display.SCREEN_BRIGHTNESS_STATUS, '10'));
     }
-    emitter.on(Constants.PLAYER_EVENT, (data) => {
+    emitter.on(Constants.PLAYER_EVENT, async (data) => {
       if (data.data && data.data['eventName']) {
         let name = data.data['eventName'] as string
         switch (name) {
           case 'onPageShow':
+            if(this.uiState.isCastPlaying) return
             this.onLockChanged()
             if (this.mContext && !this.mFirst) {
               this.startPlayOrResumePlay();
@@ -225,6 +234,7 @@ export struct PlayerView {
             if (speed) {
               this.playSpeed = speed
             }
+            break
         }
       }
     })
@@ -403,7 +413,16 @@ export struct PlayerView {
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
           .margin({ left: 4 })
-        // .visibility(this.screenIsFull ? Visibility.Visible : Visibility.None)
+          .layoutWeight(1)
+        AVCastPicker({
+          normalColor: Color.White,
+        })
+          .width('24vp')
+          .height('24vp')
+          .margin({
+            right: 32
+          })
+        .visibility(this.uiState.isCastPlaying ? Visibility.None : Visibility.Visible)
       }
     }.height(56).width('100%').justifyContent(FlexAlign.Start)
   }
@@ -765,7 +784,15 @@ export struct PlayerView {
         .visibility(this.loadingVisible)
         .border({ width: 0 })
         .borderStyle(BorderStyle.Dashed)
-
+      Stack() {
+        Button('退出投屏')
+          .onClick(()=>{
+            this.stopCast()
+          })
+      }.width('100%')
+      .height('100%')
+      .backgroundColor(Color.Black)
+      .visibility(this.uiState.isCastPlaying ? Visibility.Visible : Visibility.Hidden)
     }
     .width('100%')
     .backgroundColor($r('sys.color.black'))
@@ -1367,32 +1394,33 @@ export struct PlayerView {
 
     let mOnBufferingUpdateListener: OnBufferingUpdateListener = {
       onBufferingUpdate: (percent: number) => {
-        LogUtils.getInstance().LOGI("OnBufferingUpdateListener-->go:" + percent);
-        let MediaInfo = this.mIjkMediaPlayer.getMediaInfo()
-        LogUtils.getInstance().LOGI('getMediaInfo---' + MediaInfo);
-        let VideoWidth = this.mIjkMediaPlayer.getVideoWidth()
-        LogUtils.getInstance().LOGI('getVideoWidth---' + VideoWidth);
-
-        let VideoHeight = this.mIjkMediaPlayer.getVideoHeight()
-        LogUtils.getInstance().LOGI('getVideoHeight---' + VideoHeight);
-
-        let VideoSarNum = this.mIjkMediaPlayer.getVideoSarNum()
-        LogUtils.getInstance().LOGI('getVideoSarNum---' + VideoSarNum);
-
-        let VideoSarDen = this.mIjkMediaPlayer.getVideoSarDen()
-        LogUtils.getInstance().LOGI('getVideoSarDen---' + VideoSarDen);
-
-        let AudioSessionId = this.mIjkMediaPlayer.getAudioSessionId()
-        LogUtils.getInstance().LOGI('getAudioSessionId---' + AudioSessionId);
-
-        let Looping = this.mIjkMediaPlayer.isLooping()
-        LogUtils.getInstance().LOGI('isLooping---' + Looping);
+        // LogUtils.getInstance().LOGI("OnBufferingUpdateListener-->go:" + percent);
+        // let MediaInfo = this.mIjkMediaPlayer.getMediaInfo()
+        // LogUtils.getInstance().LOGI('getMediaInfo---' + MediaInfo);
+        // let VideoWidth = this.mIjkMediaPlayer.getVideoWidth()
+        // LogUtils.getInstance().LOGI('getVideoWidth---' + VideoWidth);
+        //
+        // let VideoHeight = this.mIjkMediaPlayer.getVideoHeight()
+        // LogUtils.getInstance().LOGI('getVideoHeight---' + VideoHeight);
+        //
+        // let VideoSarNum = this.mIjkMediaPlayer.getVideoSarNum()
+        // LogUtils.getInstance().LOGI('getVideoSarNum---' + VideoSarNum);
+        //
+        // let VideoSarDen = this.mIjkMediaPlayer.getVideoSarDen()
+        // LogUtils.getInstance().LOGI('getVideoSarDen---' + VideoSarDen);
+        //
+        // let AudioSessionId = this.mIjkMediaPlayer.getAudioSessionId()
+        // LogUtils.getInstance().LOGI('getAudioSessionId---' + AudioSessionId);
+        //
+        // let Looping = this.mIjkMediaPlayer.isLooping()
+        // LogUtils.getInstance().LOGI('isLooping---' + Looping);
       }
     }
     this.mIjkMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
 
     let mOnSeekCompleteListener: OnSeekCompleteListener = {
       onSeekComplete: () => {
+        if(this.uiState.isCastPlaying) return
         LogUtils.getInstance().LOGI("OnSeekCompleteListener-->go");
         that.startPlayOrResumePlay();
       }
@@ -1461,9 +1489,13 @@ export struct PlayerView {
   }
 
   private seekTo(value: string) {
-    this.mIjkMediaPlayer.seekTo(value);
-    this.seekToSubtitle()
-    this.sendAVSessionState(this.uiState.playerStatus)
+    if (this.uiState.isCastPlaying) {
+      this.mIjkMediaPlayer.seekTo(value);
+    } else {
+      this.mIjkMediaPlayer.seekTo(value);
+      this.seekToSubtitle()
+      this.sendAVSessionState(this.uiState.playerStatus)
+    }
   }
 
   debounce() {
@@ -1585,7 +1617,7 @@ export struct PlayerView {
 
   private timeCountdown() {
     clearTimeout(uiTime);
-    if(!this.lock){
+    if (!this.lock) {
       this.showControls = true;
     }
     if (this.screenIsFull) {

@@ -4,6 +4,7 @@ import { QueueItem } from "../../entity/QueueItem"
 import { QualityOption } from "../../player/qualityoptions/QualityOption"
 import { SubtitleItem } from "../../utils/SubtitleManager"
 import { PlayerStatus, PlayStatus } from "./PlayStatus"
+import { avSession } from "@kit.AVSessionKit"
 
 @ObservedV2
 export class PlayerUIState {
@@ -21,6 +22,8 @@ export class PlayerUIState {
   @Trace subtitles: SubtitleItem[] = []
   //整理后的播放列表
   @Trace playList: QueueItem[] = []
+  //整理后的播放列表
+  @Trace sessionQueue: avSession.AVQueueItem[] = []
   //当前播放视频id
   @Trace currentPlayId: string = ''
   //媒体类型
@@ -37,6 +40,8 @@ export class PlayerUIState {
   qualityOptions:QualityOption[] = []
   //选中码率
   selectedBitrate?: number | null
+  //正在投屏
+  @Trace isCastPlaying:boolean = false
 
   scroller: ListScroller = new ListScroller()
   playWhenReady: boolean = true

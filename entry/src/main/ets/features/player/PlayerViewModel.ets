@@ -22,6 +22,8 @@ import { QueueItem } from "../../entity/QueueItem";
 import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
 import qualityOptionsProvider from "../../player/qualityoptions/QualityOptionsProvider";
+import { BackgroundTaskManager } from "../../utils/BackgroundTaskManager";
+import { common } from "@kit.AbilityKit";
 
 @ObservedV2
 export class PlayerViewModel {
@@ -29,15 +31,16 @@ export class PlayerViewModel {
   subtitleManager: SubtitleManager = new SubtitleManager()
   uiState: PlayerUIState
   @Trace url?: string
+  private context: common.UIAbilityContext | undefined = AppStorage.get('context');
 
   constructor(uiState: PlayerUIState) {
     this.uiState = uiState
   }
 
   @Monitor('mediaSourceOrNull')
-  onMediaSourceChanged(){
+  onMediaSourceChanged() {
     let source = this.mediaSourceOrNull
-    if(source){
+    if (source) {
       this.uiState.audioTrackIndex = source.audioStreamIndex
       this.uiState.title = source.name
       this.uiState.seriesName = source.item.SeriesName
@@ -49,7 +52,7 @@ export class PlayerViewModel {
       let height = videoStream?.Height
       let width = videoStream?.Width
       if (height != null && width != null) {
-        this.uiState.qualityOptions = qualityOptionsProvider.getApplicableQualityOptions(width,height)
+        this.uiState.qualityOptions = qualityOptionsProvider.getApplicableQualityOptions(width, height)
       } else {
         //qualityButton.isVisible = false
       }
@@ -57,12 +60,12 @@ export class PlayerViewModel {
   }
 
   @Monitor('mediaSourceOrNull._selectedAudioStream')
-  onSelectedAudioStreamChanged(){
+  onSelectedAudioStreamChanged() {
     this.uiState.selectedAudioStream = this.mediaSourceOrNull?._selectedAudioStream
   }
 
   @Monitor('mediaSourceOrNull._selectedSubtitleStream')
-  onSelectedSubtitleStreamChanged(){
+  onSelectedSubtitleStreamChanged() {
     this.uiState.selectedSubtitleStream = this.mediaSourceOrNull?._selectedSubtitleStream
   }
 
@@ -79,7 +82,7 @@ export class PlayerViewModel {
   setSessionCallBack(session: avSession.AVSession) {
     // 一般在监听器中会对播放器做相应逻辑处理
     // 不要忘记处理完后需要通过set接口同步播放相关信息，参考上面的用例
-    avSessionManager.getSession()?.on('play', () => {
+    session.on('play', () => {
       console.info(`on play , do play task`);
       // 如暂不支持该指令，请勿注册；或在注册后但暂不使用时，通过session.off('play')取消监听
       // 处理完毕后，请使用SetAVPlayState上报播放状态
@@ -157,8 +160,31 @@ export class PlayerViewModel {
     //   // 如暂不支持该指令，请勿注册；或在注册后但暂不使用时，通过session.off('toggleFavorite')取消监听
     //   // 处理完毕后，请使用SetAVPlayState上报收藏结果isFavorite
     // });
-
+    session.on('outputDeviceChange', this.sessionOutputDeviceChange)
   }
+
+  private sessionOutputDeviceChange = async (connectState: avSession.ConnectionState,
+    device: avSession.OutputDeviceInfo) => {
+    let currentDevice: avSession.DeviceInfo = device?.devices?.[0];
+    if (currentDevice.castCategory === avSession.AVCastCategory.CATEGORY_REMOTE &&
+      connectState === avSession.ConnectionState.STATE_CONNECTED) {
+      if (currentDevice.supportedProtocols === avSession.ProtocolType.TYPE_CAST_PLUS_STREAM) {
+        // 此设备支持cast+投播协议
+        console.log('此设备支持cast+投播协议')
+      } else if (currentDevice.supportedProtocols === avSession.ProtocolType.TYPE_DLNA) {
+        // 此设备支持DLNA投播协议
+        console.log('此设备支持DLNA投播协议')
+      }
+      this.startCast()
+    } else if ((currentDevice.castCategory === avSession.AVCastCategory.CATEGORY_REMOTE &&
+      connectState === avSession.ConnectionState.STATE_DISCONNECTED) ||
+      (currentDevice.castCategory === avSession.AVCastCategory.CATEGORY_LOCAL &&
+        connectState === avSession.ConnectionState.STATE_CONNECTED)) {
+      if (device) {
+        this.stopCast()
+      }
+    }
+  };
 
   @Monitor('uiState.CONTROL_PlayStatus')
   async onPlayStateChanged() {
@@ -278,7 +304,7 @@ export class PlayerViewModel {
   }
 
   getSubtitle(source: JellyfinMediaSource) {
-    if(source.playMethod == PlayMethod.Transcode){
+    if (source.playMethod == PlayMethod.Transcode) {
       this.uiState.currentSubtitle = ''
       this.uiState.subtitles = []
       return
@@ -334,10 +360,7 @@ export class PlayerViewModel {
               assetId: item.Id!,
               title: item.SeriesName ?? item.Name ?? "TITLE",
               subtitle: item.SeriesName ? (item.Name ?? '') : '',
-              description: 'music_description',
               mediaImage: image,
-              startPosition: 0,
-              duration: 1000
             };
             let avQueueItem: avSession.AVQueueItem = {
               itemId: item.IndexNumber!,
@@ -347,6 +370,7 @@ export class PlayerViewModel {
           })
           this.uiState.playList = list
           avSessionManager.getSession()?.setAVQueueItems(sessionQueue)
+          this.uiState.sessionQueue = sessionQueue
         }
         this.uiState.scroller.scrollToIndex(this.uiState.playList.findIndex(e => e.id == this.uiState.currentPlayId))
       }).catch((e: BusinessError) => {
@@ -356,35 +380,8 @@ export class PlayerViewModel {
   }
 
   release() {
-    this.removeAVSessionCallback()
-  }
-
-  removeAVSessionCallback() {
-    let session = avSessionManager.getSession()
-    if (!session) {
-      return
-    }
-    // 一般在监听器中会对播放器做相应逻辑处理
-    // 不要忘记处理完后需要通过set接口同步播放相关信息，参考上面的用例
-    session.off('play');
-    session.off('pause');
-    session.off('stop');
-    session.off('playNext');
-    session.off('playPrevious');
-    // session.on('fastForward', () => {
-    //   console.info(`on fastForward , do fastForward task`);
-    //   // 如暂不支持该指令，请勿注册；或在注册后但暂不使用时，通过session.off('fastForward')取消监听
-    //   // 处理完毕后，请使用SetAVPlayState上报播放状态和播放position
-    // });
-    // session.on('rewind', () => {
-    //   console.info(`on rewind , do rewind task`);
-    //   // 如暂不支持该指令，请勿注册；或在注册后但暂不使用时，通过session.off('rewind')取消监听
-    //   // 处理完毕后，请使用SetAVPlayState上报播放状态和播放position
-    // });
-    session.off('seek')
-    session.off('setSpeed');
-    // session.off('toggleFavorite');
-    session.destroy()
+    avSessionManager.unregisterSessionListener()
+    //BackgroundTaskManager.stopContinuousTask(this.context);
   }
 
   getPositionAndPause(): number {
@@ -396,11 +393,125 @@ export class PlayerViewModel {
     return IjkMediaPlayer.getInstance().getCurrentPosition()
   }
 
-  changeBitrate(bitrate?: number){
+  changeBitrate(bitrate?: number) {
     this.queueManager.changeBitrate(bitrate)
   }
 
   logTracks() {
 
   }
+
+  private async startCast() {
+    emitter.emit(Constants.PLAYER_EVENT, {
+      data: {
+        'eventName': 'Pause'
+      }
+    })
+    let castController = await avSessionManager.getSession()?.getAVCastController()
+    castController?.on('playbackStateChange', 'all', this.playbackStateChangeListener);
+    castController?.on('endOfStream', this.reloadCasting);
+    castController?.on('playNext', this.playNextCallback);
+    castController?.on('playPrevious', this.playPreviousCallback);
+    let queueItem = this.uiState.playList.find(e => e.id == this.uiState.currentPlayId)
+    let avQueueItem: avSession.AVQueueItem = {
+      itemId: queueItem!.playIndex,
+      description: {
+        assetId: queueItem!.id,
+        title: this.uiState.seriesName ?? this.uiState.title,
+        subtitle: this.uiState.seriesName ? this.uiState.title : '',
+        mediaUri: this.url,
+
+        mediaType: 'VIDEO',
+        appName: Constants.APP_INFO_NAME,
+        //startPosition为投播当前进度，设置该字段可将本机播放进度同步到远端
+        startPosition: IjkMediaPlayer.getInstance().getCurrentPosition(),
+        // 投播资源播放时长，设置该字段可将本机播放时长同步到远端显示
+        duration: IjkMediaPlayer.getInstance().getDuration(),
+      }
+    }
+
+    try {
+      await castController?.prepare(avQueueItem)
+      await castController?.start(avQueueItem)
+    } catch (e) {
+      console.error(e)
+    }
+    BackgroundTaskManager.startContinuousTask(AppStorage.get('context'))
+    this.uiState.isCastPlaying = true;
+  }
+
+  async stopCast() {
+    avSessionManager.getSession()?.stopCasting()
+    this.uiState.isCastPlaying = false;
+    let castController = await avSessionManager.getSession()?.getAVCastController()
+    castController?.off('playbackStateChange');
+    castController?.off('endOfStream');
+    castController?.off('playNext');
+    castController?.off('playPrevious');
+    BackgroundTaskManager.stopContinuousTask(AppStorage.get('context'))
+  }
+
+  private playbackStateChangeListener = (playbackState: avSession.AVPlaybackState) => {
+    const duration = playbackState?.extras?.duration;
+    // if (typeof duration === 'number') {
+    //   this.playDurationChange(duration as number);
+    // }
+
+    if (typeof playbackState?.position?.elapsedTime !== 'undefined') {
+      //this.positionChange(playbackState?.position?.elapsedTime);
+      emitter.emit(Constants.PLAYER_EVENT, {
+        data: {
+          'eventName': 'Seek',
+          'args': playbackState?.position?.elapsedTime
+        }
+      })
+    }
+
+    if (playbackState.state === Constants.PLAYBACK_STATE_PAUSE ||
+      playbackState.state === Constants.PLAYBACK_STATE_STOP ||
+      playbackState.state === Constants.PLAYBACK_STATE_PREPARE ||
+      playbackState.state === Constants.PLAYBACK_STATE_INITIAL) {
+      this.uiState.isCastPlaying = false;
+    }
+
+    if (playbackState.state === Constants.PLAYBACK_STATE_PLAY) {
+      this.uiState.isCastPlaying = true;
+    }
+  };
+  private reloadCasting = async () => {
+    let queueItem = this.uiState.playList.find(e => e.id == this.uiState.currentPlayId)
+    let image =
+      ApiClient.Instance().basePath + new ImageUrlsApi().getItemImageUrlById(queueItem?.id)
+    let avQueueItem: avSession.AVQueueItem = {
+      itemId: queueItem!.playIndex,
+      description: {
+        assetId: queueItem!.id,
+        title: (this.uiState.mediaType == BaseItemKind.Episode ? this.uiState.seriesName : this.uiState.title) ?? '',
+        subtitle: (this.uiState.mediaType == BaseItemKind.Episode ? this.uiState.title : '') ?? '',
+        mediaImage:image,
+        mediaUri: this.url,
+        mediaType: 'VIDEO',
+        appName: Constants.APP_INFO_NAME,
+        //startPosition为投播当前进度，设置该字段可将本机播放进度同步到远端
+        startPosition: 0,
+        // 投播资源播放时长，设置该字段可将本机播放时长同步到远端显示
+        duration: IjkMediaPlayer.getInstance().getDuration(),
+      }
+    }
+
+    try {
+      let castController = await avSessionManager.getSession()?.getAVCastController()
+      await castController?.prepare(avQueueItem)
+      await castController?.start(avQueueItem)
+    } catch (e) {
+      console.error(e)
+    }
+    this.uiState.isCastPlaying = true;
+  };
+  public playNextCallback = (): void => {
+    this.queueManager.next()
+  };
+  public playPreviousCallback = (): void => {
+    this.queueManager.previous()
+  };
 }

@@ -110,6 +110,10 @@
     {
       "name": "IMAGEVIDEO_REQUEST_PERMISSION",
       "value": "api apply image video request permission."
+    },
+    {
+      "name": "reason_background",
+      "value": "避免应用在投播时进入后台被系统冻结"
     }
   ]
 }

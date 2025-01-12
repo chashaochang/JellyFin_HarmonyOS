@@ -18,6 +18,33 @@ class AVSessionManager {
     this.session = session
     return session
   }
+
+  async unregisterSessionListener() {
+    if (!this.session) {
+      return;
+    }
+    this.session.off('play');
+    this.session.off('pause');
+    this.session.off('playNext');
+    this.session.off('playPrevious');
+    // this.session.off('setLoopMode');
+    this.session.off('seek');
+    // this.session.off('toggleFavorite');
+
+    this.session.off('stop');
+    // session.on('fastForward', () => {
+    //   console.info(`on fastForward , do fastForward task`);
+    //   // 如暂不支持该指令，请勿注册；或在注册后但暂不使用时，通过session.off('fastForward')取消监听
+    //   // 处理完毕后，请使用SetAVPlayState上报播放状态和播放position
+    // });
+    // session.on('rewind', () => {
+    //   console.info(`on rewind , do rewind task`);
+    //   // 如暂不支持该指令，请勿注册；或在注册后但暂不使用时，通过session.off('rewind')取消监听
+    //   // 处理完毕后，请使用SetAVPlayState上报播放状态和播放position
+    // });
+    this.session.off('setSpeed');
+    this.session.destroy()
+  }
 }
 
 const avSessionManager = new AVSessionManager()
