@@ -6,9 +6,9 @@
         "type": "HarmonyOS",
         "material": {
           "certpath": "/Users/machunjiang/.ohos/config/default_JellyFin_HarmonyOS_xMNsffkzwU_ahnFa0FBEoyexOJxwFsX4_FWqCxYigiw=.cer",
-          "storePassword": "0000001B17AA57B7D229E6F3D05225C7099758365FF4551D044A07011DEAEB6B420629AC55B46E17F16BF0",
+          "storePassword": "0000001B5EC6F370C86CB03F6671809AC6FBB840BAD51736375A2E60AF8F488AF8326B4C5CF94B62A67570",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BCF8E7F3D7E6F53490770BE54F3590DC89BD8B0F8FFCEF436FEFC3CD45A505FB32E6D3EE7B47C29",
+          "keyPassword": "0000001B1F5C4594B59B1BD5E389DE0B54793372D04A298B893BD3CB50950C7B01137C23ED45B38B26E2FB",
           "profile": "/Users/machunjiang/.ohos/config/default_JellyFin_HarmonyOS_xMNsffkzwU_ahnFa0FBEoyexOJxwFsX4_FWqCxYigiw=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "/Users/machunjiang/.ohos/config/default_JellyFin_HarmonyOS_xMNsffkzwU_ahnFa0FBEoyexOJxwFsX4_FWqCxYigiw=.p12"

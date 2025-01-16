@@ -1,4 +1,4 @@
-import { getHlsSegmentApi, getPlaystateApi, getSubtitleApi, ImageUrlsApi } from "sdk";
+import { getHlsSegmentApi, getLibraryApi, getPlaystateApi, getSubtitleApi, ImageUrlsApi } from "sdk";
 import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError, emitter } from "@kit.BasicServicesKit";
@@ -6,6 +6,7 @@ import { JellyfinMediaSource } from "../../player/source/JellyfinMediaSource";
 import {
   BaseItemDtoQueryResult,
   BaseItemKind,
+  ItemFields,
   MediaStream,
   PlayMethod,
   RepeatMode
@@ -23,6 +24,7 @@ import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
 import qualityOptionsProvider from "../../player/qualityoptions/QualityOptionsProvider";
 import { BackgroundTaskManager } from "../../utils/BackgroundTaskManager";
+import { SimilarItem } from "../../entity/SimilarItem";
 
 @ObservedV2
 export class PlayerViewModel {
@@ -237,13 +239,41 @@ export class PlayerViewModel {
         console.log('外挂字幕:' + element);
       }
     }
+    //更多类似的
+    getLibraryApi(ApiClient.Instance()).getSimilarItems({
+      itemId: source.item.SeriesId ?? source.itemId,
+      userId: AppStorage.get('userId'),
+      limit: 12,
+      fields: [ItemFields.PrimaryImageAspectRatio, ItemFields.CanDelete]
+    }).then((res: AxiosResponse<BaseItemDtoQueryResult>) => {
+      let result = res.data.Items?.map(e => {
+        let desc = e.ProductionYear + ''
+        switch (e.Status) {
+          case 'Continuing':
+            desc += ' - 现在'
+            break
+          case 'Ended':
+            desc = desc + ' - ' + new Date(e.EndDate!).getFullYear()
+            break
+        }
+        let item: SimilarItem = {
+          id:e.Id!,
+          name: e.Name ?? '',
+          image: ApiClient.Instance().basePath + new ImageUrlsApi().getItemImageUrlById(e.Id),
+          desc: desc,
+          runTimeTicks : e.RunTimeTicks
+        }
+        return item
+      }) ?? []
+      this.uiState.similarItems = result
+    })
   }
 
   stopTranscoding(mediaSource: JellyfinMediaSource) {
     if (mediaSource.playMethod == PlayMethod.Transcode) {
       getHlsSegmentApi(ApiClient.Instance()).stopEncodingProcess({
-        deviceId :ApiClient.Instance().deviceInfo.id,
-        playSessionId : mediaSource.playSessionId,
+        deviceId: ApiClient.Instance().deviceInfo.id,
+        playSessionId: mediaSource.playSessionId,
       })
     }
   }
@@ -494,7 +524,7 @@ export class PlayerViewModel {
         assetId: queueItem!.id,
         title: (this.uiState.mediaType == BaseItemKind.Episode ? this.uiState.seriesName : this.uiState.title) ?? '',
         subtitle: (this.uiState.mediaType == BaseItemKind.Episode ? this.uiState.title : '') ?? '',
-        mediaImage:image,
+        mediaImage: image,
         mediaUri: this.url,
         mediaType: 'VIDEO',
         appName: Constants.APP_INFO_NAME,
@@ -520,6 +550,7 @@ export class PlayerViewModel {
   public playPreviousCallback = (): void => {
     this.queueManager.previous()
   };
+
   changeEpisode(index: number) {
     this.queueManager.changeEpisode(index)
   }

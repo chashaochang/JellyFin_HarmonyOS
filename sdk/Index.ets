@@ -21,3 +21,5 @@ export { getSubtitleApi } from './src/main/ets/utils/api/subtitle-api'
 export { ImageUrlsApi } from './src/main/ets/utils/api/image-urls-api'
 
 export { getHlsSegmentApi } from './src/main/ets/utils/api/hls-segment-api'
+
+export { getLibraryApi } from './src/main/ets/utils/api/library-api'

@@ -5,6 +5,7 @@ import { QualityOption } from "../../player/qualityoptions/QualityOption"
 import { SubtitleItem } from "../../utils/SubtitleManager"
 import { PlayerStatus, PlayStatus } from "./PlayStatus"
 import { avSession } from "@kit.AVSessionKit"
+import { SimilarItem } from "../../entity/SimilarItem"
 
 @ObservedV2
 export class PlayerUIState {
@@ -42,6 +43,8 @@ export class PlayerUIState {
   selectedBitrate?: number | null
   //正在投屏
   @Trace isCastPlaying:boolean = false
+  //更多类似的
+  @Trace similarItems:SimilarItem[] = []
 
   scroller: ListScroller = new ListScroller()
   playWhenReady: boolean = true
