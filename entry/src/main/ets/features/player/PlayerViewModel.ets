@@ -1,4 +1,4 @@
-import { getPlaystateApi, getSubtitleApi, ImageUrlsApi } from "sdk";
+import { getHlsSegmentApi, getPlaystateApi, getSubtitleApi, ImageUrlsApi } from "sdk";
 import { ApiClient } from "../../network/ApiClient";
 import { QueueManager } from "../../player/queue/QueueManager";
 import { BusinessError, emitter } from "@kit.BasicServicesKit";
@@ -241,10 +241,10 @@ export class PlayerViewModel {
 
   stopTranscoding(mediaSource: JellyfinMediaSource) {
     if (mediaSource.playMethod == PlayMethod.Transcode) {
-      // hlsSegmentApi.stopEncodingProcess(
-      //   deviceId = apiClient.deviceInfo.id,
-      //   playSessionId = mediaSource.playSessionId,
-      // )
+      getHlsSegmentApi(ApiClient.Instance()).stopEncodingProcess({
+        deviceId :ApiClient.Instance().deviceInfo.id,
+        playSessionId : mediaSource.playSessionId,
+      })
     }
   }
 
