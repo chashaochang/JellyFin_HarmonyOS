@@ -148,8 +148,10 @@ export struct WebViewScreen {
         // .onErrorReceive((err) => {
         //   this.handleError()
         // })
-        .onHttpErrorReceive(() => {
-          this.handleError()
+        .onHttpErrorReceive((e) => {
+          if(e.request.getRequestUrl() == this.server.hostname){
+            this.handleError()
+          }
         })
         .onSslErrorEventReceive((event) => {
           event.handler.handleCancel()
