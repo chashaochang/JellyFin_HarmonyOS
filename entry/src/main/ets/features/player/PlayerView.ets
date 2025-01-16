@@ -23,9 +23,10 @@ import { audio } from "@kit.AudioKit";
 import { window, PiPWindow } from "@kit.ArkUI";
 import avSessionManager from "../../utils/AVSessionManager";
 import { AVCastPicker, avSession } from "@kit.AVSessionKit";
-import { MediaStream } from "sdk/src/main/ets/generated-client/models";
+import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/models";
 import { QualityOption } from "../../player/qualityoptions/QualityOption";
 import { common } from "@kit.AbilityKit";
+import { QueueItem } from "../../entity/QueueItem";
 
 let uiTime: number = 0;
 let uiLockTime: number = 0;
@@ -49,6 +50,7 @@ export struct PlayerView {
   @Param @Require onAudioTrackSelected: (stream: MediaStream) => void
   @Param @Require onSubtitleSelected: (stream: MediaStream) => void
   @Param @Require onQualitySelected: (option: QualityOption) => void
+  @Param @Require onEpisodeChange: (index: number) => void
   @Param @Require stopCast: () => void
   @Local progressValue: number = 0;
   @Local currentTime: string = "00:00";
@@ -131,6 +133,7 @@ export struct PlayerView {
         windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_LANDSCAPE);
       }
     } else {
+      SmartDialog.dismiss()
       windowClass?.setWindowLayoutFullScreen(false)
       windowClass?.setWindowSystemBarEnable(['status', 'navigation'])
       if (canIUse('SystemCapability.Window.SessionManager')) {
@@ -156,8 +159,8 @@ export struct PlayerView {
   }
 
   @Monitor('uiState.isCastPlaying')
-  onCastChanged(){
-    if(this.uiState.isCastPlaying){
+  onCastChanged() {
+    if (this.uiState.isCastPlaying) {
       this.screenIsFull = false
     }
   }
@@ -188,7 +191,9 @@ export struct PlayerView {
         let name = data.data['eventName'] as string
         switch (name) {
           case 'onPageShow':
-            if(this.uiState.isCastPlaying) return
+            if (this.uiState.isCastPlaying) {
+              return
+            }
             this.onLockChanged()
             if (this.mContext && !this.mFirst) {
               this.startPlayOrResumePlay();
@@ -275,6 +280,41 @@ export struct PlayerView {
       this.stop();
     }
     this.mIjkMediaPlayer.off('audioInterrupt');
+  }
+
+  @Builder
+  dialogEpisode(_this: PlayerView) {
+    Column({ space: 10 }) {
+      List({space:8,initialIndex:_this.uiState.playList.findIndex(e=>e.id == _this.uiState.currentPlayId)}) {
+        ForEach(_this.uiState.playList, (item: QueueItem, index) => {
+          ListItem() {
+            Column() {
+              Text(`第 ${item.playIndex} 集  ` + (item.name == `第 ${item.playIndex} 集` ? '' : item.name))
+                .fontColor(_this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.White)
+                .fontSize(14)
+                .maxLines(1)
+                .ellipsisMode(EllipsisMode.END)
+                .textOverflow({
+                  overflow:TextOverflow.Ellipsis
+                })
+            }
+            .width('100%')
+            .height(40)
+            .alignItems(HorizontalAlign.Start)
+            .justifyContent(FlexAlign.Center)
+            .padding(12)
+            .borderWidth(1)
+            .borderColor(_this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Gray)
+            .borderRadius(8)
+            .onClick(() => {
+              _this.onEpisodeChange(index)
+              SmartDialog.dismiss()
+            })
+          }
+        })
+      }.width('100%').height('100%')
+    }.height('100%').padding(20).backgroundColor('rgba(0,0,0,0.8)')
+    .width(300)
   }
 
   @Builder
@@ -422,7 +462,7 @@ export struct PlayerView {
           .margin({
             right: 32
           })
-        .visibility(this.uiState.isCastPlaying ? Visibility.None : Visibility.Visible)
+          .visibility(this.uiState.isCastPlaying ? Visibility.None : Visibility.Visible)
       }
     }.height(56).width('100%').justifyContent(FlexAlign.Start)
   }
@@ -508,7 +548,22 @@ export struct PlayerView {
           }.backgroundColor(Color.Transparent).bindMenu(this.subtitleMenu())
 
           Blank().layoutWeight(1)
-
+          if (this.uiState.mediaType == BaseItemKind.Episode) {
+            Text('选集')
+              .fontColor(Color.White)
+              .fontSize(16)
+              .height('100%')
+              .padding({
+                left: 16, right: 16
+              })
+              .onClick(() => {
+                SmartDialog.show({
+                  builder: this.dialogEpisode,
+                  builderArgs: this,
+                  alignment: Alignment.End,
+                })
+              })
+          }
           Button() {
             Text('质量')
               .fontColor(Color.White)
@@ -786,7 +841,7 @@ export struct PlayerView {
         .borderStyle(BorderStyle.Dashed)
       Stack() {
         Button('退出投屏')
-          .onClick(()=>{
+          .onClick(() => {
             this.stopCast()
           })
       }.width('100%')
@@ -1393,7 +1448,7 @@ export struct PlayerView {
     this.mIjkMediaPlayer.setOnCompletionListener(mOnCompletionListener);
 
     let mOnBufferingUpdateListener: OnBufferingUpdateListener = {
-      onBufferingUpdate: (percent: number) => {
+      onBufferingUpdate: (_percent: number) => {
         // LogUtils.getInstance().LOGI("OnBufferingUpdateListener-->go:" + percent);
         // let MediaInfo = this.mIjkMediaPlayer.getMediaInfo()
         // LogUtils.getInstance().LOGI('getMediaInfo---' + MediaInfo);
@@ -1420,7 +1475,9 @@ export struct PlayerView {
 
     let mOnSeekCompleteListener: OnSeekCompleteListener = {
       onSeekComplete: () => {
-        if(this.uiState.isCastPlaying) return
+        if (this.uiState.isCastPlaying) {
+          return
+        }
         LogUtils.getInstance().LOGI("OnSeekCompleteListener-->go");
         that.startPlayOrResumePlay();
       }
@@ -1428,7 +1485,7 @@ export struct PlayerView {
     this.mIjkMediaPlayer.setOnSeekCompleteListener(mOnSeekCompleteListener);
 
     let mOnInfoListener: OnInfoListener = {
-      onInfo: (what: number, extra: number) => {
+      onInfo: (_what: number, _extra: number) => {
         //LogUtils.getInstance().LOGI("OnInfoListener-->go:" + what + "===" + extra);
         that.hideLoadIng();
       }

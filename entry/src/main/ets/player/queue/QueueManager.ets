@@ -11,8 +11,7 @@ import {
   MediaProtocol,
   MediaStream,
   MediaStreamType,
-  PlayMethod
-} from "sdk/src/main/ets/generated-client/models";
+  PlayMethod} from "sdk/src/main/ets/generated-client/models";
 import { ApiClient } from "../../network/ApiClient";
 import { AxiosResponse } from "@ohos/axios";
 import { Constants } from "../../utils/Constants";
@@ -168,6 +167,23 @@ export class QueueManager {
     return true
   }
 
+  async changeEpisode(index: number) {
+    if (!this.currentMediaSourceOrNull) {
+      return false
+    }
+    let currentMediaSource = this.currentMediaSourceOrNull
+    this.currentQueueIndex = index
+    await this.startPlayback(
+      this.currentQueue[this.currentQueueIndex],
+      null,
+      currentMediaSource.maxStreamingBitrate ?? null,
+      null,
+      null,
+      null
+    )
+    return true
+  }
+
 
   async prepareStreams(source: JellyfinMediaSource): Promise<string[]> {
     let videoSource = await this.createVideoMediaSource(source)
@@ -290,7 +306,7 @@ export class QueueManager {
   async getItem(id: string): Promise<AxiosResponse<BaseItemDtoQueryResult>> {
     return getItemsApi(ApiClient.Instance()).getItems({
       ids: Array.of(id),
-      includeItemTypes: ['Series'],
+      includeItemTypes: ['Series','Movie'],
       fields: ['Overview', 'Genres'],
     })
   }

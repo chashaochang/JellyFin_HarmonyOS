@@ -23,15 +23,21 @@ import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
 import qualityOptionsProvider from "../../player/qualityoptions/QualityOptionsProvider";
 import { BackgroundTaskManager } from "../../utils/BackgroundTaskManager";
-import { common } from "@kit.AbilityKit";
 
 @ObservedV2
 export class PlayerViewModel {
+  //   // 处理完毕后，请使用SetAVPlayState上报播放状态和播放position
+  // });
+  // session.on('rewind', () => {
+  //   console.info(`on rewind , do rewind task`);
+  //   // 如暂不支持该指令，请勿注册；或在注册后但暂不使用时，通过session.off('rewind')取消监听
+  //   // 处理完毕后，请使用SetAVPlayState上报播放状态和播放position
+  // });
+
   queueManager: QueueManager = new QueueManager(this)
   subtitleManager: SubtitleManager = new SubtitleManager()
   uiState: PlayerUIState
   @Trace url?: string
-  private context: common.UIAbilityContext | undefined = AppStorage.get('context');
 
   constructor(uiState: PlayerUIState) {
     this.uiState = uiState
@@ -514,4 +520,7 @@ export class PlayerViewModel {
   public playPreviousCallback = (): void => {
     this.queueManager.previous()
   };
+  changeEpisode(index: number) {
+    this.queueManager.changeEpisode(index)
+  }
 }

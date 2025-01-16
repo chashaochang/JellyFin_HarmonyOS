@@ -13,8 +13,7 @@ import { PlayerUIState } from "./PlayerUIState"
 import { QueueItem } from "../../entity/QueueItem"
 import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/models"
 import { QualityOption } from "../../player/qualityoptions/QualityOption"
-import { AVCastPicker, AVCastPickerState, avSession } from "@kit.AVSessionKit"
-import avSessionManager from "../../utils/AVSessionManager"
+import { AVCastPicker, avSession } from "@kit.AVSessionKit"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -29,10 +28,10 @@ export struct PlayerScreen {
   @Provider() uiState: PlayerUIState = new PlayerUIState()
   @Provider() viewModel: PlayerViewModel = new PlayerViewModel(this.uiState)
   castController: avSession.AVCastController | undefined = undefined;
-
   backClickListener: () => void = () => {
     HMRouterMgr.pop()
   }
+  @Local showEpisodeView: boolean = false
 
   async aboutToAppear(): Promise<void> {
     this.viewModel.initAVSession()
@@ -86,13 +85,71 @@ export struct PlayerScreen {
     this.viewModel.release()
   }
 
-
   onBackPress(): boolean | void {
     if (this.screenIsFull) {
       this.screenIsFull = false
     } else {
       HMRouterMgr.pop()
     }
+  }
+
+  @Builder
+  EpisodeView() {
+    Column({ space: 10 }) {
+      Row() {
+        Text('选集').titleStyle()
+        Blank().layoutWeight(1)
+        Image($r('app.media.ic_close'))
+          .width(40)
+          .height(40)
+          .onClick(() => {
+            this.showEpisodeView = false
+          })
+      }
+
+      List({ space: 10 }) {
+        ForEach(this.viewModel.uiState.playList, (item: QueueItem, index) => {
+          ListItem() {
+            Column({ space: 2 }) {
+              Text(`第 ${item.playIndex} 集`)
+                .fontSize(14)
+                .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+              Text(item.name == `第 ${item.playIndex} 集` ? '' : item.name)
+                .width('100%')
+                .fontSize(14)
+                .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+                .maxLines(1)
+                .textOverflow({
+                  overflow: TextOverflow.Ellipsis
+                })
+                .ellipsisMode(EllipsisMode.END)
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+            .justifyContent(FlexAlign.Center)
+            .padding(12)
+            .backgroundColor('#eeeeee')
+            .borderRadius(8)
+          }.padding({
+            left: index % 2 === 0 ? 0 : 4,
+            right: index % 2 === 0 ? 4 : 0,
+          }).onClick(() => {
+            this.viewModel.changeEpisode(index)
+          })
+        })
+      }
+      .width('100%')
+      .layoutWeight(1)
+      .lanes(2)
+    }.width('100%')
+    .height('100%')
+    .padding({
+      left: 16,
+      right: 16,
+      top: 12,
+      bottom: 12
+    })
+    .backgroundColor(Color.White)
   }
 
   build() {
@@ -113,8 +170,11 @@ export struct PlayerScreen {
             onQualitySelected: (option: QualityOption) => {
               this.viewModel.changeBitrate(option.bitrate)
             },
-            stopCast:()=>{
+            stopCast: () => {
               this.viewModel.stopCast()
+            },
+            onEpisodeChange: (index: number) => {
+              this.viewModel.changeEpisode(index)
             }
           }).height(this.screenIsFull ? '100%' : 240)
         }
@@ -133,7 +193,7 @@ export struct PlayerScreen {
             .width('24vp')
             .height('24vp')
             .margin({
-              right:24
+              right: 24
             })
             .visibility(this.uiState.isCastPlaying ? Visibility.None : Visibility.Visible)
         }
@@ -144,97 +204,112 @@ export struct PlayerScreen {
       }.width('100%')
       .alignContent(Alignment.Top)
 
-      Column({ space: 10 }) {
-        //标题
-        Text(this.viewModel.uiState.seriesName ?? this.viewModel.uiState.title)
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .width('100%')
-          .textAlign(TextAlign.Start)
+      Stack() {
+        Column({ space: 10 }) {
+          //标题
+          Text(this.viewModel.uiState.seriesName ?? this.viewModel.uiState.title)
+            .titleStyle()
 
-        Text(this.uiState.overview)
-          .width('100%')
-          .textAlign(TextAlign.Start)
-          .maxLines(3)
-          .textOverflow({
-            overflow: TextOverflow.Ellipsis
-          })
-          .ellipsisMode(EllipsisMode.END)
-
-        Row() {
-          ForEach(this.uiState.genres, (item: string) => {
-            Text(item)
-              .fontSize(12)
-              .fontColor(Color.White)
-              .padding({
-                left: 6,
-                right: 6,
-                top: 2,
-                bottom: 2
-              })
-              .margin({
-                right: 6
-              })
-              .backgroundColor($r('app.color.color_main'))
-              .borderColor(Color.Black)
-              .borderRadius(4)
-          })
-        }.justifyContent(FlexAlign.Start)
-        .width('100%')
-
-        if (this.viewModel.initSource?.item.Type == BaseItemKind.Episode) {
-          Row() {
-            //标题
-            Text('选集')
-              .fontSize(16)
-              .fontWeight(FontWeight.Bold)
-              .textAlign(TextAlign.Start)
-            Blank().layoutWeight(1)
-            Image($r('app.media.ic_right')).width(24).height(24).padding(8)
-          }.alignItems(VerticalAlign.Bottom)
-
-          List({
-            scroller: this.uiState.scroller,
-          }) {
-            ForEach(this.uiState.playList, (item: QueueItem) => {
-              ListItem() {
-                Column({ space: 2 }) {
-                  Text(`第 ${item.playIndex} 集`)
-                    .fontSize(14)
-                    .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
-                  Text(item.name)
-                    .width('100%')
-                    .fontSize(14)
-                    .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
-                    .maxLines(1)
-                    .textOverflow({
-                      overflow: TextOverflow.Ellipsis
-                    })
-                    .ellipsisMode(EllipsisMode.END)
-                }
-                .width(140)
-                .alignItems(HorizontalAlign.Start)
-                .justifyContent(FlexAlign.Center)
-                .padding(12)
-                .backgroundColor('#eeeeee')
-                .borderRadius(8)
-                .margin({ right: 10 })
-              }
+          Text(this.uiState.overview)
+            .width('100%')
+            .textAlign(TextAlign.Start)
+            .maxLines(3)
+            .textOverflow({
+              overflow: TextOverflow.Ellipsis
             })
-          }.width('100%')
-          .height(60)
-          .listDirection(Axis.Horizontal)
-          .scrollBar(BarState.Off)
-        }
+            .ellipsisMode(EllipsisMode.END)
 
+          Row() {
+            ForEach(this.uiState.genres, (item: string) => {
+              Text(item)
+                .fontSize(12)
+                .fontColor(Color.White)
+                .padding({
+                  left: 6,
+                  right: 6,
+                  top: 2,
+                  bottom: 2
+                })
+                .margin({
+                  right: 6
+                })
+                .backgroundColor($r('app.color.color_main'))
+                .borderColor(Color.Black)
+                .borderRadius(4)
+            })
+          }.justifyContent(FlexAlign.Start)
+          .width('100%')
+
+          if (this.viewModel.mediaSourceOrNull?.item.Type == BaseItemKind.Episode) {
+            Row() {
+              //标题
+              Text('选集')
+                .titleStyle()
+              Blank().layoutWeight(1)
+              Image($r('app.media.ic_right')).width(24).height(24).padding(8)
+                .onClick(() => {
+                  this.showEpisodeView = true
+                })
+            }.alignItems(VerticalAlign.Bottom)
+
+            List({
+              scroller: this.uiState.scroller,
+            }) {
+              ForEach(this.uiState.playList, (item: QueueItem, index) => {
+                ListItem() {
+                  Column({ space: 2 }) {
+                    Text(`第 ${item.playIndex} 集`)
+                      .fontSize(14)
+                      .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+                    Text(item.name == `第 ${item.playIndex} 集` ? '' : item.name)
+                      .width('100%')
+                      .fontSize(14)
+                      .fontColor(this.uiState.currentPlayId == item.id ? $r('app.color.color_main') : Color.Black)
+                      .maxLines(1)
+                      .textOverflow({
+                        overflow: TextOverflow.Ellipsis
+                      })
+                      .ellipsisMode(EllipsisMode.END)
+                  }
+                  .width(140)
+                  .alignItems(HorizontalAlign.Start)
+                  .justifyContent(FlexAlign.Center)
+                  .padding(12)
+                  .backgroundColor('#eeeeee')
+                  .borderRadius(8)
+                  .margin({ right: 10 })
+                }.onClick(() => {
+                  this.viewModel.changeEpisode(index)
+                })
+              })
+            }.width('100%')
+            .height(60)
+            .listDirection(Axis.Horizontal)
+            .scrollBar(BarState.Off)
+          }
+
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .height('100%')
+        .padding(16)
+        .visibility(this.screenIsFull ? Visibility.None : Visibility.Visible)
+
+        //选集
+        if (this.showEpisodeView) {
+          this.EpisodeView()
+        }
       }.width('100%')
       .layoutWeight(1)
-      .padding(16)
-      .visibility(this.screenIsFull ? Visibility.None : Visibility.Visible)
-
     }
     .width('100%')
     .height('100%')
   }
+}
 
+@Extend(Text)
+function titleStyle() {
+  .fontSize(18)
+  .fontWeight(FontWeight.Bold)
+  .textAlign(TextAlign.Start)
 }

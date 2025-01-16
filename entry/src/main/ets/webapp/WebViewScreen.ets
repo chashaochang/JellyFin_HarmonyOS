@@ -2,7 +2,7 @@ import { webview } from "@kit.ArkWeb";
 import { NativeInterface } from "../bridge/NativeInterface";
 import { NativePlayer } from "../bridge/NativePlayer";
 import { Constants } from "../utils/Constants";
-import { url, util } from "@kit.ArkTS";
+import { util } from "@kit.ArkTS";
 import { ExternalPlayer } from "../bridge/ExternalPlayer";
 import { JSONUtil } from "@pura/harmony-utils";
 import ServerEntity from "../data/ServerEntity";
