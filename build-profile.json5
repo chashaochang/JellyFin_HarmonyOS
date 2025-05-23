@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/machunjiang/.ohos/config/default_JellyFin_HarmonyOS_xMNsffkzwU_ahnFa0FBEoyexOJxwFsX4_FWqCxYigiw=.cer",
-          "storePassword": "0000001B5EC6F370C86CB03F6671809AC6FBB840BAD51736375A2E60AF8F488AF8326B4C5CF94B62A67570",
+          "certpath": "/Users/machunjiang/.ohos/config/default_JellyFin_DxannsFysdWmHkXd6t6DQm2KWbLbHmRAw2u5-yw73IQ=.cer",
+          "storePassword": "0000001A88BEDFEA1A66C8019260C89318E13F9010887F4D67110CAE49B4DC88245430E103D3A5BE7410",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B1F5C4594B59B1BD5E389DE0B54793372D04A298B893BD3CB50950C7B01137C23ED45B38B26E2FB",
-          "profile": "/Users/machunjiang/.ohos/config/default_JellyFin_HarmonyOS_xMNsffkzwU_ahnFa0FBEoyexOJxwFsX4_FWqCxYigiw=.p7b",
+          "keyPassword": "0000001A234D3D4D4D503969D9C29F3DB2E2B49971FA09FD93A5F15C8202DBE3372D2CE1818F331585E0",
+          "profile": "/Users/machunjiang/.ohos/config/default_JellyFin_DxannsFysdWmHkXd6t6DQm2KWbLbHmRAw2u5-yw73IQ=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/machunjiang/.ohos/config/default_JellyFin_HarmonyOS_xMNsffkzwU_ahnFa0FBEoyexOJxwFsX4_FWqCxYigiw=.p12"
+          "storeFile": "/Users/machunjiang/.ohos/config/default_JellyFin_DxannsFysdWmHkXd6t6DQm2KWbLbHmRAw2u5-yw73IQ=.p12"
         }
       }
     ],
@@ -19,7 +19,7 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "compatibleSdkVersion": "5.0.1(13)",
+        "compatibleSdkVersion": "5.0.5(17)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

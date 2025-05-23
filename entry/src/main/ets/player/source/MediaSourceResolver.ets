@@ -31,8 +31,6 @@ export class MediaSourceResolver {
           SubtitleStreamIndex : subtitleStreamIndex,
           AutoOpenLiveStream : autoOpenLiveStream,
         }
-        // subtitleStreamIndex: subtitleStreamIndex,
-        // autoOpenLiveStream: autoOpenLiveStream,
       }).then((res: AxiosResponse<PlaybackInfoResponse>) => {
         if (res.data.PlaySessionId) {
           let playSessionId = res.data.PlaySessionId

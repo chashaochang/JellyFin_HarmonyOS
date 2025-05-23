@@ -1,7 +1,7 @@
 import Rdb from "./Rdb";
 import { RdbConstants } from "./RdbConstants";
 import { relationalStore } from "@kit.ArkData";
-import ServerEntity  from "./ServerEntity";
+import ServerEntity from "./ServerEntity";
 
 export class ServerDao {
   private serverTable = new Rdb(
@@ -10,12 +10,8 @@ export class ServerDao {
     RdbConstants.TABLE_SERVER.columns
   )
 
-  constructor() {
-    this.serverTable.getRdbStore()
-  }
-
-  getRdbStore() {
-    this.serverTable.getRdbStore()
+  constructor(context: Context) {
+    this.serverTable.getRdbStore(context)
   }
 
   insertDataSync(valuesBucket: relationalStore.ValuesBucket): number {
@@ -61,7 +57,7 @@ export class ServerDao {
     return null;
   }
 
-  getServerByHostname(hostname:string): ServerEntity | null{
+  getServerByHostname(hostname: string): ServerEntity | null {
     let predicates: relationalStore.RdbPredicates =
       new relationalStore.RdbPredicates(RdbConstants.TABLE_SERVER.tableName)
     predicates.equalTo('hostname', hostname)
@@ -79,16 +75,16 @@ export class ServerDao {
     return null;
   }
 
-  insert(hostname:string):number{
+  insert(hostname: string): number {
     return this.serverTable.insertDataSync(new ServerEntity(hostname).toValuesBucket())
   }
 
-  getAllServers():ServerEntity[]{
+  getAllServers(): ServerEntity[] {
     let predicates: relationalStore.RdbPredicates =
       new relationalStore.RdbPredicates(RdbConstants.TABLE_SERVER.tableName)
     let resultSet = this.serverTable.queryDataSync(predicates)
-    let res:ServerEntity[] = []
-    if(resultSet){
+    let res: ServerEntity[] = []
+    if (resultSet) {
       while (resultSet.goToNextRow()) {
         let item: ServerEntity = new ServerEntity(resultSet.getString(1))
         item.id = resultSet.getLong(0)

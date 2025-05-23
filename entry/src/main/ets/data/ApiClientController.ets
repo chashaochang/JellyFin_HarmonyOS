@@ -2,6 +2,7 @@ import { ObjectUtil } from "@pura/harmony-utils";
 import jellyfin from "sdk/src/main/ets/jellyfin";
 import { ApiClient } from "../network/ApiClient";
 import { AppPreference } from "./AppPreference";
+import { DBManager } from "./DBManager";
 import { ServerDao } from "./ServerDao";
 import ServerEntity from "./ServerEntity";
 import { UserDao } from "./UserDao";
@@ -14,8 +15,8 @@ export class ApiClientController {
 
   constructor() {
     this.appPreference = AppPreference.getInstance()
-    this.serverDao = new ServerDao()
-    this.userDao = new UserDao()
+    this.serverDao = DBManager.getInstance().getServerDao()
+    this.userDao = DBManager.getInstance().getUserDao()
   }
 
   async setupUser(serverId: number, userId: string, accessToken: string) {

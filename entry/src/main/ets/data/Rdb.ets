@@ -14,8 +14,8 @@ export default class Rdb {
     this.columns = columns;
   }
 
-  getRdbStore() {
-    let context: Context = getContext(this) as Context;
+  getRdbStore(context: Context) {
+    //let context: Context = getContext(this) as Context;
 
     const STORE_CONFIG: relationalStore.StoreConfig = {
       name: RdbConstants.DB_NAME, // 数据库文件名

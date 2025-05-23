@@ -12,12 +12,8 @@ export class UserDao {
     RdbConstants.TABLE_USER.columns
   )
 
-  constructor() {
-    this.userTable.getRdbStore()
-  }
-
-  getRdbStore() {
-    this.userTable.getRdbStore()
+  constructor(context: Context) {
+    this.userTable.getRdbStore(context)
   }
 
   insertDataSync(valuesBucket: relationalStore.ValuesBucket): number {

@@ -1,9 +1,9 @@
 import { AbilityConstant, common, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { DebugDB } from '@hadss/debug-db';
 import { webview } from '@kit.ArkWeb';
 import { HMRouterMgr } from '@hadss/hmrouter';
+import { DBManager } from '../data/DBManager';
 
 export default class EntryAbility extends UIAbility {
   onCreate(_want: Want, _launchParam: AbilityConstant.LaunchParam): void {
@@ -15,6 +15,7 @@ export default class EntryAbility extends UIAbility {
     HMRouterMgr.init({
       context: this.context
     })
+    DBManager.getInstance().init(this.context)
   }
 
   onDestroy(): void {
@@ -46,9 +47,6 @@ export default class EntryAbility extends UIAbility {
       let avoidArea = windowClass.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR)
       AppStorage.setOrCreate<number>('navBarHeight', px2vp(avoidArea.bottomRect.height))
     })
-
-    const context = getContext(this) as common.UIAbilityContext;
-    DebugDB.initialize(context); // 在浏览器中访问 http://XXX.XXX.XXX.XXX:8080/index.html (详细地址请在 Log 中查看)
   }
 
   onWindowStageDestroy(): void {

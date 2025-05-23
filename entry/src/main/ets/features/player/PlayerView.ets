@@ -1385,6 +1385,8 @@ export struct PlayerView {
     this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", "10000000");
     // 变速播放
     this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "soundtouch", "1");
+    // 开启h265硬解码
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-hevc", "1");
     this.mIjkMediaPlayer.setSpeed(this.playSpeed);
     let Speed = this.mIjkMediaPlayer.getSpeed()
     LogUtils.getInstance().LOGI('getSpeed--' + Speed)
