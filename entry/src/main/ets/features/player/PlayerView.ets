@@ -1,17 +1,3 @@
-import {
-  IjkMediaPlayer,
-  InterruptEvent,
-  InterruptHintType,
-  LogUtils,
-  OnBufferingUpdateListener,
-  OnCompletionListener,
-  OnErrorListener,
-  OnInfoListener,
-  OnPreparedListener,
-  OnSeekCompleteListener,
-  OnTimedTextListener,
-  OnVideoSizeChangedListener
-} from "@ohos/ijkplayer";
 import { PlayerStatus, PlayStatus } from "./PlayStatus";
 import prompt from "@ohos.promptAction";
 import { BusinessError, emitter, settings } from "@kit.BasicServicesKit";
@@ -27,6 +13,8 @@ import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/mod
 import { QualityOption } from "../../player/qualityoptions/QualityOption";
 import { common } from "@kit.AbilityKit";
 import { QueueItem } from "../../entity/QueueItem";
+import { IMediaPlayer, IMediaPlayerStateListener, RedPlayerFactory,
+  RedPlayerXComponentController } from "@rte-xhs/redplayer";
 
 let uiTime: number = 0;
 let uiLockTime: number = 0;
@@ -74,7 +62,7 @@ export struct PlayerView {
   }
 
   @Local mDestroyPage: boolean = false;
-  @Local playSpeed: string = '1f';
+  @Local playSpeed: number = 1;
   @Local oldSeconds: number = 0;
   @Local isCurrentTime: boolean = false;
   @Local videoWidth: string = '100%';
@@ -82,7 +70,7 @@ export struct PlayerView {
   @Local videoAspectRatio: number = this.initAspectRatio;
   private last: number = 0;
   @Local videoParentAspectRatio: number = this.initAspectRatio;
-  private mIjkMediaPlayer = IjkMediaPlayer.getInstance();
+  private mIjkMediaPlayer?: IMediaPlayer
   @Local PROGRESS_MAX_VALUE: number = 100;
   @Local updateProgressTimer: number = 0;
   private updateSubtitleTimer: number = -1;
@@ -121,7 +109,7 @@ export struct PlayerView {
   sec: number = 3;
   @Consumer() screenIsFull: boolean = false;
   pipController?: PiPWindow.PiPController;
-  xComponentController: XComponentController = new XComponentController()
+  xComponentController: RedPlayerXComponentController = new RedPlayerXComponentController()
   @Local hintMsgVisibility: boolean = false;
 
   @Monitor('screenIsFull')
@@ -171,10 +159,10 @@ export struct PlayerView {
       promise.then((data) => {
         windowClass = data;
       }).catch((error: BusinessError) => {
-        LogUtils.getInstance().LOGI('Failed to obtain the top window. Cause: ' + JSON.stringify(error));
+        //LogUtils.getInstance().LOGI('Failed to obtain the top window. Cause: ' + JSON.stringify(error));
       })
     } catch (exception) {
-      LogUtils.getInstance().LOGI('Failed to obtain the top window. Cause: ' + JSON.stringify(exception));
+      //LogUtils.getInstance().LOGI('Failed to obtain the top window. Cause: ' + JSON.stringify(exception));
     }
     let groupid = audio.DEFAULT_VOLUME_GROUP_ID;
     this.mAudioManager = audio.getAudioManager();
@@ -218,7 +206,7 @@ export struct PlayerView {
           case 'Seek':
             let ms = data.data['args'] as number | undefined
             if (ms) {
-              this.seekTo(ms + '')
+              this.seekTo(ms)
             }
             break
           case 'setVolume':
@@ -227,7 +215,7 @@ export struct PlayerView {
               if (this.mAudioManager) {
                 this.mAudioManager.setVolume(audio.AudioVolumeType.MEDIA, volume, (err: BusinessError) => {
                   if (err) {
-                    LogUtils.getInstance().LOGI(`Failed to set the volume. ${err}`);
+                    //LogUtils.getInstance().LOGI(`Failed to set the volume. ${err}`);
                     return;
                   }
                 })
@@ -235,7 +223,7 @@ export struct PlayerView {
             }
             break
           case 'Speed':
-            let speed = data.data['args'] as string | undefined
+            let speed = data.data['args'] as number | undefined
             if (speed) {
               this.playSpeed = speed
             }
@@ -244,18 +232,18 @@ export struct PlayerView {
       }
     })
 
-    LogUtils.getInstance().LOGI("aboutToAppear");
-    let event: Callback<InterruptEvent> = (event) => {
-      LogUtils.getInstance().LOGI(`event: ${JSON.stringify(event)}`);
-      if (event.hintType === InterruptHintType.INTERRUPT_HINT_PAUSE) {
-        this.pause();
-      } else if (event.hintType === InterruptHintType.INTERRUPT_HINT_RESUME) {
-        this.startPlayOrResumePlay();
-      } else if (event.hintType === InterruptHintType.INTERRUPT_HINT_STOP) {
-        this.stop();
-      }
-    }
-    this.mIjkMediaPlayer.on('audioInterrupt', event);
+    // LogUtils.getInstance().LOGI("aboutToAppear");
+    // let event: Callback<InterruptEvent> = (event) => {
+    //   LogUtils.getInstance().LOGI(`event: ${JSON.stringify(event)}`);
+    //   if (event.hintType === InterruptHintType.INTERRUPT_HINT_PAUSE) {
+    //     this.pause();
+    //   } else if (event.hintType === InterruptHintType.INTERRUPT_HINT_RESUME) {
+    //     this.startPlayOrResumePlay();
+    //   } else if (event.hintType === InterruptHintType.INTERRUPT_HINT_STOP) {
+    //     this.stop();
+    //   }
+    // }
+    // this.mIjkMediaPlayer.on('audioInterrupt', event);
 
     //监听切换到桌面/恢复状态开启关闭画中画
     let context = getContext(this) as common.UIAbilityContext;
@@ -272,20 +260,20 @@ export struct PlayerView {
   aboutToDisappear() {
     this.stopSubTitle()
     emitter.off(Constants.PLAYER_EVENT.eventId)
-    LogUtils.getInstance().LOGI("aboutToDisappear");
+    //LogUtils.getInstance().LOGI("aboutToDisappear");
     this.mDestroyPage = true;
-    this.mIjkMediaPlayer.setScreenOnWhilePlaying(false);
+    // this.mIjkMediaPlayer?.setScreenOnWhilePlaying(false);
     // this.stopRecord(false);
     if (this.uiState.CONTROL_PlayStatus != PlayStatus.INIT) {
       this.stop();
     }
-    this.mIjkMediaPlayer.off('audioInterrupt');
+    // this.mIjkMediaPlayer.off('audioInterrupt');
   }
 
   @Builder
   dialogEpisode(_this: PlayerView) {
     Column({ space: 10 }) {
-      List({space:8,initialIndex:_this.uiState.playList.findIndex(e=>e.id == _this.uiState.currentPlayId)}) {
+      List({ space: 8, initialIndex: _this.uiState.playList.findIndex(e => e.id == _this.uiState.currentPlayId) }) {
         ForEach(_this.uiState.playList, (item: QueueItem, index) => {
           ListItem() {
             Column() {
@@ -295,7 +283,7 @@ export struct PlayerView {
                 .maxLines(1)
                 .ellipsisMode(EllipsisMode.END)
                 .textOverflow({
-                  overflow:TextOverflow.Ellipsis
+                  overflow: TextOverflow.Ellipsis
                 })
             }
             .width('100%')
@@ -322,67 +310,67 @@ export struct PlayerView {
     Column({ space: 10 }) {
       Stack() {
         Text('3.0X')
-          .fontColor(_this.playSpeed === '3f' ? $r('app.color.color_main') : Color.White)
+          .fontColor(_this.playSpeed === 3 ? $r('app.color.color_main') : Color.White)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
       }.menuItemStyle().onClick(() => {
-        _this.playSpeed = '3f'
-        _this.mIjkMediaPlayer.setSpeed(_this.playSpeed);
+        _this.playSpeed = 3
+        _this.mIjkMediaPlayer?.setSpeed(_this.playSpeed);
         SmartDialog.dismiss()
       })
 
       Stack() {
         Text('2.0X')
-          .fontColor(_this.playSpeed === '2f' ? $r('app.color.color_main') : Color.White)
+          .fontColor(_this.playSpeed === 2 ? $r('app.color.color_main') : Color.White)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
       }.menuItemStyle().onClick(() => {
-        _this.playSpeed = '2f'
-        _this.mIjkMediaPlayer.setSpeed(_this.playSpeed);
+        _this.playSpeed = 2
+        _this.mIjkMediaPlayer?.setSpeed(_this.playSpeed);
         SmartDialog.dismiss()
       })
 
       Stack() {
         Text('1.5X')
-          .fontColor(_this.playSpeed === '1.5f' ? $r('app.color.color_main') : Color.White)
+          .fontColor(_this.playSpeed === 1.5 ? $r('app.color.color_main') : Color.White)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
       }.menuItemStyle().onClick(() => {
-        _this.playSpeed = '1.5f'
-        _this.mIjkMediaPlayer.setSpeed(_this.playSpeed);
+        _this.playSpeed = 1.5
+        _this.mIjkMediaPlayer?.setSpeed(_this.playSpeed);
         SmartDialog.dismiss()
       })
 
       Stack() {
         Text('1.25X')
-          .fontColor(_this.playSpeed === '1.25f' ? $r('app.color.color_main') : Color.White)
+          .fontColor(_this.playSpeed === 1.25 ? $r('app.color.color_main') : Color.White)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
       }.menuItemStyle().onClick(() => {
-        _this.playSpeed = '1.25f'
-        _this.mIjkMediaPlayer.setSpeed(_this.playSpeed);
+        _this.playSpeed = 1.25
+        _this.mIjkMediaPlayer?.setSpeed(_this.playSpeed);
         SmartDialog.dismiss()
       })
 
       Stack() {
         Text('1.0X')
-          .fontColor(_this.playSpeed === '1f' ? $r('app.color.color_main') : Color.White)
+          .fontColor(_this.playSpeed === 1 ? $r('app.color.color_main') : Color.White)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
       }.menuItemStyle().onClick(() => {
-        _this.playSpeed = '1f'
-        _this.mIjkMediaPlayer.setSpeed(_this.playSpeed);
+        _this.playSpeed = 1
+        _this.mIjkMediaPlayer?.setSpeed(_this.playSpeed);
         SmartDialog.dismiss()
       })
 
       Stack() {
         Text('0.75X')
-          .fontColor(_this.playSpeed === '0.75f' ? $r('app.color.color_main') : Color.White)
+          .fontColor(_this.playSpeed === 0.75 ? $r('app.color.color_main') : Color.White)
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
       }.menuItemStyle().onClick(() => {
-        _this.playSpeed = '0.75f'
-        _this.mIjkMediaPlayer.setSpeed(_this.playSpeed);
+        _this.playSpeed = 0.75
+        _this.mIjkMediaPlayer?.setSpeed(_this.playSpeed);
         SmartDialog.dismiss()
       })
     }.height('100%').padding(10).backgroundColor('rgba(0,0,0,0.8)')
@@ -498,11 +486,11 @@ export struct PlayerView {
                 this.isSeek = true;
                 this.mDestroyPage = false;
                 this.showLoadIng();
-                LogUtils.getInstance().LOGI("slider-->seekValue start:" + value);
-                let seekValue = value * (this.mIjkMediaPlayer.getDuration() / 100);
-                this.seekTo(seekValue + "");
+                //LogUtils.getInstance().LOGI("slider-->seekValue start:" + value);
+                let seekValue = value * ((this.mIjkMediaPlayer?.getVideoDuration() || 0) / 100);
+                this.seekTo(seekValue);
                 this.setProgress()
-                LogUtils.getInstance().LOGI("slider-->seekValue end:" + seekValue);
+                //LogUtils.getInstance().LOGI("slider-->seekValue end:" + seekValue);
                 this.isSeek = false;
               }
             })
@@ -631,11 +619,11 @@ export struct PlayerView {
                 this.isSeek = true;
                 this.mDestroyPage = false;
                 this.showLoadIng();
-                LogUtils.getInstance().LOGI("slider-->seekValue start:" + value);
-                let seekValue = value * (this.mIjkMediaPlayer.getDuration() / 100);
-                this.seekTo(seekValue + "");
+                //LogUtils.getInstance().LOGI("slider-->seekValue start:" + value);
+                let seekValue = value * ((this.mIjkMediaPlayer?.getVideoDuration()||0) / 100);
+                this.seekTo(seekValue);
                 this.setProgress()
-                LogUtils.getInstance().LOGI("slider-->seekValue end:" + seekValue);
+                //LogUtils.getInstance().LOGI("slider-->seekValue end:" + seekValue);
                 this.isSeek = false;
               }
             })
@@ -747,29 +735,125 @@ export struct PlayerView {
         .visibility(this.hintMsgVisibility ? Visibility.Visible : Visibility.Hidden)
       Column() {
         XComponent({
-          id: 'xcomponentId',
-          type: XComponentType.SURFACE,
-          libraryname: 'ijkplayer_napi',
+          id: this.xComponentController.getSurfaceId(),
+          type: this.xComponentController.getSurfaceType(),
+          libraryname: this.xComponentController.getLibraryName(),
           controller: this.xComponentController
         })
           .onLoad(async (event?: object) => {
-            if (!!event) {
-              this.initDelayPlay(event);
-              //开启自动画中画
-              if (canIUse('SystemCapability.Window.SessionManager')) {
-                if (!this.pipController) {
-                  await this.createPipController();
-                  // this.pipController!.setAutoStartEnabled(true)
+            let that = this
+            let listener: IMediaPlayerStateListener = {
+              onPlayerCreated(): void {
+                //that.uiState.playerStatus = PlayerStatus.IDLE
+              },
+
+              onInitialized(): void {
+                that.uiState.playerStatus = PlayerStatus.INITIALIZED
+              },
+
+              onPrepared(): void {
+                that.uiState.playerStatus = PlayerStatus.PREPARED
+                that.hideLoadIng();
+                //LogUtils.getInstance().LOGI("setOnPreparedListener-->go");
+                if (that.uiState.initSeek > 0) {
+                  setTimeout(() => {
+                    that.seekTo(that.uiState.initSeek)
+                    that.uiState.initSeek = 0
+                    if (that.uiState.audioTrackIndex) {
+                      //this.mIjkMediaPlayer?.selectTrack(this.uiState.audioTrackIndex + 1 + '')
+                    }
+                  }, 500)
                 }
+              },
+
+              onStarted(): void {
+                //that.uiState.playerStatus = PlayerStatus.
+                //throw new Error("Method not implemented.");
+              },
+
+              onFirstFrameRendered(): void {
+                //throw new Error("Method not implemented.");
+              },
+
+              onPositionUpdated(time: number): void {
+                //throw new Error("Method not implemented.");
+              },
+
+              onPaused(): void {
+                that.uiState.playerStatus = PlayerStatus.PAUSED
+                //throw new Error("Method not implemented.");
+              },
+
+              onStopped(): void {
+                that.uiState.playerStatus = PlayerStatus.STOPPED
+                //throw new Error("Method not implemented.");
+              },
+
+              onCompleted(): void {
+                that.uiState.playerStatus = PlayerStatus.COMPLETED
+                that.showRePlay();
+                that.currentTime = that.stringForTime(that.mIjkMediaPlayer?.getVideoDuration()||0);
+                that.progressValue = that.PROGRESS_MAX_VALUE;
+                that.slideEnable = false;
+                that.stop();
+              },
+
+              onReleased(): void {
+                that.uiState.playerStatus = PlayerStatus.RELEASED
+                //throw new Error("Method not implemented.");
+              },
+
+              onError(reason: string): void {
+                that.uiState.playerStatus = PlayerStatus.ERROR
+                that.stopProgressTask();
+                //LogUtils.getInstance().LOGI("OnErrorListener-->go:" + what + "===" + extra)
+                that.hideLoadIng();
+                prompt.showToast({
+                  message: getContext()
+                    .resourceManager
+                    .getStringByNameSync("Honey_the_video_is_playing_errant_The_system_is_wandering")
+                });
+              },
+
+              onSeekDone(): void {
+                if (that.uiState.isCastPlaying) {
+                  return
+                }
+                //LogUtils.getInstance().LOGI("OnSeekCompleteListener-->go");
+                that.startPlayOrResumePlay();
+              },
+
+              onBufferingStart(): void {
+                //throw new Error("Method not implemented.");
+              },
+
+              onBufferingEnd(): void {
+                //throw new Error("Method not implemented.");
               }
             }
+            RedPlayerFactory.createMediaPlayer(listener).then((p) => {
+              // player created
+              that.mIjkMediaPlayer = p
+              //this.mIjkMediaPlayer?.setSurfaceId(this.xComponentController.getSurfaceId())
+              if (!!event) {
+                this.initDelayPlay(event);
+                //开启自动画中画
+                if (canIUse('SystemCapability.Window.SessionManager')) {
+                  if (!this.pipController) {
+                    this.createPipController();
+                    // this.pipController!.setAutoStartEnabled(true)
+                  }
+                }
+              }
+            })
+
           })
           .onDestroy(() => {
+            this.mIjkMediaPlayer?.release()
           })
           .width('100%')
           .width(this.videoWidth)
           .aspectRatio(this.videoAspectRatio)
-          .id('xcomponentId')
       }.aspectRatio(this.videoAspectRatio)
 
       //字幕
@@ -866,15 +950,15 @@ export struct PlayerView {
             this.timeCountdown();
           }
           if (event && event.fingerList && event.fingerList[0]) {
-            LogUtils.getInstance().LOGI('TapGesture event.onActionStart start x: ' + event.fingerList[0].localX +
-              " ---event.onActionStart start y: " + event.fingerList[0].localY);
+            // LogUtils.getInstance().LOGI('TapGesture event.onActionStart start x: ' + event.fingerList[0].localX +
+            //   " ---event.onActionStart start y: " + event.fingerList[0].localY);
           }
         }
       }),
       // 绑定声音屏幕亮度拖动手势
       PanGesture(this.panOptionBrightAndVolume)
         .onActionStart((event: GestureEvent | undefined) => {
-          LogUtils.getInstance().LOGI('Vertical Pan Start');
+          //LogUtils.getInstance().LOGI('Vertical Pan Start');
           if (this.lock) {
             return;
           }
@@ -884,8 +968,8 @@ export struct PlayerView {
           if (event && event.fingerList && event.fingerList[0]) {
             touchStartX = event.fingerList[0].localX;
             touchStartY = event.fingerList[0].localY;
-            LogUtils.getInstance().LOGI('VerticalPanBrightAndVolume event.onActionStart start x: ' + touchStartX +
-              ' event.onActionStart start y: ' + touchStartY);
+            // LogUtils.getInstance().LOGI('VerticalPanBrightAndVolume event.onActionStart start x: ' + touchStartX +
+            //   ' event.onActionStart start y: ' + touchStartY);
           }
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
@@ -919,7 +1003,7 @@ export struct PlayerView {
               if (this.mAudioManager) {
                 this.mAudioManager.setVolume(audio.AudioVolumeType.MEDIA, playerVolumeValue, (err: BusinessError) => {
                   if (err) {
-                    LogUtils.getInstance().LOGI(`Failed to set the volume. ${err}`);
+                    //LogUtils.getInstance().LOGI(`Failed to set the volume. ${err}`);
                     return;
                   }
                 })
@@ -945,14 +1029,14 @@ export struct PlayerView {
           }
         })
         .onActionEnd((_event: GestureEvent | undefined) => {
-          LogUtils.getInstance().LOGI('Vertical Pan End')
+          //LogUtils.getInstance().LOGI('Vertical Pan End')
           this.showVolumeUi = false;
           this.showBrightnessUi = false;
           this.isVerticalDrag = false;
         }),
       PanGesture(this.panOptionSeek)
         .onActionStart((event: GestureEvent | undefined) => {
-          LogUtils.getInstance().LOGI('Horizontal Pan Start');
+          //LogUtils.getInstance().LOGI('Horizontal Pan Start');
           if (!this.mIjkMediaPlayer) {
             return;
           }
@@ -974,9 +1058,9 @@ export struct PlayerView {
             this.stopProgressTask();
             touchStartX = event.fingerList[0].localX;
             this.mSeekTimePosition = this.progressValue;
-            LogUtils.getInstance()
-              .LOGI('HorizontalSeekProgress event.onActionStart start x: ' + event.fingerList[0].localX +
-                ' event.onActionStart start y: ' + event.fingerList[0].localY);
+            // LogUtils.getInstance()
+            //   .LOGI('HorizontalSeekProgress event.onActionStart start x: ' + event.fingerList[0].localX +
+            //     ' event.onActionStart start y: ' + event.fingerList[0].localY);
           }
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
@@ -1006,7 +1090,7 @@ export struct PlayerView {
             }
 
             let position: number = this.mIjkMediaPlayer.getCurrentPosition();
-            let totalTimeDuration: number = this.mIjkMediaPlayer.getDuration();
+            let totalTimeDuration: number = this.mIjkMediaPlayer.getVideoDuration() || 0;
             let seekTimePosition: number = Number(position + (deltaX * totalTimeDuration / changeWidth));
             if (seekTimePosition < 0) {
               seekTimePosition = 0
@@ -1034,8 +1118,8 @@ export struct PlayerView {
             this.progressValue = this.mSeekTimePosition;
             this.loadingVisible = Visibility.Visible;
             this.showControls = false
-            let seekValue = this.mSeekTimePosition * (this.mIjkMediaPlayer.getDuration() / 100);
-            this.seekTo(seekValue + "");
+            let seekValue = this.mSeekTimePosition * (this.mIjkMediaPlayer.getVideoDuration() / 100);
+            this.seekTo(seekValue);
             this.setProgress()
             this.isSeek = false;
           }
@@ -1052,7 +1136,7 @@ export struct PlayerView {
         if (!this.mIjkMediaPlayer) {
           return;
         }
-        LogUtils.getInstance().LOGI('double click start');
+        //LogUtils.getInstance().LOGI('double click start');
         if (this.mIjkMediaPlayer.isPlaying()) {
           this.pause();
         } else {
@@ -1183,7 +1267,7 @@ export struct PlayerView {
     if (this.uiState.subtitles.length === 0) {
       return
     }
-    const currentTime = this.mIjkMediaPlayer.getCurrentPosition()
+    const currentTime = this.mIjkMediaPlayer?.getCurrentPosition() || 0
     let currentSubtitle: SubtitleItem | null = null;
     let nextUpdateTime: number = Number.MAX_VALUE;
 
@@ -1233,8 +1317,8 @@ export struct PlayerView {
 
   private startPlayOrResumePlay() {
     this.mDestroyPage = false;
-    LogUtils.getInstance()
-      .LOGI("startPlayOrResumePlay start this.uiState.CONTROL_PlayStatus:" + this.uiState.CONTROL_PlayStatus)
+    // LogUtils.getInstance()
+    //   .LOGI("startPlayOrResumePlay start this.uiState.CONTROL_PlayStatus:" + this.uiState.CONTROL_PlayStatus)
     if (this.uiState.CONTROL_PlayStatus == PlayStatus.INIT) {
       this.stopProgressTask();
       this.startProgressTask();
@@ -1243,7 +1327,7 @@ export struct PlayerView {
     }
     if (this.uiState.CONTROL_PlayStatus == PlayStatus.PAUSE) {
       this.uiState.CONTROL_PlayStatus = PlayStatus.PLAY
-      this.mIjkMediaPlayer.start();
+      this.mIjkMediaPlayer?.start();
       this.setProgress()
       this.timeCountdown()
     }
@@ -1283,8 +1367,8 @@ export struct PlayerView {
   }
 
   private setProgress() {
-    let position = this.mIjkMediaPlayer.getCurrentPosition();
-    let duration = this.mIjkMediaPlayer.getDuration();
+    let position = this.mIjkMediaPlayer?.getCurrentPosition() || 0
+    let duration = this.mIjkMediaPlayer?.getVideoDuration() || 0
     let pos = 0;
     if (duration > 0) {
       this.slideEnable = true;
@@ -1342,193 +1426,166 @@ export struct PlayerView {
     let that = this;
     that.showLoadIng();
     //设置XComponent回调的context
-    if (!!this.mContext) {
-      this.mIjkMediaPlayer.setContext(this.mContext, 'xcomponentId');
-    }
+    // if (!!this.mContext) {
+    //   this.mIjkMediaPlayer?.setContext(this.mContext, 'xcomponentId');
+    // }
     if (this.uiState.CONTROL_PlayStatus == PlayStatus.INIT) {
-      this.mIjkMediaPlayer.reset();
+      this.mIjkMediaPlayer?.reset();
     }
     this.uiState.CONTROL_PlayStatus = PlayStatus.PLAY;
     //设置debug模式
-    this.mIjkMediaPlayer.setDebug(false);
-    //初始化配置
-    this.mIjkMediaPlayer.native_setup();
+    // this.mIjkMediaPlayer.setDebug(false);
+    // //初始化配置
+    // this.mIjkMediaPlayer.native_setup();
     // 初始化配置后需要重新设置音频流音量，否则音量为默认值1.0
     // this.mIjkMediaPlayer.setVolume(this.volume.toString(), this.volume.toString());
     //设置视频源
-    this.mIjkMediaPlayer.setDataSource(url);
+    this.mIjkMediaPlayer?.setDataSource({
+      url:url,
+      isAutoLoop:false,
+      isAutoStart:true,
+      useSoftDecoder:false
+    }).then(()=>{
+      this.mIjkMediaPlayer?.setSurfaceId(this.xComponentController.getSurfaceId())
+      this.mIjkMediaPlayer?.setSpeed(this.playSpeed);
+      this.mIjkMediaPlayer?.prepare().then(()=>{
+        this.mIjkMediaPlayer?.start();
+      });
+    })
     //使用精确寻帧 例如，拖动播放后，会寻找最近的关键帧进行播放，很有可能关键帧的位置不是拖动后的位置，而是较前的位置.可以设置这个参数来解决问题
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "enable-accurate-seek", "1");
-    //预读数据的缓冲区大小
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max-buffer-size", "102400");
-    //停止预读的最小帧数
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "min-frames", "100");
-    //启动预加载
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", "1");
-    // 设置无缓冲，这是播放器的缓冲区，有数据就播放
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "packet-buffering", "0");
-    //跳帧处理,放CPU处理较慢时，进行跳帧处理，保证播放流程，画面和声音同步
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", "5");
-    // 最大缓冲cache是3s， 有时候网络波动，会突然在短时间内收到好几秒的数据
-    // 因此需要播放器丢包，才不会累积延时
-    // 这个和第三个参数packet-buffering无关。
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", "3000");
-    // 无限制收流
-    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", "1");
-    // this.mIjkMediaPlayer.setOptionLong(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", "1")
-    // 屏幕常亮
-    this.mIjkMediaPlayer.setScreenOnWhilePlaying(true);
-    // 设置超时
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "timeout", "30000000");
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "connect_timeout", "10000000");
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "addrinfo_timeout", "10000000");
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", "10000000");
-    // 变速播放
-    this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "soundtouch", "1");
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "enable-accurate-seek", "1");
+    // //预读数据的缓冲区大小
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max-buffer-size", "102400");
+    // //停止预读的最小帧数
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "min-frames", "100");
+    // //启动预加载
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", "1");
+    // // 设置无缓冲，这是播放器的缓冲区，有数据就播放
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "packet-buffering", "0");
+    // //跳帧处理,放CPU处理较慢时，进行跳帧处理，保证播放流程，画面和声音同步
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", "5");
+    // // 最大缓冲cache是3s， 有时候网络波动，会突然在短时间内收到好几秒的数据
+    // // 因此需要播放器丢包，才不会累积延时
+    // // 这个和第三个参数packet-buffering无关。
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", "3000");
+    // // 无限制收流
+    // // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", "1");
+    // // this.mIjkMediaPlayer.setOptionLong(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", "1")
+    // // 屏幕常亮
+    // this.mIjkMediaPlayer.setScreenOnWhilePlaying(true);
+    // // 设置超时
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "timeout", "30000000");
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "connect_timeout", "10000000");
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "addrinfo_timeout", "10000000");
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", "10000000");
+    // // 变速播放
+    // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "soundtouch", "1");
     // 开启h265硬解码
     // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-hevc", "1");
-    this.mIjkMediaPlayer.setSpeed(this.playSpeed);
-    let Speed = this.mIjkMediaPlayer.getSpeed()
-    LogUtils.getInstance().LOGI('getSpeed--' + Speed)
+
+    // let Speed = this.mIjkMediaPlayer.getSpeed()
+    // LogUtils.getInstance().LOGI('getSpeed--' + Speed)
     //是否开启循环播放
-    this.mIjkMediaPlayer.setLoopCount(false);
-    let mOnVideoSizeChangedListener: OnVideoSizeChangedListener = {
-      onVideoSizeChanged: (width: number, height: number, sar_num: number, sar_den: number) => {
-        if (height === 0) {
-          return;
-        }
-        const va = width / height;
-        const vpa = that.videoParentAspectRatio;
-        if (vpa > va) {
-          that.videoWidth = (width / (height * vpa)) * 100 + '%';
-        } else {
-          that.videoWidth = '100%';
-        }
-        if (width && height) {
-          that.videoAspectRatio = width / height;
-        }
-        LogUtils.getInstance()
-          .LOGI("setOnVideoSizeChangedListener-->go:" + width + "," + height + "," + sar_num + "," + sar_den);
-        that.getVideoSize();
-        that.hideLoadIng();
-      }
-    }
-    this.mIjkMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
-    let mOnPreparedListener: OnPreparedListener = {
-      onPrepared: () => {
-        this.uiState.playerStatus = PlayerStatus.PREPARED
-        LogUtils.getInstance().LOGI("setOnPreparedListener-->go");
-        if (this.uiState.initSeek > 0) {
-          setTimeout(() => {
-            this.seekTo(this.uiState.initSeek + "")
-            this.uiState.initSeek = 0
-            if (this.uiState.audioTrackIndex) {
-              this.mIjkMediaPlayer.selectTrack(this.uiState.audioTrackIndex + 1 + '')
-            }
-          }, 500)
-        }
-      }
-    }
-    this.mIjkMediaPlayer.setOnPreparedListener(mOnPreparedListener);
+    // this.mIjkMediaPlayer.setLoopCount(false);
+    // let mOnVideoSizeChangedListener: OnVideoSizeChangedListener = {
+    //   onVideoSizeChanged: (width: number, height: number, sar_num: number, sar_den: number) => {
+    //     if (height === 0) {
+    //       return;
+    //     }
+    //     const va = width / height;
+    //     const vpa = that.videoParentAspectRatio;
+    //     if (vpa > va) {
+    //       that.videoWidth = (width / (height * vpa)) * 100 + '%';
+    //     } else {
+    //       that.videoWidth = '100%';
+    //     }
+    //     if (width && height) {
+    //       that.videoAspectRatio = width / height;
+    //     }
+    //     LogUtils.getInstance()
+    //       .LOGI("setOnVideoSizeChangedListener-->go:" + width + "," + height + "," + sar_num + "," + sar_den);
+    //     that.getVideoSize();
+    //     that.hideLoadIng();
+    //   }
+    // }
+    // this.mIjkMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
+    // let mOnPreparedListener: OnPreparedListener = {
+    //   onPrepared: () => {
+    //
+    //   }
+    // }
+    // this.mIjkMediaPlayer.setOnPreparedListener(mOnPreparedListener);
 
-    let mOnTimedTextListener: OnTimedTextListener = {
-      onTimedText: () => {
-      }
-    }
-    this.mIjkMediaPlayer.setOnTimedTextListener(mOnTimedTextListener)
+    // let mOnTimedTextListener: OnTimedTextListener = {
+    //   onTimedText: () => {
+    //   }
+    // }
+    // this.mIjkMediaPlayer.setOnTimedTextListener(mOnTimedTextListener)
 
-    let mOnCompletionListener: OnCompletionListener = {
-      onCompletion: () => {
-        LogUtils.getInstance().LOGI("OnCompletionListener-->go")
-        that.showRePlay();
-        that.currentTime = that.stringForTime(this.mIjkMediaPlayer.getDuration());
-        that.progressValue = this.PROGRESS_MAX_VALUE;
-        that.slideEnable = false;
-        that.stop();
-      }
-    }
-    this.mIjkMediaPlayer.setOnCompletionListener(mOnCompletionListener);
+    // let mOnCompletionListener: OnCompletionListener = {
+    //   onCompletion: () => {
+    //     LogUtils.getInstance().LOGI("OnCompletionListener-->go")
+    //
+    //   }
+    // }
+    // this.mIjkMediaPlayer.setOnCompletionListener(mOnCompletionListener);
 
-    let mOnBufferingUpdateListener: OnBufferingUpdateListener = {
-      onBufferingUpdate: (_percent: number) => {
-        // LogUtils.getInstance().LOGI("OnBufferingUpdateListener-->go:" + percent);
-        // let MediaInfo = this.mIjkMediaPlayer.getMediaInfo()
-        // LogUtils.getInstance().LOGI('getMediaInfo---' + MediaInfo);
-        // let VideoWidth = this.mIjkMediaPlayer.getVideoWidth()
-        // LogUtils.getInstance().LOGI('getVideoWidth---' + VideoWidth);
-        //
-        // let VideoHeight = this.mIjkMediaPlayer.getVideoHeight()
-        // LogUtils.getInstance().LOGI('getVideoHeight---' + VideoHeight);
-        //
-        // let VideoSarNum = this.mIjkMediaPlayer.getVideoSarNum()
-        // LogUtils.getInstance().LOGI('getVideoSarNum---' + VideoSarNum);
-        //
-        // let VideoSarDen = this.mIjkMediaPlayer.getVideoSarDen()
-        // LogUtils.getInstance().LOGI('getVideoSarDen---' + VideoSarDen);
-        //
-        // let AudioSessionId = this.mIjkMediaPlayer.getAudioSessionId()
-        // LogUtils.getInstance().LOGI('getAudioSessionId---' + AudioSessionId);
-        //
-        // let Looping = this.mIjkMediaPlayer.isLooping()
-        // LogUtils.getInstance().LOGI('isLooping---' + Looping);
-      }
-    }
-    this.mIjkMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
+    // let mOnBufferingUpdateListener: OnBufferingUpdateListener = {
+    //   onBufferingUpdate: (_percent: number) => {
+    //     // LogUtils.getInstance().LOGI("OnBufferingUpdateListener-->go:" + percent);
+    //     // let MediaInfo = this.mIjkMediaPlayer.getMediaInfo()
+    //     // LogUtils.getInstance().LOGI('getMediaInfo---' + MediaInfo);
+    //     // let VideoWidth = this.mIjkMediaPlayer.getVideoWidth()
+    //     // LogUtils.getInstance().LOGI('getVideoWidth---' + VideoWidth);
+    //     //
+    //     // let VideoHeight = this.mIjkMediaPlayer.getVideoHeight()
+    //     // LogUtils.getInstance().LOGI('getVideoHeight---' + VideoHeight);
+    //     //
+    //     // let VideoSarNum = this.mIjkMediaPlayer.getVideoSarNum()
+    //     // LogUtils.getInstance().LOGI('getVideoSarNum---' + VideoSarNum);
+    //     //
+    //     // let VideoSarDen = this.mIjkMediaPlayer.getVideoSarDen()
+    //     // LogUtils.getInstance().LOGI('getVideoSarDen---' + VideoSarDen);
+    //     //
+    //     // let AudioSessionId = this.mIjkMediaPlayer.getAudioSessionId()
+    //     // LogUtils.getInstance().LOGI('getAudioSessionId---' + AudioSessionId);
+    //     //
+    //     // let Looping = this.mIjkMediaPlayer.isLooping()
+    //     // LogUtils.getInstance().LOGI('isLooping---' + Looping);
+    //   }
+    // }
+    // this.mIjkMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
 
-    let mOnSeekCompleteListener: OnSeekCompleteListener = {
-      onSeekComplete: () => {
-        if (this.uiState.isCastPlaying) {
-          return
-        }
-        LogUtils.getInstance().LOGI("OnSeekCompleteListener-->go");
-        that.startPlayOrResumePlay();
-      }
-    }
-    this.mIjkMediaPlayer.setOnSeekCompleteListener(mOnSeekCompleteListener);
+    // let mOnSeekCompleteListener: OnSeekCompleteListener = {
+    //   onSeekComplete: () => {
+    //
+    //   }
+    // }
+    // this.mIjkMediaPlayer.setOnSeekCompleteListener(mOnSeekCompleteListener);
 
-    let mOnInfoListener: OnInfoListener = {
-      onInfo: (_what: number, _extra: number) => {
-        //LogUtils.getInstance().LOGI("OnInfoListener-->go:" + what + "===" + extra);
-        that.hideLoadIng();
-      }
-    }
-    this.mIjkMediaPlayer.setOnInfoListener(mOnInfoListener);
+    // let mOnInfoListener: OnInfoListener = {
+    //   onInfo: (_what: number, _extra: number) => {
+    //     //LogUtils.getInstance().LOGI("OnInfoListener-->go:" + what + "===" + extra);
+    //
+    //   }
+    // }
+    // this.mIjkMediaPlayer.setOnInfoListener(mOnInfoListener);
+
+    // this.mIjkMediaPlayer?.setMessageListener();
 
 
-    let mOnErrorListener: OnErrorListener = {
-      onError: (what: number, extra: number) => {
-        this.uiState.playerStatus = PlayerStatus.ERROR
-        this.stopProgressTask();
-        LogUtils.getInstance().LOGI("OnErrorListener-->go:" + what + "===" + extra)
-        that.hideLoadIng();
-        prompt.showToast({
-          message: getContext()
-            .resourceManager
-            .getStringByNameSync("Honey_the_video_is_playing_errant_The_system_is_wandering")
-        });
-      }
-    }
-
-
-    this.mIjkMediaPlayer.setOnErrorListener(mOnErrorListener);
-
-    this.mIjkMediaPlayer.setMessageListener();
-
-    this.mIjkMediaPlayer.prepareAsync();
-
-    this.mIjkMediaPlayer.start();
   }
 
   private getVideoSize() {
-    let VideoWidth = this.mIjkMediaPlayer.getVideoWidth();
-    LogUtils.getInstance().LOGI("getVideoWidth---" + VideoWidth);
+    let VideoWidth = this.mIjkMediaPlayer?.getVideoWidth();
+    // LogUtils.getInstance().LOGI("getVideoWidth---" + VideoWidth);
 
-    let VideoHeight = this.mIjkMediaPlayer.getVideoHeight();
-    LogUtils.getInstance().LOGI("getVideoHeight---" + VideoHeight);
+    let VideoHeight = this.mIjkMediaPlayer?.getVideoHeight();
+    // LogUtils.getInstance().LOGI("getVideoHeight---" + VideoHeight);
   }
 
   private pause() {
-    if (this.mIjkMediaPlayer.isPlaying()) {
+    if (this.mIjkMediaPlayer?.isPlaying()) {
       this.mIjkMediaPlayer.pause();
       this.setProgress();
       this.mDestroyPage = true;
@@ -1540,18 +1597,18 @@ export struct PlayerView {
   private stop() {
     this.uiState.CONTROL_PlayStatus = PlayStatus.INIT;
     this.uiState.playerStatus = PlayerStatus.STOPPED
-    this.mIjkMediaPlayer.stop();
-    this.mIjkMediaPlayer.release();
+    this.mIjkMediaPlayer?.stop();
+    this.mIjkMediaPlayer?.release();
     this.uiState.playerStatus = PlayerStatus.RELEASED
     this.stopProgressTask();
     this.stopSubTitle()
   }
 
-  private seekTo(value: string) {
+  private seekTo(value: number) {
     if (this.uiState.isCastPlaying) {
-      this.mIjkMediaPlayer.seekTo(value);
+      this.mIjkMediaPlayer?.seek(value);
     } else {
-      this.mIjkMediaPlayer.seekTo(value);
+      this.mIjkMediaPlayer?.seek(value);
       this.seekToSubtitle()
       this.sendAVSessionState(this.uiState.playerStatus)
     }
@@ -1710,9 +1767,9 @@ export struct PlayerView {
 
   sendAVSessionState(status: number) {
     let playbackState: avSession.AVPlaybackState = {
-      speed: Number(this.playSpeed.replace('f', '')),
+      speed: this.playSpeed,
       position: {
-        elapsedTime: this.mIjkMediaPlayer.getCurrentPosition(),
+        elapsedTime: this.mIjkMediaPlayer?.getCurrentPosition() || 0,
         updateTime: Date.now()
       },
     }

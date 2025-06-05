@@ -7,8 +7,8 @@
   "license": "",
   "dependencies": {
     "sdk": 'file:../sdk',
-    "@ohos/ijkplayer": "^2.0.6",
-    "ohos_smart_dialog": "^1.7.5"
+    "ohos_smart_dialog": "^1.7.5",
+    "@rte-xhs/redplayer":"^1.0.0"
   }
 }
 

@@ -18,7 +18,6 @@ import { buffer } from "@kit.ArkTS";
 import { PlayerUIState } from "./PlayerUIState";
 import { SubtitleManager } from "../../utils/SubtitleManager";
 import { PlayStatus } from "./PlayStatus";
-import { IjkMediaPlayer } from "@ohos/ijkplayer";
 import { QueueItem } from "../../entity/QueueItem";
 import avSessionManager from "../../utils/AVSessionManager";
 import { avSession } from "@kit.AVSessionKit";
@@ -159,7 +158,7 @@ export class PlayerViewModel {
       emitter.emit(Constants.PLAYER_EVENT, {
         data: {
           'eventName': 'Speed',
-          'args': speed + 'f'
+          'args': speed
         }
       })
     });
@@ -302,9 +301,7 @@ export class PlayerViewModel {
       return
     }
     let hasFinished = this.uiState.CONTROL_PlayStatus == PlayStatus.DONE
-    let lastPositionTicks =
-      hasFinished ? mediaSource.runTimeTicks :
-        IjkMediaPlayer.getInstance().getCurrentPosition() * Constants.TICKS_PER_MILLISECOND
+    let lastPositionTicks = hasFinished ? mediaSource.runTimeTicks : 0//IMediaPlayer.getCurrentPosition() * Constants.TICKS_PER_MILLISECOND
     let playStateApi = getPlaystateApi(ApiClient.Instance())
     await playStateApi.reportPlaybackStopped({
       playbackStopInfo: {
@@ -426,7 +423,7 @@ export class PlayerViewModel {
         'eventName': 'Pause'
       }
     })
-    return IjkMediaPlayer.getInstance().getCurrentPosition()
+    return 0//IjkMediaPlayer.getInstance().getCurrentPosition()
   }
 
   changeBitrate(bitrate?: number) {
@@ -460,9 +457,9 @@ export class PlayerViewModel {
         mediaType: 'VIDEO',
         appName: Constants.APP_INFO_NAME,
         //startPosition为投播当前进度，设置该字段可将本机播放进度同步到远端
-        startPosition: IjkMediaPlayer.getInstance().getCurrentPosition(),
+        startPosition: 0,//IjkMediaPlayer.getInstance().getCurrentPosition(),
         // 投播资源播放时长，设置该字段可将本机播放时长同步到远端显示
-        duration: IjkMediaPlayer.getInstance().getDuration(),
+        duration: 0//IjkMediaPlayer.getInstance().getDuration(),
       }
     }
 
@@ -531,7 +528,7 @@ export class PlayerViewModel {
         //startPosition为投播当前进度，设置该字段可将本机播放进度同步到远端
         startPosition: 0,
         // 投播资源播放时长，设置该字段可将本机播放时长同步到远端显示
-        duration: IjkMediaPlayer.getInstance().getDuration(),
+        duration: 0//IMediaPlayer.getInstance().getDuration(),
       }
     }
 
