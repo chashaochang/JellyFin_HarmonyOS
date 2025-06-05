@@ -131,7 +131,7 @@ export struct WebViewScreen {
           if (path.toLowerCase().endsWith(Constants.SESSION_CAPABILITIES_PATH)) {
             this.controller.runJavaScript("JSON.parse(window.localStorage.getItem('jellyfin_credentials'))")
               .then(result => {
-                const credentials: Credentials | null = JSONUtil.jsonToBean(Credentials, result)
+                const credentials: Credentials | null = JSONUtil.jsonToBean(result, Credentials)
                 if (credentials) {
                   let server = credentials.Servers[0]
                   this.apiClientController.setupUser(this.server.id, server.UserId, server.AccessToken)
@@ -144,12 +144,11 @@ export struct WebViewScreen {
 
           }
           return null
-        })
-        // .onErrorReceive((err) => {
-        //   this.handleError()
-        // })
+        })// .onErrorReceive((err) => {
+          //   this.handleError()
+          // })
         .onHttpErrorReceive((e) => {
-          if(e.request.getRequestUrl() == this.server.hostname){
+          if (e.request.getRequestUrl() == this.server.hostname) {
             this.handleError()
           }
         })

@@ -15,6 +15,8 @@ import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/mod
 import { QualityOption } from "../../player/qualityoptions/QualityOption"
 import { AVCastPicker, avSession } from "@kit.AVSessionKit"
 import { SimilarItem } from "../../entity/SimilarItem"
+import { MediaStreamUtil } from "../../utils/MediaStreamUtil"
+import { PlayerMenus } from "../../player/ui/PlayerMenus"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -33,6 +35,24 @@ export struct PlayerScreen {
     HMRouterMgr.pop()
   }
   @Local showEpisodeView: boolean = false
+
+  @Monitor('viewModel.queueManager.currentMediaSourceOrNull')
+  onMediaSourceChanged() {
+    if(!this.viewModel.queueManager.currentMediaSourceOrNull) return
+    let mediaSource = this.viewModel.queueManager.currentMediaSourceOrNull!
+    if (MediaStreamUtil.isLandscape(mediaSource.selectedVideoStream) == false) {
+      // For portrait videos, immediately enable fullscreen
+      //playerFullscreenHelper.enableFullscreen()
+    }
+    // else if (appPreferences.exoPlayerStartLandscapeVideoInLandscape) {
+    //   // Auto-switch to landscape for landscape videos if enabled
+    //   requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    // }
+
+    // Update title and player menus
+    this.viewModel.uiState.title = mediaSource.name
+    this.viewModel.uiState.playerMenus?.onQueueItemChanged(mediaSource, this.viewModel.queueManager.hasNext())
+  }
 
   async aboutToAppear(): Promise<void> {
     this.viewModel.initAVSession()
@@ -68,7 +88,8 @@ export struct PlayerScreen {
       default:
         break
     }
-
+    // Create playback menus
+    this.viewModel.uiState.playerMenus = new PlayerMenus()//(this, playerBinding, playerControlsBinding)
   }
 
   aboutToDisappear() {
@@ -360,3 +381,4 @@ function titleStyle() {
   .fontWeight(FontWeight.Bold)
   .textAlign(TextAlign.Start)
 }
+

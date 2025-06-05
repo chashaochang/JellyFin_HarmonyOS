@@ -114,6 +114,26 @@
     {
       "name": "reason_background",
       "value": "避免应用在投播时进入后台被系统冻结"
+    },
+    {
+      "name": "playback_info_play_method",
+      "value": "播放方式： "
+    },
+    {
+      "name": "playback_info_video_streams",
+      "value": "视频流"
+    },
+    {
+      "name": "playback_info_audio_streams",
+      "value": "音频流"
+    },
+    {
+      "name": "playback_info_stream_unknown_title",
+      "value": "未知标题"
+    },
+    {
+      "name": "playback_info_and_x_more",
+      "value": "....还有 %d 个"
     }
   ]
 }

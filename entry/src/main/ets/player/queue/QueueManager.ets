@@ -30,12 +30,6 @@ export class QueueManager {
   private mediaSourceResolver: MediaSourceResolver = new MediaSourceResolver()
   @Trace currentMediaSourceOrNull?: JellyfinMediaSource
 
-  @Monitor('currentMediaSourceOrNull')
-  onMediaSourceChanged() {
-    this.viewModel.uiState.hasPrevious = this.hasPrevious()
-    this.viewModel.uiState.hasNext = this.hasNext()
-  }
-
   private deviceProfileBuilder: DeviceProfileBuilder = new DeviceProfileBuilder()
   private deviceProfile: DeviceProfile = this.deviceProfileBuilder.getDeviceProfile()
 

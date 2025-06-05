@@ -6,6 +6,7 @@ import { SubtitleItem } from "../../utils/SubtitleManager"
 import { PlayerStatus, PlayStatus } from "./PlayStatus"
 import { avSession } from "@kit.AVSessionKit"
 import { SimilarItem } from "../../entity/SimilarItem"
+import { PlayerMenus } from "../../player/ui/PlayerMenus"
 
 @ObservedV2
 export class PlayerUIState {
@@ -30,22 +31,21 @@ export class PlayerUIState {
   //媒体类型
   @Trace mediaType: BaseItemKind = BaseItemKind.Video
   //音频列表
-  @Trace audioStreams:MediaStream[] = []
+  @Trace audioStreams: MediaStream[] = []
   //字幕列表
-  @Trace subtitleStreams:MediaStream[] = []
+  @Trace subtitleStreams: MediaStream[] = []
   //选中音频
   selectedAudioStream?: MediaStream
   //选中字幕
   selectedSubtitleStream?: MediaStream
   //质量列表
-  qualityOptions:QualityOption[] = []
+  qualityOptions: QualityOption[] = []
   //选中码率
   selectedBitrate?: number | null
   //正在投屏
-  @Trace isCastPlaying:boolean = false
+  @Trace isCastPlaying: boolean = false
   //更多类似的
-  @Trace similarItems:SimilarItem[] = []
-
+  @Trace similarItems: SimilarItem[] = []
   scroller: ListScroller = new ListScroller()
   playWhenReady: boolean = true
   //初始进度
@@ -54,5 +54,6 @@ export class PlayerUIState {
   @Trace audioTrackIndex?: number | null = null
   @Trace playerStatus: number = PlayerStatus.IDLE
   @Trace hasPrevious: boolean = false
-  @Trace hasNext: boolean = false
+
+  playerMenus?: PlayerMenus
 }

@@ -285,7 +285,7 @@ export struct PlayerView {
   @Builder
   dialogEpisode(_this: PlayerView) {
     Column({ space: 10 }) {
-      List({space:8,initialIndex:_this.uiState.playList.findIndex(e=>e.id == _this.uiState.currentPlayId)}) {
+      List({ space: 8, initialIndex: _this.uiState.playList.findIndex(e => e.id == _this.uiState.currentPlayId) }) {
         ForEach(_this.uiState.playList, (item: QueueItem, index) => {
           ListItem() {
             Column() {
@@ -295,7 +295,7 @@ export struct PlayerView {
                 .maxLines(1)
                 .ellipsisMode(EllipsisMode.END)
                 .textOverflow({
-                  overflow:TextOverflow.Ellipsis
+                  overflow: TextOverflow.Ellipsis
                 })
             }
             .width('100%')
@@ -524,7 +524,7 @@ export struct PlayerView {
                 this.startPlayOrResumePlay();
               }
             })
-          if (this.uiState.hasNext) {
+          if (this.uiState.playerMenus?.hasNext) {
             Image($r('app.media.ic_next'))
               .width(44)
               .height(44)
@@ -546,6 +546,18 @@ export struct PlayerView {
               .height(44)
               .padding(12)
           }.backgroundColor(Color.Transparent).bindMenu(this.subtitleMenu())
+
+          Button() {
+            Image($r("app.media.ic_info"))
+              .width(44)
+              .height(44)
+              .padding(12)
+          }.backgroundColor(Color.Transparent)
+          .onClick(() => {
+            if (this.uiState.playerMenus) {
+              this.uiState.playerMenus.isShowPlayBackInfo = true
+            }
+          })
 
           Blank().layoutWeight(1)
           if (this.uiState.mediaType == BaseItemKind.Episode) {
@@ -839,6 +851,27 @@ export struct PlayerView {
         .visibility(this.loadingVisible)
         .border({ width: 0 })
         .borderStyle(BorderStyle.Dashed)
+
+      Text(this.uiState.playerMenus?.playBackInfo)
+        .backgroundColor($r('sys.color.mask_primary'))
+        .borderRadius(16)
+        .fontSize(12)
+        .position({
+          x: 0, y: 0
+        })
+        .padding(16)
+        .visibility(this.uiState.playerMenus?.isShowPlayBackInfo ? Visibility.Visible : Visibility.None)
+        .onClick(() => {
+          if (this.uiState.playerMenus) {
+            this.uiState.playerMenus.isShowPlayBackInfo = false
+          }
+        })
+        .margin({
+          top: 48,
+          bottom: 96,
+          left: 12,
+          right: 12
+        })
       Stack() {
         Button('退出投屏')
           .onClick(() => {
