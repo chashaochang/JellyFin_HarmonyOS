@@ -855,6 +855,7 @@ export struct PlayerView {
       Text(this.uiState.playerMenus?.playBackInfo)
         .backgroundColor($r('sys.color.mask_primary'))
         .borderRadius(16)
+        .fontColor(Color.White)
         .fontSize(12)
         .position({
           x: 0, y: 0
@@ -1418,7 +1419,7 @@ export struct PlayerView {
     this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", "10000000");
     // 变速播放
     this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "soundtouch", "1");
-    // 开启h265硬解码
+    // 开启h265硬解码 开了4K HEVC SDR的个别视频会花屏
     // this.mIjkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-hevc", "1");
     this.mIjkMediaPlayer.setSpeed(this.playSpeed);
     let Speed = this.mIjkMediaPlayer.getSpeed()
