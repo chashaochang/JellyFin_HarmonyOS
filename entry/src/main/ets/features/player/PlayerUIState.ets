@@ -56,4 +56,7 @@ export class PlayerUIState {
   @Trace hasPrevious: boolean = false
 
   playerMenus?: PlayerMenus
+
+  //是否正在倍速播放
+  @Trace isFastSpeed: boolean = false
 }

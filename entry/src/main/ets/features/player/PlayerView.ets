@@ -882,6 +882,25 @@ export struct PlayerView {
       .height('100%')
       .backgroundColor(Color.Black)
       .visibility(this.uiState.isCastPlaying ? Visibility.Visible : Visibility.Hidden)
+      //长按三倍速提示
+      Stack({ alignContent: Alignment.Top }) {
+        Row() {
+          Image($r('app.media.ic_speed')).height(20)
+          Text('正在倍速播放')
+            .fontSize(14)
+            .fontColor(Color.White)
+        }
+        .margin({
+          top:20
+        })
+        .padding(4)
+        .backgroundColor(Color.Black)
+        .borderRadius(4)
+        .opacity(0.4)
+      }
+      .width('100%')
+      .height('100%')
+      .visibility(this.uiState.isFastSpeed ? Visibility.Visible : Visibility.None)
     }
     .width('100%')
     .backgroundColor($r('sys.color.black'))
@@ -1092,7 +1111,23 @@ export struct PlayerView {
         } else {
           this.startPlayOrResumePlay();
         }
-      })
+      }),
+      LongPressGesture()//长按三倍速
+        .onAction((event: GestureEvent) => {
+          if (event) {
+            //投屏不用倍速
+            if(this.uiState.isCastPlaying) return
+            this.mIjkMediaPlayer.setSpeed('3f')
+            this.uiState.isFastSpeed = true
+          }
+        })
+        // 长按动作一结束触发
+        .onActionEnd((_event: GestureEvent) => {
+          if(this.uiState.isFastSpeed){
+            this.mIjkMediaPlayer.setSpeed(this.playSpeed)
+            this.uiState.isFastSpeed = false
+          }
+        })
     ))
     .onAreaChange((_oldValue: Area, newValue: Area) => {
       changeWidth = newValue.width as number;
