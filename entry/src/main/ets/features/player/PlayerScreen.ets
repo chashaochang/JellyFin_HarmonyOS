@@ -4,7 +4,7 @@ import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
-import { display } from "@kit.ArkUI"
+import { AppStorageV2, display } from "@kit.ArkUI"
 import { Constants } from "../../utils/Constants"
 import { common } from "@kit.AbilityKit"
 import { PlayerView } from "./PlayerView"
@@ -17,17 +17,18 @@ import { AVCastPicker, avSession } from "@kit.AVSessionKit"
 import { SimilarItem } from "../../entity/SimilarItem"
 import { MediaStreamUtil } from "../../utils/MediaStreamUtil"
 import { PlayerMenus } from "../../player/ui/PlayerMenus"
+import { OneMoreUtil } from "../../utils/OneMoreUtil"
+import { AppUIState } from "../../entity/AppUIState"
+import { PlayerLifecycle } from "../../router/lifecycles/PlayerLifecycle"
 
 @HMRouter({
   pageUrl: '/Player',
   singleton: true,
   lifecycle: 'playerLifecycle',
-  interceptors: ['jumpInfoInterceptor']
 })
 @ComponentV2
 export struct PlayerScreen {
   options: PlayOptions = HMRouterMgr.getCurrentParam() as PlayOptions
-  @Provider() screenIsFull: boolean = false;
   @Provider() uiState: PlayerUIState = new PlayerUIState()
   @Provider() viewModel: PlayerViewModel = new PlayerViewModel(this.uiState)
   castController: avSession.AVCastController | undefined = undefined;
@@ -35,10 +36,21 @@ export struct PlayerScreen {
     HMRouterMgr.pop()
   }
   @Local showEpisodeView: boolean = false
+  @Local appUIState: AppUIState = AppStorageV2.connect(AppUIState, () => new AppUIState())!;
 
+  @Local lifecycle: PlayerLifecycle = HMRouterMgr.getCurrentLifecycleOwner()?.getLifecycle() as PlayerLifecycle;
+  @Monitor('lifecycle.options')
+  onNewInstance(){
+    this.options = this.lifecycle.options
+    this.uiState = new PlayerUIState()
+    this.viewModel = new PlayerViewModel(this.uiState)
+    this.aboutToAppear()
+  }
   @Monitor('viewModel.queueManager.currentMediaSourceOrNull')
   onMediaSourceChanged() {
-    if(!this.viewModel.queueManager.currentMediaSourceOrNull) return
+    if (!this.viewModel.queueManager.currentMediaSourceOrNull) {
+      return
+    }
     let mediaSource = this.viewModel.queueManager.currentMediaSourceOrNull!
     if (MediaStreamUtil.isLandscape(mediaSource.selectedVideoStream) == false) {
       // For portrait videos, immediately enable fullscreen
@@ -55,10 +67,17 @@ export struct PlayerScreen {
   }
 
   async aboutToAppear(): Promise<void> {
+    if (OneMoreUtil.isBigScreen()) {
+      if (this.appUIState.orientation == display.Orientation.LANDSCAPE ||
+        this.appUIState.orientation == display.Orientation.LANDSCAPE_INVERTED) {
+        //如果现在横屏分栏展示,需要手动点击才能全屏
+        OneMoreUtil.updateNavModifier()
+      }
+    }
     this.viewModel.initAVSession()
     let callback = async () => {
       let defaultDisplay = display.getDefaultDisplaySync()
-      this.screenIsFull = defaultDisplay.width > defaultDisplay.height
+      this.appUIState.isFullScreen = defaultDisplay.width > defaultDisplay.height
     }
     try {
       display.on("change", callback); // 监听屏幕状态改变
@@ -89,7 +108,7 @@ export struct PlayerScreen {
         break
     }
     // Create playback menus
-    this.viewModel.uiState.playerMenus = new PlayerMenus()//(this, playerBinding, playerControlsBinding)
+    this.viewModel.uiState.playerMenus = new PlayerMenus() //(this, playerBinding, playerControlsBinding)
   }
 
   aboutToDisappear() {
@@ -108,8 +127,8 @@ export struct PlayerScreen {
   }
 
   onBackPress(): boolean | void {
-    if (this.screenIsFull) {
-      this.screenIsFull = false
+    if (this.appUIState.isFullScreen) {
+      this.appUIState.isFullScreen = false
     } else {
       HMRouterMgr.pop()
     }
@@ -199,7 +218,7 @@ export struct PlayerScreen {
             onEpisodeChange: (index: number) => {
               this.viewModel.changeEpisode(index)
             }
-          }).height(this.screenIsFull ? '100%' : 240)
+          }).height(this.appUIState.isFullScreen ? '100%' : 240)
         }
         Row() {
           Image($r('app.media.ic_back'))
@@ -223,7 +242,7 @@ export struct PlayerScreen {
         .height(56)
         .width('100%')
         .justifyContent(FlexAlign.Start)
-        .visibility(this.screenIsFull ? Visibility.None : Visibility.Visible)
+        .visibility(this.appUIState.isFullScreen ? Visibility.None : Visibility.Visible)
       }.width('100%')
       .alignContent(Alignment.Top)
 
@@ -357,7 +376,7 @@ export struct PlayerScreen {
           .alignItems(HorizontalAlign.Start)
           .width('100%')
           .padding(16)
-          .visibility(this.screenIsFull ? Visibility.None : Visibility.Visible)
+          .visibility(this.appUIState.isFullScreen ? Visibility.None : Visibility.Visible)
         }.width('100%')
         .height('100%')
         .scrollable(ScrollDirection.Vertical)

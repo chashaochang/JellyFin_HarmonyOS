@@ -20,13 +20,15 @@ import { PlayerUIState } from "./PlayerUIState";
 import { SmartDialog } from "ohos_smart_dialog";
 import { SubtitleItem } from "../../utils/SubtitleManager";
 import { audio } from "@kit.AudioKit";
-import { window, PiPWindow } from "@kit.ArkUI";
+import { window, PiPWindow, AppStorageV2 } from "@kit.ArkUI";
 import avSessionManager from "../../utils/AVSessionManager";
 import { AVCastPicker, avSession } from "@kit.AVSessionKit";
 import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/models";
 import { QualityOption } from "../../player/qualityoptions/QualityOption";
 import { common } from "@kit.AbilityKit";
 import { QueueItem } from "../../entity/QueueItem";
+import { AppUIState } from "../../entity/AppUIState";
+import { OneMoreUtil } from "../../utils/OneMoreUtil";
 
 let uiTime: number = 0;
 let uiLockTime: number = 0;
@@ -119,30 +121,43 @@ export struct PlayerView {
   private isHorizontalDrag: boolean = false;
   private mAudioManager: audio.AudioManager | null = null;
   sec: number = 3;
-  @Consumer() screenIsFull: boolean = false;
   pipController?: PiPWindow.PiPController;
   xComponentController: XComponentController = new XComponentController()
   @Local hintMsgVisibility: boolean = false;
+  @Local appUIState: AppUIState = AppStorageV2.connect(AppUIState, () => new AppUIState())!;
 
-  @Monitor('screenIsFull')
+  @Monitor('appUIState.isFullScreen')
   onScreenChanged() {
-    if (this.screenIsFull) {
+    if (this.appUIState.isFullScreen) {
       windowClass?.setWindowLayoutFullScreen(true)
       windowClass?.setWindowSystemBarEnable([])
-      if (canIUse('SystemCapability.Window.SessionManager')) {
-        windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_LANDSCAPE);
+      if (OneMoreUtil.isNormalPhone()) {
+        if (canIUse('SystemCapability.Window.SessionManager')) {
+          windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_LANDSCAPE);
+        }
+      } else if (OneMoreUtil.isBigScreen()) {
+
       }
     } else {
-      SmartDialog.dismiss()
       windowClass?.setWindowLayoutFullScreen(false)
       windowClass?.setWindowSystemBarEnable(['status', 'navigation'])
-      if (canIUse('SystemCapability.Window.SessionManager')) {
-        windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_PORTRAIT);
+      if (OneMoreUtil.isNormalPhone()) {
+        SmartDialog.dismiss()
+        if (canIUse('SystemCapability.Window.SessionManager')) {
+          windowClass?.setPreferredOrientation(window.Orientation.USER_ROTATION_PORTRAIT);
+        }
+      } else if (OneMoreUtil.isBigScreen()) {
+
       }
     }
   }
 
   @Consumer() uiState: PlayerUIState = new PlayerUIState()
+
+  @Monitor('uiState')
+  onNewInstance(){
+    this.stop()
+  }
 
   @Monitor('uiState.subtitles')
   onSubtitleChanged() {
@@ -161,7 +176,7 @@ export struct PlayerView {
   @Monitor('uiState.isCastPlaying')
   onCastChanged() {
     if (this.uiState.isCastPlaying) {
-      this.screenIsFull = false
+      this.appUIState.isFullScreen = false
     }
   }
 
@@ -437,7 +452,7 @@ export struct PlayerView {
   @Builder
   topControlView() {
     Row() {
-      if (this.screenIsFull) {
+      if (this.appUIState.isFullScreen) {
         Image($r('app.media.ic_back'))
           .width(44)
           .height(44)
@@ -446,7 +461,7 @@ export struct PlayerView {
             left: 16
           })
           .onClick(() => {
-            this.screenIsFull = false
+            this.appUIState.isFullScreen = false
           })
         Text(this.uiState.title)
           .fontColor(Color.White)
@@ -469,7 +484,7 @@ export struct PlayerView {
 
   @Builder
   bottomControlView() {
-    if (this.screenIsFull) {
+    if (this.appUIState.isFullScreen) {
       Column() {
         Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Start }) {
           Text(this.currentTime)
@@ -659,7 +674,7 @@ export struct PlayerView {
         //   this.hintMsgVisibility = true;
         // })
         Image($r('app.media.ic_full')).width(48).height(48).padding(12).onClick(() => {
-          this.screenIsFull = true
+          this.appUIState.isFullScreen = true
         })
       }.height(52).width('100%')
     }
@@ -788,7 +803,7 @@ export struct PlayerView {
       if (this.uiState.subtitles.length > 0) {
         Stack() {
           Text(this.uiState.currentSubtitle)
-            .fontSize(this.screenIsFull ? 21 : 13)
+            .fontSize(this.appUIState.isFullScreen ? 21 : 13)
             .fontColor(Color.White)
             .width('100%')
             .padding(20)
@@ -817,7 +832,7 @@ export struct PlayerView {
       }.height('100%')
       .visibility(this.showControls ? Visibility.Visible : Visibility.Hidden)
 
-      if (this.screenIsFull && this.fullShowLock) {
+      if (this.appUIState.isFullScreen && this.fullShowLock) {
         Stack() {
           Image(this.lock ? $r('app.media.lock') : $r('app.media.unlock'))
             .width(20)
@@ -882,6 +897,7 @@ export struct PlayerView {
       .height('100%')
       .backgroundColor(Color.Black)
       .visibility(this.uiState.isCastPlaying ? Visibility.Visible : Visibility.Hidden)
+
       //长按三倍速提示
       Stack({ alignContent: Alignment.Top }) {
         Row() {
@@ -891,7 +907,7 @@ export struct PlayerView {
             .fontColor(Color.White)
         }
         .margin({
-          top:20
+          top: 20
         })
         .padding(4)
         .backgroundColor(Color.Black)
@@ -1116,14 +1132,16 @@ export struct PlayerView {
         .onAction((event: GestureEvent) => {
           if (event) {
             //投屏不用倍速
-            if(this.uiState.isCastPlaying) return
+            if (this.uiState.isCastPlaying) {
+              return
+            }
             this.mIjkMediaPlayer.setSpeed('3f')
             this.uiState.isFastSpeed = true
           }
         })
         // 长按动作一结束触发
         .onActionEnd((_event: GestureEvent) => {
-          if(this.uiState.isFastSpeed){
+          if (this.uiState.isFastSpeed) {
             this.mIjkMediaPlayer.setSpeed(this.playSpeed)
             this.uiState.isFastSpeed = false
           }
@@ -1133,7 +1151,7 @@ export struct PlayerView {
       changeWidth = newValue.width as number;
       changeHeight = newValue.height as number;
       // 如果用户不隐藏状态栏，全屏的时候组件高度与手机的高度差距小于50.就显示上方控制栏
-      if (this.screenIsFull) {
+      if (this.appUIState.isFullScreen) {
         this.fullShowLock = true;
       }
     })
@@ -1748,7 +1766,7 @@ export struct PlayerView {
     if (!this.lock) {
       this.showControls = true;
     }
-    if (this.screenIsFull) {
+    if (this.appUIState.isFullScreen) {
       this.fullShowLock = true
     }
     this.sec = 3;

@@ -7,7 +7,8 @@
     "deviceTypes": [
       "phone",
       "tablet",
-      "2in1"
+      "2in1",
+      "car"
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
@@ -21,7 +22,7 @@
         "label": "$string:EntryAbility_label",
         "startWindowIcon": "$media:foreground",
         "startWindowBackground": "$color:start_window_background",
-        "orientation": "portrait",
+        "orientation": "auto_rotation_unspecified",
         "exported": true,
         "skills": [
           {

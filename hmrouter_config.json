@@ -1,4 +1,8 @@
 {
-  "scanDir": ["src/main/ets/features","src/main/ets/router/interceptors"],
+  "scanDir": [
+    "src/main/ets/features",
+    "src/main/ets/router/interceptors",
+    "src/main/ets/router/lifecycles"
+  ],
   "saveGeneratedFile": false
 }

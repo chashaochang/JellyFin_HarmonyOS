@@ -1,7 +1,7 @@
 {
   "modelVersion": "5.0.1",
   "dependencies": {
-    "@hadss/hmrouter-plugin": "^1.0.0-rc.10" // 使用npm仓版本号
+    "@hadss/hmrouter-plugin": "^1.2.0-beta.0" // 使用npm仓版本号
   },
   "execution": {
     // "analyze": "normal",                     /* Define the build analyze mode. Value: [ "normal" | "advanced" | false ]. Default: "normal" */

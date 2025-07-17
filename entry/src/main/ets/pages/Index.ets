@@ -3,13 +3,15 @@ import { WebViewScreen } from '../webapp/WebViewScreen'
 import mainViewModel, { MainViewModel, ServerState } from './MainViewModel'
 import { common } from '@kit.AbilityKit';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
-import { AttributeUpdater } from '@kit.ArkUI';
+import { AppStorageV2, AttributeUpdater, display } from '@kit.ArkUI';
 import { HMDefaultGlobalAnimator, HMNavigation, HMRouterMgr } from '@hadss/hmrouter';
 import { Constants } from '../utils/Constants';
 import { BackController } from '../webapp/BackController';
 import { JumpInfoInterceptor } from '../router/interceptors/JumpInfoInterceptor';
 import { PlayerLifecycle } from '../router/lifecycles/PlayerLifecycle';
 import { OhosSmartDialog } from 'ohos_smart_dialog';
+import { OneMoreUtil } from '../utils/OneMoreUtil';
+import { AppUIState } from '../entity/AppUIState';
 
 @Entry
 @ComponentV2
@@ -20,18 +22,29 @@ struct Index {
   @Provider() showExternalConnectionError: boolean = false
   modifier: NavModifier = new NavModifier();
   backController?: BackController
+  @Local appUIState: AppUIState = AppStorageV2.connect(AppUIState, () => new AppUIState())!;
+
+  @Monitor('appUIState.orientation')
+  onBreakpointChanged() {
+    OneMoreUtil.updateNavModifier()
+  }
+
+  @Monitor('appUIState.isFullScreen')
+  onFullScreenChanged() {
+    if (OneMoreUtil.isBigScreen()) {
+      if (this.appUIState.isFullScreen) {
+        this.modifier.instance?.navBarWidth(0)
+      } else {
+        this.modifier.instance?.navBarWidth('33%')
+      }
+    }
+  }
+
+  onPageShow(): void {
+    AppStorage.setOrCreate('modifier', this.modifier)
+  }
 
   aboutToAppear(): void {
-    HMRouterMgr.registerGlobalInterceptor({
-      interceptor: new JumpInfoInterceptor(),
-      interceptorName: "jumpInfoInterceptor",
-      priority: 5
-    })
-    HMRouterMgr.registerGlobalLifecycle({
-      lifecycle: new PlayerLifecycle(),
-      lifecycleName: 'playerLifecycle',
-      priority: 5
-    })
     this.mainViewModel.refreshServer()
     this.activityEventHandler.subscribe()
   }
@@ -48,7 +61,7 @@ struct Index {
         navigationId: Constants.NAVIGATION_ID, options: {
           standardAnimator: HMDefaultGlobalAnimator.STANDARD_ANIMATOR,
           dialogAnimator: HMDefaultGlobalAnimator.DIALOG_ANIMATOR,
-          modifier: this.modifier
+          modifier: this.modifier,
         }
       }) {
         Stack() {
@@ -63,6 +76,7 @@ struct Index {
           }
         }.width('100%').height('100%')
       }
+
       // here dialog init
       OhosSmartDialog()
     }
@@ -76,11 +90,12 @@ struct Index {
   }
 }
 
-class NavModifier extends AttributeUpdater<NavigationAttribute> {
+export class NavModifier extends AttributeUpdater<NavigationAttribute> {
+  instance?: NavigationAttribute
+
   initializeModifier(instance: NavigationAttribute): void {
-    instance.mode(NavigationMode.Stack);
-    instance.navBarWidth('100%');
-    instance.hideTitleBar(true);
-    instance.hideToolBar(true);
+    this.instance = instance
+    instance.hideTitleBar(true)
+    OneMoreUtil.updateNavModifier(instance)
   }
 }
