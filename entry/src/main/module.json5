@@ -32,12 +32,19 @@
             "actions": [
               "action.system.home"
             ]
-          }
+          },
         ],
         "backgroundModes": [
           // 长时任务类型的配置项
           "audioPlayback"
-        ]
+        ],
+        supportWindowMode: [
+          "floating",
+          "split",
+          "fullscreen"
+        ],
+        "minWindowWidth": 1280,
+        "minWindowHeight": 720
       }
     ],
     "extensionAbilities": [
