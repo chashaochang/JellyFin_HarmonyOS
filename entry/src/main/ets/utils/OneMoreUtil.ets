@@ -6,14 +6,13 @@ import { NavModifier } from "../pages/Index";
 import { AppUIState } from "../entity/AppUIState";
 
 export class OneMoreUtil {
-
   //是否大屏设备(需要分栏的) 暂时没适配折叠屏
-  static isBigScreen(){
+  static isBigScreen() {
     return deviceInfo.deviceType == 'tablet' || deviceInfo.deviceType == 'car' || deviceInfo.deviceType == '2in1'
   }
 
   //是正常的小屏手机
-  static isNormalPhone(){
+  static isNormalPhone() {
     return deviceInfo.deviceType == 'phone' && !OneMoreUtil.isFoldable()
   }
 
@@ -43,10 +42,9 @@ export class OneMoreUtil {
     }
   }
 
-  static updateNavModifier(instance?: NavigationAttribute){
+  static updateNavModifier(appUIState: AppUIState, instance?: NavigationAttribute) {
     let modifier = AppStorage.get<NavModifier>('modifier')
     let navInstance = instance || modifier?.instance
-    let appUIState: AppUIState = AppStorageV2.connect(AppUIState, () => new AppUIState())!
     let mode = OneMoreUtil.getNavigationMode(appUIState.orientation)
     if ((OneMoreUtil.isBigScreen())) {
       navInstance?.mode(mode)
@@ -65,5 +63,4 @@ export class OneMoreUtil {
     }
 
   }
-
 }

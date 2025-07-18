@@ -20,7 +20,7 @@ import { PlayerUIState } from "./PlayerUIState";
 import { SmartDialog } from "ohos_smart_dialog";
 import { SubtitleItem } from "../../utils/SubtitleManager";
 import { audio } from "@kit.AudioKit";
-import { window, PiPWindow, AppStorageV2 } from "@kit.ArkUI";
+import { window, PiPWindow, AppStorageV2, display } from "@kit.ArkUI";
 import avSessionManager from "../../utils/AVSessionManager";
 import { AVCastPicker, avSession } from "@kit.AVSessionKit";
 import { BaseItemKind, MediaStream } from "sdk/src/main/ets/generated-client/models";
@@ -69,8 +69,28 @@ export struct PlayerView {
   @Monitor('lock')
   onLockChanged() {
     if (this.lock) {
-      windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);
+      if (OneMoreUtil.isNormalPhone()) {
+        windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);
+      } else if (OneMoreUtil.isBigScreen()) {
+        switch (this.appUIState.orientation){
+          case display.Orientation.PORTRAIT:
+            windowClass?.setPreferredOrientation(window.Orientation.PORTRAIT);
+            break
+          case display.Orientation.LANDSCAPE:
+            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);
+            break
+          case display.Orientation.PORTRAIT_INVERTED:
+            windowClass?.setPreferredOrientation(window.Orientation.PORTRAIT_INVERTED);
+            break
+          case display.Orientation.LANDSCAPE_INVERTED:
+            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE_INVERTED);
+            break
+        }
+      }
     } else {
+      if(OneMoreUtil.isBigScreen()){
+        windowClass?.setPreferredOrientation(window.Orientation.AUTO_ROTATION)
+      }
       this.onScreenChanged()
     }
   }
@@ -155,7 +175,7 @@ export struct PlayerView {
   @Consumer() uiState: PlayerUIState = new PlayerUIState()
 
   @Monitor('uiState')
-  onNewInstance(){
+  onNewInstance() {
     this.stop()
   }
 

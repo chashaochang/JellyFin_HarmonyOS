@@ -3,12 +3,10 @@ import { WebViewScreen } from '../webapp/WebViewScreen'
 import mainViewModel, { MainViewModel, ServerState } from './MainViewModel'
 import { common } from '@kit.AbilityKit';
 import { ActivityEventHandler } from '../events/ActivityEventHandler';
-import { AppStorageV2, AttributeUpdater, display } from '@kit.ArkUI';
-import { HMDefaultGlobalAnimator, HMNavigation, HMRouterMgr } from '@hadss/hmrouter';
+import { AppStorageV2, AttributeUpdater } from '@kit.ArkUI';
+import { HMDefaultGlobalAnimator, HMNavigation } from '@hadss/hmrouter';
 import { Constants } from '../utils/Constants';
 import { BackController } from '../webapp/BackController';
-import { JumpInfoInterceptor } from '../router/interceptors/JumpInfoInterceptor';
-import { PlayerLifecycle } from '../router/lifecycles/PlayerLifecycle';
 import { OhosSmartDialog } from 'ohos_smart_dialog';
 import { OneMoreUtil } from '../utils/OneMoreUtil';
 import { AppUIState } from '../entity/AppUIState';
@@ -26,7 +24,7 @@ struct Index {
 
   @Monitor('appUIState.orientation')
   onBreakpointChanged() {
-    OneMoreUtil.updateNavModifier()
+    OneMoreUtil.updateNavModifier(this.appUIState)
   }
 
   @Monitor('appUIState.isFullScreen')
@@ -96,6 +94,7 @@ export class NavModifier extends AttributeUpdater<NavigationAttribute> {
   initializeModifier(instance: NavigationAttribute): void {
     this.instance = instance
     instance.hideTitleBar(true)
-    OneMoreUtil.updateNavModifier(instance)
+    let appUIState: AppUIState = AppStorageV2.connect(AppUIState, () => new AppUIState())!;
+    OneMoreUtil.updateNavModifier(appUIState, instance)
   }
 }

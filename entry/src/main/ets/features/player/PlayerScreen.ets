@@ -71,19 +71,19 @@ export struct PlayerScreen {
       if (this.appUIState.orientation == display.Orientation.LANDSCAPE ||
         this.appUIState.orientation == display.Orientation.LANDSCAPE_INVERTED) {
         //如果现在横屏分栏展示,需要手动点击才能全屏
-        OneMoreUtil.updateNavModifier()
+        OneMoreUtil.updateNavModifier(this.appUIState)
       }
     }
     this.viewModel.initAVSession()
-    let callback = async () => {
-      let defaultDisplay = display.getDefaultDisplaySync()
-      this.appUIState.isFullScreen = defaultDisplay.width > defaultDisplay.height
-    }
-    try {
-      display.on("change", callback); // 监听屏幕状态改变
-    } catch (exception) {
-      console.error('PlayerScreen', 'Failed to register callback. Code: ' + JSON.stringify(exception));
-    }
+    // let callback = async () => {
+    //   let defaultDisplay = display.getDefaultDisplaySync()
+    //   this.appUIState.isFullScreen = defaultDisplay.width > defaultDisplay.height
+    // }
+    // try {
+    //   display.on("change", callback); // 监听屏幕状态改变
+    // } catch (exception) {
+    //   console.error('PlayerScreen', 'Failed to register callback. Code: ' + JSON.stringify(exception));
+    // }
     emitter.on(Constants.PLAYER_EVENT, (data) => {
       if (data.data && data.data['eventName']) {
         let name = data.data['eventName'] as string
