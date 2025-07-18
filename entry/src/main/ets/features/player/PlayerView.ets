@@ -72,18 +72,18 @@ export struct PlayerView {
       if (OneMoreUtil.isNormalPhone()) {
         windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);
       } else if (OneMoreUtil.isBigScreen()) {
-        switch (this.appUIState.orientation){
+        switch (display.getDefaultDisplaySync().orientation){
           case display.Orientation.PORTRAIT:
             windowClass?.setPreferredOrientation(window.Orientation.PORTRAIT);
             break
           case display.Orientation.LANDSCAPE:
-            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);
+            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE_INVERTED);//不知道为啥模拟器是反的,没有真机
             break
           case display.Orientation.PORTRAIT_INVERTED:
             windowClass?.setPreferredOrientation(window.Orientation.PORTRAIT_INVERTED);
             break
           case display.Orientation.LANDSCAPE_INVERTED:
-            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE_INVERTED);
+            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);//不知道为啥模拟器是反的,没有真机
             break
         }
       }
