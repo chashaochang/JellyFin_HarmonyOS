@@ -38,6 +38,7 @@ export struct PlayerScreen {
   @Local showEpisodeView: boolean = false
   @Local appUIState: AppUIState = AppStorageV2.connect(AppUIState, () => new AppUIState())!;
   @Local lifecycle: PlayerLifecycle = HMRouterMgr.getCurrentLifecycleOwner()?.getLifecycle() as PlayerLifecycle;
+  playerInitHeight: number = 240
 
   @Monitor('lifecycle.options')
   onNewInstance() {
@@ -81,6 +82,11 @@ export struct PlayerScreen {
         //如果现在横屏分栏展示,需要手动点击才能全屏
         OneMoreUtil.updateNavModifier(this.appUIState)
       }
+    }
+    if (OneMoreUtil.isNormalPhone()) {
+      this.playerInitHeight = 240
+    } else if (OneMoreUtil.isBigScreen()) {
+      this.playerInitHeight = 480
     }
     this.viewModel.initAVSession()
     // let callback = async () => {
@@ -226,7 +232,8 @@ export struct PlayerScreen {
             onEpisodeChange: (index: number) => {
               this.viewModel.changeEpisode(index)
             }
-          }).height(this.appUIState.isFullScreen || OneMoreUtil.isPc() ? '100%' : 240)
+          }).width('100%')
+            .height(this.appUIState.isFullScreen || OneMoreUtil.isPc() ? '100%' : this.playerInitHeight)
         }
         Row() {
           Image($r('app.media.ic_back'))

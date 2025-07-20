@@ -40,13 +40,15 @@ export default class EntryAbility extends UIAbility {
     });
 
     windowStage.getMainWindow().then((windowClass) => {
-      windowClass.setWindowBackgroundColor('#101010')
-      windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#101010',
-        navigationBarColor: '#101010',
-        navigationBarContentColor: '#101010',
-        isStatusBarLightIcon: true
-      })
+      setTimeout(()=>{
+        windowClass.setWindowBackgroundColor('#ff101010')
+        windowClass.setWindowSystemBarProperties({
+          statusBarColor: '#ff101010',
+          navigationBarColor: '#ff101010',
+          navigationBarContentColor: '#ff101010',
+          isStatusBarLightIcon: true
+        })
+      },200)
       // 保存 UIContext， 在后续的同层渲染绘制中会用到。
       AppStorage.setOrCreate<UIContext>("UIContext", windowClass.getUIContext());
       let avoidArea = windowClass.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR)
