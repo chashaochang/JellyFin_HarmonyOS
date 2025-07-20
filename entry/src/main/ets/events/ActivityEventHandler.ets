@@ -1,8 +1,11 @@
 import { HMRouterMgr } from "@hadss/hmrouter";
-import { common } from "@kit.AbilityKit";
+import { common, Want } from "@kit.AbilityKit";
 import { MainViewModel } from "../pages/MainViewModel";
 import { PlayOptions } from "../player/interaction/PlayOptions";
+import { OneMoreUtil } from "../utils/OneMoreUtil";
 import { ActivityEventType } from "./ActivityEvent";
+import { BusinessError } from "@kit.BasicServicesKit";
+import { Constants } from "../utils/Constants";
 
 export class ActivityEventHandler {
   eventHub: common.EventHub
@@ -31,7 +34,24 @@ export class ActivityEventHandler {
       this.vm.resetServer()
     })
     this.eventHub.on(ActivityEventType.LaunchNativePlayer, (options: PlayOptions) => {
-      HMRouterMgr.push({ pageUrl: '/Player', param: options })
+      if (OneMoreUtil.isPc()) {
+        let context = getContext() as common.UIAbilityContext;
+        // 将Context对象传递过去
+        let wantInfo: Want = {
+          bundleName: context.abilityInfo.bundleName,
+          abilityName: 'PlayerAbility',
+          parameters: {
+            options: options
+          }
+        };
+        context.startAbility(wantInfo).then(() => {
+          console.info("TAG", 'startAbility success.');
+        }).catch((error: BusinessError) => {
+          console.error("TAG", 'startAbility failed.');
+        });
+      } else {
+        HMRouterMgr.push({ navigationId: Constants.NAVIGATION_ID, pageUrl: '/Player', param: options })
+      }
     })
   }
 

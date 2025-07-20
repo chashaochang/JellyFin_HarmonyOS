@@ -246,26 +246,32 @@ export class PlayerViewModel {
       limit: 12,
       fields: [ItemFields.PrimaryImageAspectRatio, ItemFields.CanDelete]
     }).then((res: AxiosResponse<BaseItemDtoQueryResult>) => {
-      let result = res.data.Items?.map(e => {
-        let desc = e.ProductionYear + ''
-        switch (e.Status) {
-          case 'Continuing':
-            desc += ' - 现在'
-            break
-          case 'Ended':
-            desc = desc + ' - ' + new Date(e.EndDate!).getFullYear()
-            break
+      this.queueManager.getItem(source.item.SeriesId ?? source.itemId).then((res2: AxiosResponse<BaseItemDtoQueryResult>) => {
+        if (res.data.Items && res.data.Items.length > 0) {
+          let result = res.data.Items?.map(e => {
+            let desc = e.ProductionYear + ''
+            switch (e.Status) {
+              case 'Continuing':
+                desc += ' - 现在'
+                break
+              case 'Ended':
+                desc = desc + ' - ' + new Date(e.EndDate!).getFullYear()
+                break
+            }
+            let overview: string = res2?.data?.Items?.[0].Overview ?? ""
+            let item: SimilarItem = {
+              id: e.Id!,
+              name: e.Name ?? '',
+              image: ApiClient.Instance().basePath + new ImageUrlsApi().getItemImageUrlById(e.Id),
+              desc: desc,
+              overview: overview,
+              runTimeTicks: e.RunTimeTicks
+            }
+            return item
+          }) ?? []
+          this.uiState.similarItems = result
         }
-        let item: SimilarItem = {
-          id:e.Id!,
-          name: e.Name ?? '',
-          image: ApiClient.Instance().basePath + new ImageUrlsApi().getItemImageUrlById(e.Id),
-          desc: desc,
-          runTimeTicks : e.RunTimeTicks
-        }
-        return item
-      }) ?? []
-      this.uiState.similarItems = result
+      })
     })
   }
 

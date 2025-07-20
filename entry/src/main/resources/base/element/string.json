@@ -9,6 +9,10 @@
       "value": "description"
     },
     {
+      "name": "PlayerAbility_desc",
+      "value": "正在播放..."
+    },
+    {
       "name": "EntryAbility_label",
       "value": "JellyFin"
     }, {

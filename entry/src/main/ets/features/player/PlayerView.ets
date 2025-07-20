@@ -29,6 +29,7 @@ import { common } from "@kit.AbilityKit";
 import { QueueItem } from "../../entity/QueueItem";
 import { AppUIState } from "../../entity/AppUIState";
 import { OneMoreUtil } from "../../utils/OneMoreUtil";
+import { KeyCode } from "@ohos.multimodalInput.keyCode";
 
 let uiTime: number = 0;
 let uiLockTime: number = 0;
@@ -72,23 +73,23 @@ export struct PlayerView {
       if (OneMoreUtil.isNormalPhone()) {
         windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);
       } else if (OneMoreUtil.isBigScreen()) {
-        switch (display.getDefaultDisplaySync().orientation){
+        switch (display.getDefaultDisplaySync().orientation) {
           case display.Orientation.PORTRAIT:
             windowClass?.setPreferredOrientation(window.Orientation.PORTRAIT);
             break
           case display.Orientation.LANDSCAPE:
-            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE_INVERTED);//不知道为啥模拟器是反的,没有真机
+            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE_INVERTED); //不知道为啥模拟器是反的,没有真机
             break
           case display.Orientation.PORTRAIT_INVERTED:
             windowClass?.setPreferredOrientation(window.Orientation.PORTRAIT_INVERTED);
             break
           case display.Orientation.LANDSCAPE_INVERTED:
-            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE);//不知道为啥模拟器是反的,没有真机
+            windowClass?.setPreferredOrientation(window.Orientation.LANDSCAPE); //不知道为啥模拟器是反的,没有真机
             break
         }
       }
     } else {
-      if(OneMoreUtil.isBigScreen()){
+      if (OneMoreUtil.isBigScreen()) {
         windowClass?.setPreferredOrientation(window.Orientation.AUTO_ROTATION)
       }
       this.onScreenChanged()
@@ -499,12 +500,16 @@ export struct PlayerView {
           })
           .visibility(this.uiState.isCastPlaying ? Visibility.None : Visibility.Visible)
       }
-    }.height(56).width('100%').justifyContent(FlexAlign.Start)
+    }
+    .height(56)
+    .width('100%')
+    .justifyContent(FlexAlign.Start)
+    .visibility(OneMoreUtil.isPc() ? Visibility.None : Visibility.Visible)
   }
 
   @Builder
   bottomControlView() {
-    if (this.appUIState.isFullScreen) {
+    if (this.appUIState.isFullScreen || OneMoreUtil.isPc()) {
       Column() {
         Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Start }) {
           Text(this.currentTime)
@@ -635,13 +640,31 @@ export struct PlayerView {
                 alignment: Alignment.End,
               })
             })
+          if (OneMoreUtil.isPc()) {
+            Button() {
+              Image(this.appUIState.isFullScreen ? $r('app.media.ic_out_fullscreen') : $r("app.media.ic_fullscreen"))
+                .width(44)
+                .height(44)
+                .padding(12)
+            }.backgroundColor(Color.Transparent)
+            .onClick(() => {
+              this.appUIState.isFullScreen = !this.appUIState.isFullScreen
+              if (this.appUIState.isFullScreen) {
+                OneMoreUtil.maximize()
+              } else {
+                OneMoreUtil.recover()
+              }
+            })
+          }
         }.height(44).padding({
           left: 8,
           right: 8
         })
       }.padding({
         left: 16,
-        right: 16
+        right: 16,
+        top: 10,
+        bottom: 10
       })
     } else {
       Row() {
@@ -852,7 +875,7 @@ export struct PlayerView {
       }.height('100%')
       .visibility(this.showControls ? Visibility.Visible : Visibility.Hidden)
 
-      if (this.appUIState.isFullScreen && this.fullShowLock) {
+      if (this.appUIState.isFullScreen && this.fullShowLock && !OneMoreUtil.isPc()) {
         Stack() {
           Image(this.lock ? $r('app.media.lock') : $r('app.media.unlock'))
             .width(20)
@@ -941,6 +964,56 @@ export struct PlayerView {
     .width('100%')
     .backgroundColor($r('sys.color.black'))
     .clip(true)
+    .onHover((isHover: boolean) => {
+      if (OneMoreUtil.isPc()) {
+        if (isHover) {
+          if (this.loadingVisible == Visibility.Visible) {
+            return;
+          }
+          if (!this.showControls) {
+            this.timeCountdown();
+          }
+        } else {
+          clearTimeout(uiTime);
+          this.showControls = false;
+          this.fullShowLock = false;
+        }
+      }
+    })
+    .onMouse((event) => {
+      if (this.loadingVisible == Visibility.Visible) {
+        return;
+      }
+      if (event.action == MouseAction.Move) {
+        if (!this.showControls) {
+          this.timeCountdown();
+        }
+      }
+    })
+    //不知道为啥按键监听没好使,有空再说吧
+    // .defaultFocus(true)
+    // .onKeyPreIme((e) => {
+    //   if (e.type == KeyType.Down) {
+    //     switch (e.keyCode) {
+    //       case KeyCode.KEYCODE_ESCAPE: {
+    //         if(this.appUIState.isFullScreen){
+    //           OneMoreUtil.recover()
+    //           this.appUIState.isFullScreen = false
+    //           return true
+    //         }
+    //         break
+    //       }
+    //       case KeyCode.KEYCODE_SPACE: {
+    //         this.startOrStop()
+    //         return true
+    //       }
+    //       default :{
+    //
+    //       }
+    //     }
+    //   }
+    //   return false
+    // })
     .gesture(GestureGroup(GestureMode.Parallel,
       TapGesture().onAction((event: GestureEvent | undefined) => {
         if (event) {
@@ -951,8 +1024,12 @@ export struct PlayerView {
           if (this.loadingVisible == Visibility.Visible) {
             return;
           }
-          if (!this.showControls) {
-            this.timeCountdown();
+          if (OneMoreUtil.isPc()) {
+            this.startOrStop()
+          } else {
+            if (!this.showControls) {
+              this.timeCountdown();
+            }
           }
           if (event && event.fingerList && event.fingerList[0]) {
             LogUtils.getInstance().LOGI('TapGesture event.onActionStart start x: ' + event.fingerList[0].localX +
@@ -964,6 +1041,9 @@ export struct PlayerView {
       PanGesture(this.panOptionBrightAndVolume)
         .onActionStart((event: GestureEvent | undefined) => {
           LogUtils.getInstance().LOGI('Vertical Pan Start');
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           if (this.lock) {
             return;
           }
@@ -978,6 +1058,9 @@ export struct PlayerView {
           }
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           if (this.lock) {
             return;
           }
@@ -1034,6 +1117,9 @@ export struct PlayerView {
           }
         })
         .onActionEnd((_event: GestureEvent | undefined) => {
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           LogUtils.getInstance().LOGI('Vertical Pan End')
           this.showVolumeUi = false;
           this.showBrightnessUi = false;
@@ -1041,6 +1127,9 @@ export struct PlayerView {
         }),
       PanGesture(this.panOptionSeek)
         .onActionStart((event: GestureEvent | undefined) => {
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           LogUtils.getInstance().LOGI('Horizontal Pan Start');
           if (!this.mIjkMediaPlayer) {
             return;
@@ -1069,6 +1158,9 @@ export struct PlayerView {
           }
         })
         .onActionUpdate((event: GestureEvent | undefined) => {
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           if (!this.mIjkMediaPlayer) {
             return;
           }
@@ -1110,6 +1202,9 @@ export struct PlayerView {
           }
         })
         .onActionEnd((_event: GestureEvent | undefined) => {
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           if (!this.mIjkMediaPlayer) {
             return;
           }
@@ -1132,6 +1227,9 @@ export struct PlayerView {
           this.showSeekProgressUi = false;
         }),
       TapGesture({ count: 2 }).onAction((_event: GestureEvent | undefined) => {
+        if (OneMoreUtil.isPc()) {
+          return
+        }
         if (this.lock) {
           return;
         }
@@ -1150,6 +1248,9 @@ export struct PlayerView {
       }),
       LongPressGesture()//长按三倍速
         .onAction((event: GestureEvent) => {
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           if (event) {
             //投屏不用倍速
             if (this.uiState.isCastPlaying) {
@@ -1161,6 +1262,9 @@ export struct PlayerView {
         })
         // 长按动作一结束触发
         .onActionEnd((_event: GestureEvent) => {
+          if (OneMoreUtil.isPc()) {
+            return
+          }
           if (this.uiState.isFastSpeed) {
             this.mIjkMediaPlayer.setSpeed(this.playSpeed)
             this.uiState.isFastSpeed = false
@@ -1266,6 +1370,17 @@ export struct PlayerView {
     //     .margin('15px')
     // }
 
+  }
+
+  private startOrStop(){
+    if (!this.mIjkMediaPlayer) {
+      return;
+    }
+    if (this.mIjkMediaPlayer.isPlaying()) {
+      this.pause();
+    } else {
+      this.startPlayOrResumePlay();
+    }
   }
 
   // 开始播放字幕

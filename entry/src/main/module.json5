@@ -15,6 +15,17 @@
     "pages": "$profile:main_pages",
     "abilities": [
       {
+        "name": "PlayerAbility",
+        "srcEntry": "./ets/entryability/PlayerAbility.ets",
+        "description": "",
+        "label": "$string:PlayerAbility_desc",
+        "exported": true,
+        "startWindowIcon": "$media:foreground",
+        "startWindowBackground": "$color:start_window_background",
+        "minWindowWidth": 1280,
+        "minWindowHeight": 720
+      },
+      {
         "name": "EntryAbility",
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",

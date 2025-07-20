@@ -1,5 +1,5 @@
 import { deviceInfo } from "@kit.BasicServicesKit";
-import { AppStorageV2, display } from "@kit.ArkUI";
+import { AppStorageV2, display, window } from "@kit.ArkUI";
 import { HMRouterMgr } from "@hadss/hmrouter";
 import { Constants } from "./Constants";
 import { NavModifier } from "../pages/Index";
@@ -26,6 +26,10 @@ export class OneMoreUtil {
     return false
   }
 
+  static isPc() {
+    return deviceInfo.deviceType == '2in1'
+  }
+
   static getNavigationMode(currentDisplay: display.Orientation): NavigationMode {
     switch (currentDisplay) {
       case display.Orientation.PORTRAIT:
@@ -46,7 +50,7 @@ export class OneMoreUtil {
     let modifier = AppStorage.get<NavModifier>('modifier')
     let navInstance = instance || modifier?.instance
     let mode = OneMoreUtil.getNavigationMode(appUIState.orientation)
-    if ((OneMoreUtil.isBigScreen())) {
+    if (OneMoreUtil.isBigScreen() && !OneMoreUtil.isPc()) {
       navInstance?.mode(mode)
     } else {
       mode = NavigationMode.Stack
@@ -62,5 +66,25 @@ export class OneMoreUtil {
       }
     }
 
+  }
+
+  static maximize(): void {
+    window.getLastWindow(getContext()).then((mainWindowClass)=>{
+      if(canIUse("SystemCapability.Window.SessionManager")){
+        if (mainWindowClass.getWindowStatus() === window.WindowStatusType.FLOATING) {
+          mainWindowClass.maximize()
+        }
+      }
+    })
+  }
+
+  static recover() {
+    window.getLastWindow(getContext()).then((mainWindowClass)=>{
+      if(canIUse("SystemCapability.Window.SessionManager")){
+        if (mainWindowClass.getWindowStatus() === window.WindowStatusType.FULL_SCREEN) {
+          mainWindowClass.recover()
+        }
+      }
+    })
   }
 }

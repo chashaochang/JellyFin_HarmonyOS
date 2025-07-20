@@ -4,7 +4,7 @@ import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
-import { AppStorageV2, display } from "@kit.ArkUI"
+import { AppStorageV2, display, window } from "@kit.ArkUI"
 import { Constants } from "../../utils/Constants"
 import { common } from "@kit.AbilityKit"
 import { PlayerView } from "./PlayerView"
@@ -37,15 +37,16 @@ export struct PlayerScreen {
   }
   @Local showEpisodeView: boolean = false
   @Local appUIState: AppUIState = AppStorageV2.connect(AppUIState, () => new AppUIState())!;
-
   @Local lifecycle: PlayerLifecycle = HMRouterMgr.getCurrentLifecycleOwner()?.getLifecycle() as PlayerLifecycle;
+
   @Monitor('lifecycle.options')
-  onNewInstance(){
+  onNewInstance() {
     this.options = this.lifecycle.options
     this.uiState = new PlayerUIState()
     this.viewModel = new PlayerViewModel(this.uiState)
     this.aboutToAppear()
   }
+
   @Monitor('viewModel.queueManager.currentMediaSourceOrNull')
   onMediaSourceChanged() {
     if (!this.viewModel.queueManager.currentMediaSourceOrNull) {
@@ -63,6 +64,13 @@ export struct PlayerScreen {
 
     // Update title and player menus
     this.viewModel.uiState.title = mediaSource.name
+    if (OneMoreUtil.isPc()) {
+      let windowStage = AppStorage.get<window.WindowStage>('playerWindowStage')
+      if (canIUse('SystemCapability.Window.SessionManager')) {
+        let title = "正在播放: " + mediaSource.name
+        windowStage?.getMainWindowSync().setWindowTitle(title)
+      }
+    }
     this.viewModel.uiState.playerMenus?.onQueueItemChanged(mediaSource, this.viewModel.queueManager.hasNext())
   }
 
@@ -194,7 +202,7 @@ export struct PlayerScreen {
   }
 
   build() {
-    Column() {
+    Flex({ direction: OneMoreUtil.isPc() ? FlexDirection.Row : FlexDirection.Column }) {
       //播放器
       Stack() {
         if (this.viewModel.url) {
@@ -218,7 +226,7 @@ export struct PlayerScreen {
             onEpisodeChange: (index: number) => {
               this.viewModel.changeEpisode(index)
             }
-          }).height(this.appUIState.isFullScreen ? '100%' : 240)
+          }).height(this.appUIState.isFullScreen || OneMoreUtil.isPc() ? '100%' : 240)
         }
         Row() {
           Image($r('app.media.ic_back'))
@@ -242,20 +250,23 @@ export struct PlayerScreen {
         .height(56)
         .width('100%')
         .justifyContent(FlexAlign.Start)
-        .visibility(this.appUIState.isFullScreen ? Visibility.None : Visibility.Visible)
-      }.width('100%')
+        .visibility(this.appUIState.isFullScreen || OneMoreUtil.isPc() ? Visibility.None : Visibility.Visible)
+      }
+      .width(OneMoreUtil.isPc() && !this.appUIState.isFullScreen ? '70%' : '100%')
+      .height(OneMoreUtil.isPc() ? '100%' : undefined)
       .alignContent(Alignment.Top)
 
       //视频相关信息
       Stack() {
         Scroll() {
-          Column({ space: 10 }) {
+          Column({ space: 20 }) {
             //标题
             Text(this.viewModel.uiState.seriesName ?? this.viewModel.uiState.title)
               .titleStyle()
 
             Text(this.uiState.overview)
               .width('100%')
+              .fontColor(Color.White)
               .textAlign(TextAlign.Start)
               .maxLines(3)
               .textOverflow({
@@ -344,24 +355,62 @@ export struct PlayerScreen {
               }) {
                 ForEach(this.uiState.similarItems, (item: SimilarItem) => {
                   ListItem() {
-                    Column({ space: 4 }) {
-                      Image(item.image)
-                        .width(120)
-                        .height(160)
-                        .borderRadius(8)
-                      Text(item.name)
-                        .fontSize(14)
-                        .width('100%')
-                        .maxLines(1)
-                        .textAlign(TextAlign.Center)
-                        .textOverflow({ overflow: TextOverflow.Ellipsis })
-                        .ellipsisMode(EllipsisMode.END)
-                      Text(item.desc)
-                        .fontSize(12)
-                        .fontColor(Color.Gray)
+                    if (OneMoreUtil.isPc()) {
+                      Row({ space: 16 }) {
+                        Image(item.image)
+                          .width(90)
+                          .height(120)
+                          .borderRadius(8)
+                        Column({ space: 8 }) {
+                          Text(item.name)
+                            .fontSize(14)
+                            .width('100%')
+                            .maxLines(1)
+                            .textAlign(TextAlign.Start)
+                            .textOverflow({ overflow: TextOverflow.Ellipsis })
+                            .ellipsisMode(EllipsisMode.END)
+                            .fontColor(Color.White)
+                          Text(item.desc)
+                            .fontSize(12)
+                            .fontColor(Color.White)
+                          Text(item.overview)
+                            .fontSize(12)
+                            .fontColor(Color.White)
+                            .width('100%')
+                            .layoutWeight(1)
+                            .maxLines(5)
+                            .align(Alignment.TopStart)
+                            .textOverflow({
+                              overflow: TextOverflow.Ellipsis
+                            })
+                            .ellipsisMode(EllipsisMode.END)
+                        }.layoutWeight(1)
+                        .height('100%')
+                        .alignItems(HorizontalAlign.Start)
+                      }.width('100%')
+                      .height(120)
+                      .margin({ top: 10 })
+                    } else {
+                      Column({ space: 4 }) {
+                        Image(item.image)
+                          .width(120)
+                          .height(160)
+                          .borderRadius(8)
+                        Text(item.name)
+                          .fontSize(14)
+                          .width('100%')
+                          .maxLines(1)
+                          .textAlign(TextAlign.Center)
+                          .textOverflow({ overflow: TextOverflow.Ellipsis })
+                          .ellipsisMode(EllipsisMode.END)
+                          .fontColor(Color.White)
+                        Text(item.desc)
+                          .fontSize(12)
+                          .fontColor(Color.Gray)
+                      }
+                      .width(120)
+                      .margin({ right: 10 })
                     }
-                    .width(120)
-                    .margin({ right: 10 })
                   }.onClick(() => {
                     // let options: PlayOptions = new PlayOptions(Array.of(item.id))
                     // options.startPositionTicks = item.runTimeTicks ?? 0
@@ -369,11 +418,12 @@ export struct PlayerScreen {
                   })
                 })
               }.width('100%')
-              .listDirection(Axis.Horizontal)
+              .listDirection(OneMoreUtil.isPc() ? Axis.Vertical : Axis.Horizontal)
               .scrollBar(BarState.Off)
             }
           }
           .alignItems(HorizontalAlign.Start)
+          .justifyContent(FlexAlign.Start)
           .width('100%')
           .padding(16)
           .visibility(this.appUIState.isFullScreen ? Visibility.None : Visibility.Visible)
@@ -387,7 +437,9 @@ export struct PlayerScreen {
           this.EpisodeView()
         }
       }.width('100%')
+      .height(OneMoreUtil.isPc() ? '100%' : undefined)
       .layoutWeight(1)
+      .backgroundColor('#111111')
     }
     .width('100%')
     .height('100%')
@@ -396,8 +448,9 @@ export struct PlayerScreen {
 
 @Extend(Text)
 function titleStyle() {
-  .fontSize(18)
+  .fontSize(20)
   .fontWeight(FontWeight.Bold)
   .textAlign(TextAlign.Start)
+  .fontColor(Color.White)
 }
 

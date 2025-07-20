@@ -3,5 +3,6 @@ export interface SimilarItem {
   name: string,
   image: string,
   desc: string,
-  runTimeTicks?:number|null
+  overview: string,
+  runTimeTicks?:number|null,
 }
