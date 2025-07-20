@@ -1,6 +1,6 @@
-import { ObjectUtil } from "@pura/harmony-utils";
 import jellyfin from "sdk/src/main/ets/jellyfin";
 import { ApiClient } from "../network/ApiClient";
+import { ObjectUtil } from "../utils/ObjectUtil";
 import { AppPreference } from "./AppPreference";
 import { DBManager } from "./DBManager";
 import { ServerDao } from "./ServerDao";
@@ -64,7 +64,7 @@ export class ApiClientController {
     ApiClient.Instance().userId = userId
     ApiClient.Instance().accessToken = accessToken
     // Append user id to device id to ensure uniqueness across sessions
-    let info = ObjectUtil.deepCopy(this.baseDeviceInfo)
+    let info = ObjectUtil.Assign({},this.baseDeviceInfo)
     info.id = this.baseDeviceInfo.id + userId
     ApiClient.Instance().deviceInfo = info
   }

@@ -4,7 +4,6 @@ import { NativePlayer } from "../bridge/NativePlayer";
 import { Constants } from "../utils/Constants";
 import { util } from "@kit.ArkTS";
 import { ExternalPlayer } from "../bridge/ExternalPlayer";
-import { JSONUtil } from "@pura/harmony-utils";
 import ServerEntity from "../data/ServerEntity";
 import { ApiClientController } from "../data/ApiClientController";
 import { WebappEvents } from "./WebappEvents";
@@ -88,7 +87,7 @@ export struct WebViewScreen {
           // 此处匹配自己想要加载的本地离线资源，进行资源拦截替换，绕过跨域
           let path = event.request.getRequestUrl()
           if (path.match(Constants.MAIN_BUNDLE_PATH_REGEX) && !path?.includes('deferred')) {
-            const promise: Promise<String> = new Promise((resolve: Function, reject: Function) => {
+            const promise: Promise<String> = new Promise((resolve: Function, _reject: Function) => {
               this.onConnectedToWebapp()
               let buffer = getContext().resourceManager.getRawFileContentSync('native/injectionScript.js')
               let decoder = util.TextDecoder.create('utf-8');
@@ -109,7 +108,7 @@ export struct WebViewScreen {
             return this.responseWeb
           }
           if (path.includes('/native/')) {
-            const promise: Promise<String> = new Promise((resolve: Function, reject: Function) => {
+            const promise: Promise<String> = new Promise((resolve: Function, _reject: Function) => {
               let buffer = getContext().resourceManager.getRawFileContentSync(`native/${getLastPathSegment(path)}`)
               let decoder = util.TextDecoder.create('utf-8');
               let str = decoder.decodeToString(new Uint8Array(buffer));
@@ -131,7 +130,7 @@ export struct WebViewScreen {
           if (path.toLowerCase().endsWith(Constants.SESSION_CAPABILITIES_PATH)) {
             this.controller.runJavaScript("JSON.parse(window.localStorage.getItem('jellyfin_credentials'))")
               .then(result => {
-                const credentials: Credentials | null = JSONUtil.jsonToBean(result, Credentials)
+                const credentials: Credentials | null = JSON.parse(result)
                 if (credentials) {
                   let server = credentials.Servers[0]
                   this.apiClientController.setupUser(this.server.id, server.UserId, server.AccessToken)

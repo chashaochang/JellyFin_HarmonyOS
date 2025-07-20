@@ -2,7 +2,6 @@
   "modelVersion": "5.0.1",
   "description": "Please describe the basic information.",
   "dependencies": {
-    "@pura/harmony-utils": "^1.3.6",
     "@ohos/axios": "^2.2.6",
     "@ohos/node-polyfill": "^1.0.0",
     "@hadss/hmrouter": "^1.2.0-beta.0",

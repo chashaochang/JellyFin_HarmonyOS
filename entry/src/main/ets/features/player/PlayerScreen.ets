@@ -1,6 +1,5 @@
 import { HMRouter, HMRouterMgr } from "@hadss/hmrouter"
 
-import { ToastUtil } from "@pura/harmony-utils"
 import { PlayOptions } from "../../player/interaction/PlayOptions"
 import { PlayerException } from "../../player/PlayerException"
 import { PlayerViewModel } from "./PlayerViewModel"
@@ -20,6 +19,7 @@ import { PlayerMenus } from "../../player/ui/PlayerMenus"
 import { OneMoreUtil } from "../../utils/OneMoreUtil"
 import { AppUIState } from "../../entity/AppUIState"
 import { PlayerLifecycle } from "../../router/lifecycles/PlayerLifecycle"
+import { ToastUtil } from "../../utils/ToastUtil"
 
 @HMRouter({
   pageUrl: '/Player',
@@ -110,13 +110,13 @@ export struct PlayerScreen {
     })
     switch (this.viewModel.queueManager.initializePlaybackQueue(this.options)) {
       case PlayerException.InvalidPlayOptions:
-        ToastUtil.showToast('无法解析播放信息')
+        ToastUtil.showToast(this.getUIContext(), '无法解析播放信息')
         break
       case PlayerException.NetworkFailure:
-        ToastUtil.showToast('无法从服务器加载媒体信息')
+        ToastUtil.showToast(this.getUIContext(), '无法从服务器加载媒体信息')
         break
       case PlayerException.UnsupportedContent:
-        ToastUtil.showToast('该媒体无法在本设备上播放')
+        ToastUtil.showToast(this.getUIContext(), '该媒体无法在本设备上播放')
         break
       default:
         break
