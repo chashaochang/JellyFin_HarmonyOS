@@ -14,7 +14,7 @@ import {
 import { Constants } from "../../utils/Constants";
 import { TrackSelectionHelper } from "../../player/TrackSelectionHelper";
 import { AxiosResponse } from "@ohos/axios";
-import { buffer } from "@kit.ArkTS";
+import { buffer, uri } from "@kit.ArkTS";
 import { PlayerUIState } from "./PlayerUIState";
 import { SubtitleManager } from "../../utils/SubtitleManager";
 import { PlayStatus } from "./PlayStatus";
@@ -216,7 +216,12 @@ export class PlayerViewModel {
     this.uiState.mediaType = source.item.Type!
     this.uiState.currentPlayId = this.queueManager.currentQueue[this.queueManager.currentQueueIndex]
     for (let index = 0; index < url.length; index++) {
-      const element = url[index];
+      let element = url[index];
+      //适配小雅
+      if (element.includes('xiaoya.host')) {
+        let URI = new uri.URI(ApiClient.Instance().basePath)
+        element = element.replace('http://xiaoya.host', `${URI.scheme}:${URI.host}`)
+      }
       if (index === 0) {
         this.url = element
         //设置播放器url,开始播放
@@ -246,32 +251,33 @@ export class PlayerViewModel {
       limit: 12,
       fields: [ItemFields.PrimaryImageAspectRatio, ItemFields.CanDelete]
     }).then((res: AxiosResponse<BaseItemDtoQueryResult>) => {
-      this.queueManager.getItem(source.item.SeriesId ?? source.itemId).then((res2: AxiosResponse<BaseItemDtoQueryResult>) => {
-        if (res.data.Items && res.data.Items.length > 0) {
-          let result = res.data.Items?.map(e => {
-            let desc = e.ProductionYear + ''
-            switch (e.Status) {
-              case 'Continuing':
-                desc += ' - 现在'
-                break
-              case 'Ended':
-                desc = desc + ' - ' + new Date(e.EndDate!).getFullYear()
-                break
-            }
-            let overview: string = res2?.data?.Items?.[0].Overview ?? ""
-            let item: SimilarItem = {
-              id: e.Id!,
-              name: e.Name ?? '',
-              image: ApiClient.Instance().basePath + new ImageUrlsApi().getItemImageUrlById(e.Id),
-              desc: desc,
-              overview: overview,
-              runTimeTicks: e.RunTimeTicks
-            }
-            return item
-          }) ?? []
-          this.uiState.similarItems = result
-        }
-      })
+      this.queueManager.getItem(source.item.SeriesId ?? source.itemId)
+        .then((res2: AxiosResponse<BaseItemDtoQueryResult>) => {
+          if (res.data.Items && res.data.Items.length > 0) {
+            let result = res.data.Items?.map(e => {
+              let desc = e.ProductionYear + ''
+              switch (e.Status) {
+                case 'Continuing':
+                  desc += ' - 现在'
+                  break
+                case 'Ended':
+                  desc = desc + ' - ' + new Date(e.EndDate!).getFullYear()
+                  break
+              }
+              let overview: string = res2?.data?.Items?.[0].Overview ?? ""
+              let item: SimilarItem = {
+                id: e.Id!,
+                name: e.Name ?? '',
+                image: ApiClient.Instance().basePath + new ImageUrlsApi().getItemImageUrlById(e.Id),
+                desc: desc,
+                overview: overview,
+                runTimeTicks: e.RunTimeTicks
+              }
+              return item
+            }) ?? []
+            this.uiState.similarItems = result
+          }
+        })
     })
   }
 

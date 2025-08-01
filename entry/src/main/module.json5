@@ -80,6 +80,9 @@
         "name": "ohos.permission.GET_WIFI_INFO"
       },
       {
+        "name": "ohos.permission.GET_NETWORK_INFO"
+      },
+      {
         "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
         "reason": "$string:reason_background",
         "usedScene": {
